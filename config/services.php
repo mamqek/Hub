@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'external_api' => [
+        'bag_kadaster' => [
+            'key' => env('BAG_KADASTER_API_KEY'),
+        ],
+    ],
+
 ];

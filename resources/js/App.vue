@@ -5,7 +5,7 @@
     </nav>
 
     <router-view v-slot="{ Component, route }">
-        <div :key="route.name">
+        <div :key="route.name" id="content-wrapper">
             <Component :is="Component" />
         </div>
     </router-view>
