@@ -1,0 +1,92 @@
+.btn {
+    border-radius: 8px;
+    /* Rounded corners for a modern look */
+    padding: 10px 20px;
+    /* Adequate padding for better touch target */
+    font-size: 16px;
+    /* Slightly larger font size */
+    font-weight: 600;
+    /* Semi-bold text */
+    cursor: pointer;
+    /* Pointer cursor on hover */
+    transition: background-color 3s, box-shadow 0.3s, transform 0.1s ;
+    /* Smooth transitions for hover effects */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    /* Subtle shadow for a lifted effect */
+    min-height: 48px;
+    text-align: center;
+    vertical-align: middle;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+/* BUTTON STATES */
+
+/* Hover effect */
+.btn:hover {
+    /* background-color: #f1f1f1; Slightly darker background on hover */
+    filter: brightness(85%);
+    /* Darken the background on hover */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    /* Enhanced shadow on hover */
+    transform: translateY(-2px);
+    /* Slight lift on hover */
+}
+
+/* Active effect */
+.btn:active {
+    filter: brightness(75%);
+    /* Even darker background on click */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    /* Reduced shadow on click */
+    transform: translateY(2px);
+    /* Push down effect on click */
+}
+
+/* Focus effect */
+.btn:focus {
+    outline: none;
+    /* Remove default focus outline */
+    box-shadow: 0 0 0 3px rgba(52, 55, 61, 0.5);
+    /* Custom focus ring */
+}
+
+/* Disabled effect */
+.btn:disabled {
+    opacity: 0.6;
+    /* Lower opacity for disabled button */
+    cursor: not-allowed;
+    /* Cursor indicates the button is disabled */
+    pointer-events: none;
+    /* Prevent mouse interactions */
+    box-shadow: none;
+    /* No shadow for disabled button */
+    transform: none;
+    /* No transform for disabled button */
+}
+
+/* No hover or active effect for disabled button */
+.btn:disabled:hover,
+.btn:disabled:active {
+    filter: none;
+    /* No filter for disabled button */
+    box-shadow: none;
+    /* No shadow for disabled button */
+    transform: none;
+    /* No transform for disabled button */
+}
+
+/* No focus effect for disabled button */
+.btn:disabled:focus {
+    outline: none;
+    /* No outline for disabled button */
+    box-shadow: none;
+    /* No shadow for disabled button */
+}
+
+
+/* INPUT  */
+
