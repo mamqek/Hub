@@ -1,10 +1,5 @@
 <template>
-    <div class="container-center">
-        <h1>Zip code</h1>
-    
-        <form @submit.prevent="checkZipCode">
-            <label for="zip-code">Zip code:</label>
-            <input type="text" id="zip-code" v-model="zipCode" required>
+        <div class="content">
 
             <div class="addresses">
 
@@ -78,28 +73,54 @@
             </div>
         </div>
 
-            <label for="house-letter">House letter (optional):</label>
-            <input type="text" id="house-letter" v-model="houseLetter">
 
-            <button type="submit">Check</button>
-        </form>
-    </div>
 
 </template>
 
 <script>
+
+import KadasterResponseBox from "@/components/KadasterResponseBox.vue";
+import LinksButtons from "@/components/LinksButtons.vue"
+import Input from "@/elements/Input.vue"
+import Checkbox from "@/elements/Checkbox.vue"
+
+
+
 export default {
     name: 'Zip code checker',
 
     data() {
         return {
-            zipCode: null,
-            houseNumber: null,
-            houseLetter: null
+            APIBaseUrl : "https://api.bag.kadaster.nl/lvbag/individuelebevragingen/v2/",
+
+            zipCode: "",
+            houseNumber: "",
+            houseLetter: "",
+            exactMatch: false,
+
+            addresses: {},
+
+            responses: {},
+            alreadyFetched: new Set(),
+            
         };
     },
 
+    components: {
+        KadasterResponseBox,
+        LinksButtons,
+        Input,
+        Checkbox
+    },
+
+    computed: {
+        hasManyAddresses() {
+            return this.addresses.length > 1;
+        }
+    },
+
     methods: {
+
         checkZipCode() {
             this.$axios.post('/check-zip-code', { 
                 postcode : this.zipCode, 
@@ -132,16 +153,67 @@ export default {
             })
         },
 
+        sendLink(name, link) {
+            var endpoint = link.slice(this.APIBaseUrl.length);
+            this.$axios.get(`/check-zip-code?endpoint=${endpoint}`)
+            .then(({ data }) => {
+                console.log(endpoint)
+                this.extractResponse(name, data)
+            })
+        },
+
+        extractResponse(name, response) {
+            var key = Object.keys(response.data)[0];
+
+            const newKey = name === key 
+            ? key 
+            : (this.alreadyFetched.has(key))
+            ? (() => {
+                    let existingKey = Object.keys(this.responses).find(dataKey => dataKey.includes(key));
+                    delete this.responses[existingKey]
+                    return `${existingKey}/${name}`
+                })()
+            : `${key}/${name}`;
+
+            const {[key] : data, _links : links} = response.data;
+            this.responses[newKey] = {data: data, links: links};
+            this.alreadyFetched.add(name);
+            this.alreadyFetched.add(key);
+        },
+
     }
 }
 </script>
 
 <style scoped>
 
-form { 
+.addresses {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    justify-content: center;
+    gap: var(--div-gap);
+    padding-top: 20px;
+    width: 100%;
+
+    form { 
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
 }
+
+.content {
+    gap: var(--div-gap);
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+.data-boxes {
+    display: flex;
+    gap: var(--div-gap);
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+
 
 </style>
