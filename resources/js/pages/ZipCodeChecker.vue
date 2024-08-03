@@ -6,8 +6,77 @@
             <label for="zip-code">Zip code:</label>
             <input type="text" id="zip-code" v-model="zipCode" required>
 
-            <label for="house-number">House number:</label>
-            <input type="text" id="house-number" v-model="houseNumber" required>
+            <div class="addresses">
+
+                <form @submit.prevent="checkZipCode">
+                    <h1>Zip code</h1>
+        
+                    <Input
+                        v-model="zipCode"
+                        id="zip-code"
+                        text="Zip code:"
+                        required
+                    />
+
+                    <Input
+                        v-model="houseNumber"
+                        id="house-letter"
+                        text="House number:"
+                        required
+                    />
+
+                    <Input
+                        v-model="houseLetter"
+                        id="house-letter"
+                        text="House letter (optional):"
+                    />
+
+                    <Checkbox
+                        v-model="exactMatch"
+                        name="exact-match"
+                        text="Exact Match"
+                    />
+                    
+                    <button class="btn" type="submit">Find building</button>
+                </form>
+                
+                <KadasterResponseBox v-for="(data, name) in addresses"
+                    :key="name"
+                    :name="hasManyAddresses ? name : ''"
+                    :data="data" 
+                > 
+                    <button v-if="hasManyAddresses" 
+                        class="btn" 
+                        @click="chooseAddress(name)"
+                    > 
+                        I meant this building! I want more info! 
+                    </button>
+                    <LinksButtons v-else
+                        :links="data.links"
+                        :alreadyFetched="alreadyFetched"
+                        @send-link="sendLink"
+                    />
+                </KadasterResponseBox>
+
+            </div>
+            
+            <div v-if="responses" class="data-boxes">
+                <KadasterResponseBox v-for="(data, name) in responses"
+                    :key="name"
+                    :name="name"
+                    :data="data"
+                    @send-link="sendLink"
+                >
+
+                <LinksButtons 
+                    :links="data.links"
+                    :alreadyFetched="alreadyFetched"
+                    @send-link="sendLink"
+                />  
+                
+            </KadasterResponseBox>
+            </div>
+        </div>
 
             <label for="house-letter">House letter (optional):</label>
             <input type="text" id="house-letter" v-model="houseLetter">
@@ -53,6 +122,16 @@ export default {
                 })
             })
         },
+
+        chooseAddress(chosenAddressNumber){
+            let chosenAddress = this.addresses[chosenAddressNumber];
+            this.addresses = this.addresses.filter(address => {
+                if (address == chosenAddress) {
+                    return true;
+                }
+            })
+        },
+
     }
 }
 </script>
