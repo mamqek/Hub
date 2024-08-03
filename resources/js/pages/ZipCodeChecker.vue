@@ -33,17 +33,26 @@ export default {
     methods: {
         checkZipCode() {
             this.$axios.post('/check-zip-code', { 
-                    postcode : this.zipCode, 
-                    huisnummer : this.houseNumber, 
-                    huisletter : this.houseLetter 
+                postcode : this.zipCode, 
+                huisnummer : this.houseNumber, 
+                huisletter : this.houseLetter,
+                exactMatch : this.exactMatch,
+            })
+            .then(({ data }) => {
+                console.log(data);
+                if (data.status == "error") {
+                    alert(data.message);
+                    return;
+                }
+                this.responses = {};
+                this.alreadyFetched.clear();
+                this.addresses = data.data._embedded.adressen.map( address => {
+                    let links = address._links;
+                    delete address._links;
+                    return {data : address, links : links};
                 })
-                .then(({ data }) => {
-                    console.log(data);
-                })
-                .catch(error => {
-                    alert(error);
-                });
-        }
+            })
+        },
     }
 }
 </script>
