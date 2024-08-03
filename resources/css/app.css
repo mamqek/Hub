@@ -1,6 +1,12 @@
 :root {
     --navbar-height: 70px;
     --background: #ebebeb; 
+    --primary-color: #fefefe;
+    --dark-color: #060508;
+    --grey-color: #c8c8c8;
+    --medium-grey-color: #8b8b8b;
+    --dark-grey-color: #595959;
+    --div-gap: 30px;
 }
 
 
@@ -14,39 +20,89 @@ html, body{
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: auto;
 }
 
 nav {
     position: absolute;
+    z-index: 1;
 
     display: flex;
-    justify-content: center;
+    justify-content: end;
     align-items: center;
-    gap: 50px;
-
+    gap: 2rem;
+    
+    margin-left: auto;
     width: 100%;
-    max-width: 100%;
+    max-width: calc(100% + 4px);
     height: var(--navbar-height);
     max-height: var(--navbar-height);
-    /* background: transparent; */
-    background-color: aqua;
+    
+    padding: 1rem;
+    
+    mix-blend-mode: difference;
+    /* color: var(--medium-grey-color); */
+    color: var(--background);
 
-    /* position: relative; */
-    z-index: 1;
+    a {
+        font-size: 30px;
+        text-decoration: none;
+        color: inherit;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        padding: 0.25rem;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        transition: color 0.3s ease, border-color 0.7s ease, background-color 0.3s ease;
+    }
+
+    a:hover {
+        color: var(--dark-color);
+        border-color: var(--background);
+        background-color: var(--background);
+    }
 }
 
-#content-wrapper {
+#layout {
     flex: 1;
-    background-color: var(--background);
-    color : #000; 
-    overflow: auto;
-}
 
-.container-center {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
+
+
+    background-color: var(--background);
+    color : var(--dark-color);
+    /* overflow: auto; */
 }
+
+.content {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: var(--navbar-height) 0;
+
+}
+
+
+.box {
+    background-color: #ffffff;
+    padding: 2rem;
+    /* height: 100%; */
+    border-radius: 10px;
+    box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 767px) {
+    .box {
+        text-align: center;
+    }   
+}
+
+
+
 
