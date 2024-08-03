@@ -7,6 +7,7 @@
 
         @vite(['resources/js/app.js'])
         @vite(['resources/css/app.css'])
+        @vite(['resources/css/reset.css'])
 
         <title>Laravel</title>
 
