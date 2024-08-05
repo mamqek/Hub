@@ -6,12 +6,8 @@
         "build": "vite build"
     },
     "devDependencies": {
-        "@eslint/js": "^9.8.0",
         "axios": "^1.6.4",
-        "eslint": "^9.8.0",
-        "eslint-config-airbnb-base": "^15.0.0",
-        "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-vue": "^9.27.0",
+        "cross-env": "^7.0.3",
         "globals": "^15.8.0",
         "laravel-mix": "^6.0.49",
         "laravel-mix-eslint": "^0.2.0",
