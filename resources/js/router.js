@@ -8,6 +8,10 @@ const routes = [
     {
         path: "/zip-code-checker",
         component: () => import("./pages/ZipCodeChecker.vue"),
+    },
+    {
+        path: "/soulmap",
+        component: () => import("./pages/SoulMap.vue"),
     }
     // {
     //     path: "/",
