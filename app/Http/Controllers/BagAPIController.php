@@ -56,7 +56,7 @@ class BagAPIController extends Controller
         $response = $this->sendRequest('get','adressen', $queryParams);
 
         // Check if the request was successful
-        if (property_exists($response, '_embedded')) {
+        if (property_exists(json_decode($response), '_embedded')) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'Address is valid',
