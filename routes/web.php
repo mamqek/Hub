@@ -10,6 +10,8 @@ Route::post('/check-zip-code', 'App\Http\Controllers\BagAPIController@checkZipCo
 
 Route::get('/check-zip-code', 'App\Http\Controllers\BagAPIController@link');
 
+Route::get('/souls', 'App\Http\Controllers\SoulController@getAllRecordsGrouped');
+
 
 Route::get('/{vue_capture?}', function () {
     return view('welcome');
