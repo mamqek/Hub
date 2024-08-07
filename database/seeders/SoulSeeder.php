@@ -12,15 +12,9 @@ class SoulSeeder extends Seeder
      * Run the database seeds.
      */
 
-
-
-
-
-
-
     public function run(): void
     {
-        DB::table('soul')->insert([
+        DB::table('souls')->insert([
             [
                 'group_name' => 'soul',
                 'number' => 1,
