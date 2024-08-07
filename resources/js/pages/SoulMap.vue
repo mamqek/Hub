@@ -1,133 +1,178 @@
 <template>
 
     <div class="content">
+
+        <div class="client-info">
+
+            <InputText
+                v-model="client.name"
+                id="name"
+                label="Имя:"
+                required
+            />
+            <InputText
+                v-model="client.date"
+                type="date"
+                id="date"
+                label="Дата:"
+                required
+            />
+            <InputText
+                v-model="client.dateOfBirth"
+                type="date"
+                id="date_of_birth"
+                label="Дата рождения:"
+                required
+            />
+
+        </div>
+
+        <form @submit.prevent="showSoulsText" class="soul-numbers">
+
+            <InputNumber v-for="(entry, index) in entries" :key="entry.key"
+                v-model="chosenSoulNums[entry.key]"
+                :max="7"
+                :min="1"
+                :id="`${entry.key}-num`"
+                :label="rusSoulGroupNames[index]"
+                :class="index == 6 ? 'center' : ''" 
+            />
+
+            <button type="submit" class="btn center">Submit</button>
         
+        </form>
+
+        <div class="soul-texts" v-if="chosenSouls">
+            <div class="text" v-for="(soul, index) in chosenSouls">
+                <h2 v-html="splitTextByWords(rusSoulGroupNames[index])"></h2>
+                <p> {{ soul.text }} </p>
+            </div>
+        </div>
     </div>
     
 </template>
 
 <script>
+import InputNumber from "@/elements/InputNumber.vue"
+import InputText from "@/elements/InputText.vue"
+
 export default {
     name: "SoulMap",
+
+    data(){
+        return {
+            chosenSoulNums: {
+                soul: 0,
+                monada: 0,
+                ego: 0,
+                emotional_body: 0,
+                mental_body: 0, 
+                physical_body: 0,
+                genetic_body: 0
+            },
+            chosenSouls: [],
+            souls: [],
+
+
+            rusSoulGroupNames: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело" ],
+
+            client: {
+                name: "",
+                date: "",
+                dateOfBirth: "",
+            },
+        }
+    },
+
+    computed: {
+        entries() {
+            return Object.entries(this.chosenSoulNums).map(([key, value], index) => ({key, value, index}));
+        }
+    },
+
+    created() {
+        this.fetchSouls();
+    },
 
     methods: {
         fetchSouls(){
             this.$axios.get('/souls')
             .then(({ data }) => {
-                console.log(data);
-                
-
+                this.souls = data;
             })
+        },
+
+        showSoulsText(){
+            this.chosenSouls = this.souls.map(({group_name, records}) => {
+                let chosenNum = this.chosenSoulNums[group_name];
+                return records.find(obj => obj.number == chosenNum);
+            })
+        },
+
+        splitTextByWords(text){
+            return text.split(' ').join('<br/>');
+
         }
+    },
+
+    components: {
+        InputNumber,
+        InputText
     }
 
 }
-</script>
 
-<!-- <script>
-	export let name;
-
-	// const emotionalBodyElement = {
-	// 	"ДУША": SOUL,
-	// 	"МОНАДА": MONADA,
-	// 	"ЭГО": EGO,
-	// 	"ЭМОЦИОНАЛЬНОЕ ТЕЛО": EMOTIONAL_BODY,
-	// 	"МЕНТАЛЬНОЕ ТЕЛО": MENTAL_BODY,
-	// 	"ФИЗИЧЕСКОЕ ТЕЛО": PHYSICAL_BODY,
-	// 	"ГЕНЕТИЧЕСКОЕ ТЕЛО": GENETIC_BODY,
-	// };
-
-	let numbers = [1, 2, 3, 4, 5, 6, 7];
-	let colors = ["red", "blue", "yellow", "green", "orange", "pink", "purple"];
-	let description = [];
-	let names = [];
-
-	function handleNumberChange(index, event, name, arr) {
-		names[index] = name;
-		description[index] = arr[event.target.value];
-	}
 
 </script>
 
-<main>
+<style scoped>
 
-	<div class="customerInfo">
-		<div>
-			<label for="name">Имя:</label>
-			<input type="text" name="name">
-		</div>
+.content {
+    gap: 30px;
+}
 
-		<div>
-			<label for="date">Дата:</label>
-			<input type="date" name="date">
-		</div>
+.client-info {
+    display: flex;
+    gap: 30px;
 
-		<div>
-			<label for="birthDate">Дата рождения:</label>
-			<input type="date" name="birthDate">
-		</div>	
-	</div>
+    max-width: 70%;
+}
 
-	<div class="grid">
-	
-		{#each Object.entries(emotionalBodyElement) as [name, value], index}
-			<div class="input">
-				<label for="number-{index}"> {name}:</label>
-				<input
-					type="number"
-					id="number-{index}"
-					min="1"
-					max="7"
-					on:input={(event) => handleNumberChange(index, event, name, value)} 
-                />
-			</div>
-			<div class="text">
-				<h3>{names[index] ?? name}</h3>
-				<p>{description[index] ?? ""}</p>
-			</div>
-			
-		{/each}
+.soul-numbers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
 
-	</div>
+    .center {
+        grid-column: 2 / 3;
+    }
+}
 
-</main>
+.soul-texts {
+    padding: 50px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    
+    
+    .text {
+        display: flex;
+        background-color: var(--light-grey-color);
+        padding: 10px;
+        border-radius: 8px;
+        justify-content: space-between;
+        
+        h2 {
+            writing-mode: vertical-rl;
+            line-height: 0.8;
+            padding: 0 8px;
+            min-width: 60px;
+        }
 
-<style>
-	main {
-		width: 100%;
-		box-sizing: border-box; /* Include padding and border in element's total width and height */
-		padding: 0 20px	;
-		background-color: antiquewhite;
-	}
-	.grid {
-		display: grid;
-		grid-template-columns: 2fr 8fr; /* Two columns */
-		grid-template-rows: repeat(8, 1fr); /* Seven rows */
-		row-gap: 10px; /* Space between grid items */
-		column-gap: 30px; /* Space between grid items */
-	}
-
-	.customerInfo {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-evenly;
-	}
-
-	.text {
-		margin-left: 40px;
-		flex: 1;
-	}
+    }
+}
 
 
-	label {
-		display: block;
-		margin-bottom: 0.5em;
-	}
 
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
-</style> -->
+</style>
