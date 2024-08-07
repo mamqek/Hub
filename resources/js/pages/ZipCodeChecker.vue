@@ -129,7 +129,6 @@ export default {
                 exactMatch : this.exactMatch,
             })
             .then(({ data }) => {
-                console.log(data);
                 if (data.status == "error") {
                     alert(data.message);
                     return;
@@ -157,7 +156,6 @@ export default {
             var endpoint = link.slice(this.APIBaseUrl.length);
             this.$axios.get(`/check-zip-code?endpoint=${endpoint}`)
             .then(({ data }) => {
-                console.log(endpoint)
                 this.extractResponse(name, data)
             })
         },
