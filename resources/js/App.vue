@@ -1,5 +1,6 @@
 <template>    
     <nav>
+        <router-link to="/soulmap">Soul Map</router-link>
         <router-link to="/zip-code-checker">Zip Code Checker</router-link>
         <router-link to="/">Home</router-link>
     </nav>
