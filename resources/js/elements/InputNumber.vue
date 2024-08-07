@@ -1,9 +1,9 @@
 <template>
-    <div class="custom-number-input">
+    <div class="custom-number-input" @blur.capture="capture">
         <label>{{ label }}</label>
-        <button @click="decrement" :disabled="lessMin">-</button>
+        <button type="button" @click="decrement" :disabled="belowMin">-</button>
         <input type="number" :id="id" :value="modelValue" @input="$emit('update:`modelValue`', $event.target.value)" :min="min" :max="max">
-        <button @click="increment" >+</button>
+        <button type="button" @click="increment" :disabled="overMax" >+</button>
     </div>
 
 </template>
@@ -39,7 +39,7 @@ export default {
         overMax(){
             return this.modelValue >= this.max;
         },
-        lessMin(){
+        belowMin(){
             return this.modelValue <= this.min;
         }
     },
@@ -58,6 +58,9 @@ export default {
         updateValue(event) {
             const value = Number(event.target.value);
             this.$emit('update:modelValue', value);
+        },
+        capture() {
+            // console.log("I capture event from all my children even though I am a div without events")
         }
     }
 
