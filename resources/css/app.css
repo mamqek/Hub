@@ -3,6 +3,7 @@
     --background: #ebebeb; 
     --primary-color: #fefefe;
     --dark-color: #060508;
+    --light-grey-color: silver;
     --grey-color: #c8c8c8;
     --medium-grey-color: #8b8b8b;
     --dark-grey-color: #595959;
@@ -15,6 +16,10 @@ html, body{
     min-height:100vh;
     
 }
+
+/* label {
+    font-weight: 600;
+} */
 
 #app {
     display: flex;
