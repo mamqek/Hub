@@ -5,25 +5,25 @@
 
                 <form @submit.prevent="checkZipCode">
                     <h1>Zip code</h1>
-        
-                    <Input
+                    
+                    <InputText
                         v-model="zipCode"
                         id="zip-code"
-                        text="Zip code:"
+                        label="Zip code:"
                         required
                     />
 
-                    <Input
+                    <InputText
                         v-model="houseNumber"
                         id="house-letter"
-                        text="House number:"
+                        label="House number:"
                         required
                     />
 
-                    <Input
+                    <InputText
                         v-model="houseLetter"
                         id="house-letter"
-                        text="House letter (optional):"
+                        label="House letter (optional):"
                     />
 
                     <Checkbox
@@ -81,7 +81,7 @@
 
 import KadasterResponseBox from "@/components/KadasterResponseBox.vue";
 import LinksButtons from "@/components/LinksButtons.vue"
-import Input from "@/elements/Input.vue"
+import InputText from "@/elements/InputText.vue"
 import Checkbox from "@/elements/Checkbox.vue"
 
 
@@ -109,7 +109,7 @@ export default {
     components: {
         KadasterResponseBox,
         LinksButtons,
-        Input,
+        InputText,
         Checkbox
     },
 

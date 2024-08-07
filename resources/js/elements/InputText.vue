@@ -8,22 +8,22 @@
             @input="$emit('update:modelValue', $event.target.value)" 
             :required="required"
         >
-        <label :for="id">{{ text }}</label>
+        <label :for="id">{{ label }}</label>
     </div>
 </template>
 
 <script>
 
 export default {
-    name: "Input Field", 
+    name: "Input Text", 
     props: {
         modelValue: {
             type: String,
             required: true
         },
-        text: {
+        label: {
             type: String,
-            default: 'Default Text'
+            default: 'Default label'
         },
         type: {
             type: String,
@@ -49,6 +49,14 @@ export default {
     position: relative;
     width: 300px;
     margin-bottom: 40px;
+}
+
+input[type="date"]:in-range::-webkit-datetime-edit-year-field,
+input[type="date"]:in-range::-webkit-datetime-edit-month-field,
+input[type="date"]:in-range::-webkit-datetime-edit-day-field,
+input[type="date"]:in-range::-webkit-datetime-edit-text {
+    color: transparent;
+    pointer-events: none;
 }
 
 .inputBox input{
