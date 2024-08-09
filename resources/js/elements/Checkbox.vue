@@ -72,7 +72,7 @@
     width: 20px;
     height: 20px;
     border: 2px solid var(--dark-grey-color);
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     background-color: transparent;
     transition: background-color 0.2s, border-color 0.2s;
 }

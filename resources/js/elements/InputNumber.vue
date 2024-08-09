@@ -73,10 +73,10 @@ export default {
         display: flex;
         align-items: center;
         background-color: var(--light-grey-color);
-        border: 1px solid var(--light-grey-color);
-        border-radius: 5px;
+        /* border: 1px solid var(--light-grey-color); */
+        border-radius: var(--border-radius-sm);
         width: fit-content;
-        padding: 5px;
+        padding: 6px;
         
 
         position: relative;
@@ -99,6 +99,7 @@ export default {
         font-size: 16px;
         margin: 0 10px;
         text-align: center;
+        border-radius: var(--border-radius-sm);
         width: 50px;
     }
 
@@ -110,7 +111,7 @@ export default {
 
     .custom-number-input button {
         background: var(--medium-grey-color);
-        border-radius: 5px;
+        border-radius: var(--border-radius-sm);
         border: none;
         color: var(--primary-color);
         cursor: pointer;

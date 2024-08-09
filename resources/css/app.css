@@ -8,6 +8,8 @@
     --medium-grey-color: #8b8b8b;
     --dark-grey-color: #595959;
     --div-gap: 30px;
+    --border-radius-sm: 5px;
+    --border-radius-md: 10px;
 }
 
 
@@ -57,7 +59,7 @@ nav {
         transition: color 0.3s ease;
         padding: 0.25rem;
         border: 2px solid transparent;
-        border-radius: 10px;
+        border-radius: var(--border-radius-md);
         transition: color 0.3s ease, border-color 0.7s ease, background-color 0.3s ease;
     }
 
@@ -98,7 +100,7 @@ nav {
     background-color: #ffffff;
     padding: 2rem;
     /* height: 100%; */
-    border-radius: 10px;
+    border-radius: var(--border-radius-md);
     box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.1);
 }
 
