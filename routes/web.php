@@ -7,10 +7,11 @@ Route::get('/', function () {
 });
 
 Route::post('/check-zip-code', 'App\Http\Controllers\BagAPIController@checkZipCode');
-
 Route::get('/check-zip-code', 'App\Http\Controllers\BagAPIController@link');
 
 Route::get('/souls', 'App\Http\Controllers\SoulController@getAllRecordsGrouped');
+Route::post('/saveClient', 'App\Http\Controllers\SoulController@saveClient');
+
 
 
 Route::get('/{vue_capture?}', function () {

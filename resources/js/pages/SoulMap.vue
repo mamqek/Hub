@@ -48,7 +48,9 @@
                 <h2 v-html="splitTextByWords(rusSoulGroupNames[index])" :style="`background-color: ${colors[soul.number-1]};`"></h2>
                 <p> {{ soul.text }} </p>
             </div>
+            <button type="button" @click="saveClient" class="btn">Сохранить клиента и числа</button>
         </div>
+
     </div>
     
 </template>
@@ -62,17 +64,17 @@ export default {
 
     data(){
         return {
+            souls: [],
             chosenSoulNums: {
-                soul: 0,
-                monada: 0,
-                ego: 0,
-                emotional_body: 0,
-                mental_body: 0, 
-                physical_body: 0,
-                genetic_body: 0
+                soul: 1,
+                monada: 2,
+                ego: 3,
+                emotional_body: 4,
+                mental_body: 5, 
+                physical_body: 6,
+                genetic_body: 7
             },
             chosenSouls: [],
-            souls: [],
 
 
             rusSoulGroupNames: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело"],
@@ -115,9 +117,21 @@ export default {
             })
         },
 
+        saveClient() {
+            this.$axios.post('/saveClient', {
+                client: this.client, 
+                souls: this.chosenSouls,
+            })
+            .then(({data}) => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.log(error)
+            });
+        },
+
         splitTextByWords(text){
             return text.split(' ').join('<br/>');
-
         }
     },
 
