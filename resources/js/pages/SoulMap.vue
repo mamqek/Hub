@@ -36,15 +36,16 @@
                 :id="`${entry.key}-num`"
                 :label="rusSoulGroupNames[index]"
                 :class="index == 6 ? 'center' : ''" 
+                :style="`background-color: ${colors[chosenSoulNums[entry.key]-1]};`"
             />
 
             <button type="submit" class="btn center">Submit</button>
         
         </form>
 
-        <div class="soul-texts" v-if="chosenSouls">
-            <div class="text" v-for="(soul, index) in chosenSouls">
-                <h2 v-html="splitTextByWords(rusSoulGroupNames[index])"></h2>
+        <div class="soul-texts" v-if="chosenSouls.length >0 ">
+            <div class="text" v-for="(soul, index) in chosenSouls" >
+                <h2 v-html="splitTextByWords(rusSoulGroupNames[index])" :style="`background-color: ${colors[soul.number-1]};`"></h2>
                 <p> {{ soul.text }} </p>
             </div>
         </div>
@@ -74,7 +75,8 @@ export default {
             souls: [],
 
 
-            rusSoulGroupNames: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело" ],
+            rusSoulGroupNames: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело"],
+            colors: ["red", "#2200ff", "yellow", "green", "orange", "pink", "#54067d"],
 
             client: {
                 name: "",
@@ -103,9 +105,9 @@ export default {
         },
 
         showSoulsText(){
-            this.chosenSouls = this.souls.map(({group_name, records}) => {
-                let chosenNum = this.chosenSoulNums[group_name];
-                return records.find(obj => obj.number == chosenNum);
+            this.chosenSouls = Object.entries(this.chosenSoulNums).map(([group_name, chosen_num]) => {
+                let soulGroup = this.souls.find(soulGroup => soulGroup.group_name == group_name).records;
+                return soulGroup.find(soulObj => soulObj.number == chosen_num);
             })
         },
 
@@ -158,15 +160,19 @@ export default {
     .text {
         display: flex;
         background-color: var(--light-grey-color);
-        padding: 10px;
-        border-radius: 8px;
-        justify-content: space-between;
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
         
         h2 {
             writing-mode: vertical-rl;
             line-height: 0.8;
-            padding: 0 8px;
             min-width: 60px;
+            padding: 5px;
+            padding-left: 0;
+        }
+
+        p{
+            padding: 15px;
         }
 
     }
