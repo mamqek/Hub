@@ -9,7 +9,7 @@ class Address extends Model
 {
     use HasFactory;
 
-    public function AddressSearchAddress() {
+    public function addressSearchAddress() {
         return $this->hasMany(AddressSearchAddress::class, 'address_search_id');
     }
 

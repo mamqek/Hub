@@ -13,7 +13,7 @@ class AddressSearch extends Model
 
     protected $fillable = ['postcode', 'huisnummer', 'huisletter', 'exacteMatch'];
 
-    public function AddressSearchAddress() {
+    public function addressSearchAddress() {
         return $this->hasMany(AddressSearchAddress::class, 'address_search_id');
     }
 
