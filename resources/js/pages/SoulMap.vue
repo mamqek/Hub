@@ -99,9 +99,13 @@ export default {
     methods: {
         fetchSouls(){
             this.$axios.get('/souls')
-            .then(({ data }) => {
-                this.souls = data;
+            .then(({data}) => {
+                this.souls = data.souls;
             })
+            .catch(error => {
+                console.log(error)
+            });
+
         },
 
         showSoulsText(){

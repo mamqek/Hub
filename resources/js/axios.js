@@ -13,4 +13,17 @@ const axiosInstance  = axios.create({
     }
 })
 
+axiosInstance.interceptors.response.use(
+    response => response, 
+    error => {
+        // Create an object with message, error, status code
+        const errorDetails = {
+            message: error.response?.data?.message || 'An error occurred',
+            error: error.response?.data?.error || 'Back-end error',
+            status: error.response?.status || 500,
+        };
+        return Promise.reject(errorDetails);
+    }
+);
+
 export const $axios = axiosInstance;
