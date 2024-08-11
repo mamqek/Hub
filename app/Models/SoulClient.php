@@ -11,6 +11,11 @@ class SoulClient extends Model
 
     protected $fillable = ['name', 'date', 'date_of_birth', 'souls'];
 
+    // To automatically convert array to JSON and decode from JSON
+    protected $casts = [
+        'souls' => 'array',
+    ];
+
     public function souls(){
         return $this->hasMany(Soul::class);
     }
