@@ -1,3 +1,18 @@
+.pressable {
+
+    transition: background-color 3s, transform 0.2s;
+}
+
+.pressable:hover {
+    filter: brightness(95%);
+    transform: translateY(-2px);
+}
+
+.pressable:active {
+    filter: brightness(85%);
+    transform: translateY(2px);
+}
+
 .btn {
     border-radius: 8px;
     /* Rounded corners for a modern look */
@@ -11,6 +26,7 @@
     /* Pointer cursor on hover */
     transition: background-color 3s, box-shadow 0.3s, transform 0.1s ;
     /* Smooth transitions for hover effects */
+
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
     /* Subtle shadow for a lifted effect */
@@ -85,6 +101,17 @@
     /* No outline for disabled button */
     box-shadow: none;
     /* No shadow for disabled button */
+}
+
+p.info {
+    padding: 7px;
+    background-color: var(--grey-color);
+    border-radius: var(--border-radius-sm);
+}
+
+p.info::before {
+    content: attr(data-label)": ";
+    font-weight: 600;
 }
 
 
