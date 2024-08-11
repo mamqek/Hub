@@ -10,8 +10,18 @@ const routes = [
         component: () => import("./pages/ZipCodeChecker.vue"),
     },
     {
-        path: "/soulmap",
-        component: () => import("./pages/SoulMap.vue"),
+        path: "/soul-map",
+        component: () => import("./pages/soulmap/SoulMap.vue"),
+        children: [
+            {
+                path: 'clients',
+                component: () => import("./pages/soulmap/Clients.vue")
+            },
+            {
+                path: 'new-client',
+                component : () => import("./pages/soulmap/NewClient.vue")
+            }
+        ]
     }
     // {
     //     path: "/",
