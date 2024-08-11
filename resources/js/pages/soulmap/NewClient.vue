@@ -1,6 +1,6 @@
 <template>
 
-    <div class="content">
+    <form @submit.prevent="saveClient" class="content">
 
         <div class="client-info">
 
@@ -10,6 +10,7 @@
                 label="Имя:"
                 required
             />
+
             <InputText
                 v-model="client.date"
                 type="date"
@@ -17,6 +18,7 @@
                 label="Дата:"
                 required
             />
+
             <InputText
                 v-model="client.dateOfBirth"
                 type="date"
@@ -27,37 +29,38 @@
 
         </div>
 
-        <form @submit.prevent="showSoulsText" class="soul-numbers">
+        <div class="soul-choose-numbers">
 
-            <InputNumber v-for="(entry, index) in entries" :key="entry.key"
-                v-model="chosenSoulNums[entry.key]"
-                :max="7"
+            <InputNumber v-for="({key, value}, index) in entries" :key="key"
+                v-model="chosenSoulNumbers[key]"
                 :min="1"
-                :id="`${entry.key}-num`"
-                :label="rusSoulGroupNames[index]"
+                :max="7"
+                :id="`${key}-num`"
+                :label="soulGroupNamesRus[index]"
                 :class="index == 6 ? 'center' : ''" 
-                :style="`background-color: ${colors[chosenSoulNums[entry.key]-1]};`"
+                :style="`background-color: ${colors[value-1]};`"
             />
 
-            <button type="submit" class="btn center">Submit</button>
+            <button type="button" @click="showSoulsText" class="btn center">Submit</button>
         
-        </form>
-
-        <div class="soul-texts" v-if="chosenSouls.length >0 ">
-            <div class="text" v-for="(soul, index) in chosenSouls" >
-                <h2 v-html="splitTextByWords(rusSoulGroupNames[index])" :style="`background-color: ${colors[soul.number-1]};`"></h2>
-                <p> {{ soul.text }} </p>
-            </div>
-            <button type="button" @click="saveClient" class="btn">Сохранить клиента и числа</button>
         </div>
 
-    </div>
+        <SoulNumbersList v-if="chosenSouls.length > 0"
+            :objArr="chosenSouls"
+            :colors="colors"
+            :headers="soulGroupNamesRus"
+        />
+        
+        <button v-if="chosenSouls.length > 0" class="btn">Сохранить клиента и числа</button>
+        
+    </form>
     
 </template>
 
 <script>
 import InputNumber from "@/elements/InputNumber.vue"
 import InputText from "@/elements/InputText.vue"
+import SoulNumbersList from "@/components/SoulNumbersList.vue"
 
 export default {
     name: "SoulMap",
@@ -65,7 +68,7 @@ export default {
     data(){
         return {
             souls: [],
-            chosenSoulNums: {
+            chosenSoulNumbers: {
                 soul: 1,
                 monada: 2,
                 ego: 3,
@@ -76,10 +79,6 @@ export default {
             },
             chosenSouls: [],
 
-
-            rusSoulGroupNames: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело"],
-            colors: ["red", "#2200ff", "yellow", "green", "orange", "pink", "#54067d"],
-
             client: {
                 name: "",
                 date: "",
@@ -88,9 +87,11 @@ export default {
         }
     },
 
+    props: ['colors', 'soulGroupNamesRus'],
+
     computed: {
         entries() {
-            return Object.entries(this.chosenSoulNums).map(([key, value], index) => ({key, value, index}));
+            return Object.entries(this.chosenSoulNumbers).map(([key, value], index) => ({key, value, index}));
         }
     },
 
@@ -100,7 +101,7 @@ export default {
 
     methods: {
         fetchSouls(){
-            this.$axios.get('/souls')
+            this.$axios.get('/soulmap/souls')
             .then(({data}) => {
                 this.souls = data.souls;
             })
@@ -111,14 +112,14 @@ export default {
         },
 
         showSoulsText(){
-            this.chosenSouls = Object.entries(this.chosenSoulNums).map(([group_name, chosen_num]) => {
+            this.chosenSouls = Object.entries(this.chosenSoulNumbers).map(([group_name, chosen_num]) => {
                 let soulGroup = this.souls.find(soulGroup => soulGroup.group_name == group_name).records;
                 return soulGroup.find(soulObj => soulObj.number == chosen_num);
             })
         },
 
         saveClient() {
-            this.$axios.post('/saveClient', {
+            this.$axios.post('/soulmap/saveClient', {
                 client: this.client, 
                 souls: this.chosenSouls,
             })
@@ -130,14 +131,13 @@ export default {
             });
         },
 
-        splitTextByWords(text){
-            return text.split(' ').join('<br/>');
-        }
+
     },
 
     components: {
         InputNumber,
-        InputText
+        InputText,
+        SoulNumbersList
     }
 
 }
@@ -151,6 +151,10 @@ export default {
     gap: 30px;
 }
 
+form {
+    width: 100%;
+}
+
 .client-info {
     display: flex;
     gap: 30px;
@@ -158,7 +162,7 @@ export default {
     max-width: 70%;
 }
 
-.soul-numbers {
+.soul-choose-numbers {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
@@ -168,33 +172,7 @@ export default {
     }
 }
 
-.soul-texts {
-    padding: 50px 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    
-    
-    .text {
-        display: flex;
-        background-color: var(--light-grey-color);
-        border-radius: var(--border-radius-md);
-        overflow: hidden;
-        
-        h2 {
-            writing-mode: vertical-rl;
-            line-height: 0.8;
-            min-width: 60px;
-            padding: 5px;
-            padding-left: 0;
-        }
 
-        p{
-            padding: 15px;
-        }
-
-    }
-}
 
 
 
