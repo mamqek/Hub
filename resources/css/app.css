@@ -3,8 +3,9 @@
     --background: #ebebeb; 
     --primary-color: #fefefe;
     --dark-color: #060508;
-    --light-grey-color: silver;
-    --grey-color: #c8c8c8;
+    --light-grey-color: #d8d8d8;
+    --grey-color: silver;
+    /* --grey-color: #c8c8c8; */
     --medium-grey-color: #8b8b8b;
     --dark-grey-color: #595959;
     --div-gap: 30px;
@@ -12,16 +13,15 @@
     --border-radius-md: 10px;
 }
 
+/* label {
+    font-weight: 600;
+} */
 
 html, body{
     height: 100%; 
     min-height:100vh;
     
 }
-
-/* label {
-    font-weight: 600;
-} */
 
 #app {
     display: flex;
@@ -30,7 +30,7 @@ html, body{
     overflow: auto;
 }
 
-nav {
+.main-nav {
     position: absolute;
     z-index: 1;
 
