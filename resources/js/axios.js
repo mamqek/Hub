@@ -19,7 +19,7 @@ axiosInstance.interceptors.response.use(
         // Create an object with message, error, status code
         const errorDetails = {
             message: error.response?.data?.message || 'An error occurred',
-            error: error.response?.data?.error || 'Back-end error',
+            error: error.response?.data?.error || error.response?.statusText,
             status: error.response?.status || 500,
         };
         return Promise.reject(errorDetails);
