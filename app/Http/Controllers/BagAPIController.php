@@ -17,32 +17,35 @@ class BagAPIController extends Controller
     
     private function sendRequest($type, $endpoint, $params)
     {
-        try {
+
+        $base_link = "https://api.bag.kadaster.nl/lvbag/individuelebevragingen/v2/";
 
         
-            $base_link = "https://api.bag.kadaster.nl/lvbag/individuelebevragingen/v2/";
-            
-            $headers = [
-                'X-Api-Key' => config('services.external_api.bag_kadaster.key'),
-                'Content-Crs' => 'EPSG:28992',
-                'Accept-Crs' => 'EPSG:28992',
-            ];
+        $apiKey = config('services.external_api.bag_kadaster.key');
 
-            if ($type == "get") {
-                $response = Http::withHeaders($headers)->get($base_link.$endpoint, $params);
-            } else {
-                
-            }
-
-        } catch (\Exception $e) {
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error sending the request to API',
-                'error' => $e->getMessage()
-            ], 500);
-
+        // Check if the API key is missing or empty
+        if (empty($apiKey)) {
+            throw new \InvalidArgumentException("API key is missing: config('services.external_api.bag_kadaster.key') \n Please add it to .env with name BAG_KADASTER_API_KEY");
         }
+
+        $headers = [
+            'X-Api-Key' => $apiKey,
+            'Content-Crs' => 'EPSG:28992',
+            'Accept-Crs' => 'EPSG:28992',
+        ];
+
+        if ($type == "get") {
+            $response = Http::withHeaders($headers)->get($base_link.$endpoint, $params);
+        } else {
+            
+        }
+
+        // Optionally check the response status and throw an exception if needed
+        if ($response->failed()) {
+            throw new \Exception("API request failed with status: " . $response->status());
+        }
+
+            
 
         return $response;
         
@@ -64,8 +67,15 @@ class BagAPIController extends Controller
         if (!is_null($huisletter)) {
             $queryParams['huisletter'] = $huisletter;
         }
-        
-        $response = $this->sendRequest('get','adressen', $queryParams);
+        try{
+            $response = $this->sendRequest('get','adressen', $queryParams);
+        } catch (\Exception $e) {
+            // Return the error message from the exception
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
 
         try {
 
@@ -100,7 +110,7 @@ class BagAPIController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Address is not found',
-                ], $response->status());
+                ], 500);
             }
             
                 
@@ -121,32 +131,35 @@ class BagAPIController extends Controller
         $endpoint = $request->input('endpoint');
         $addressRecordId = $request->input('addressRecordId');
 
-        $response = $this->sendRequest('get', $endpoint, []);
+        try{
+            $response = $this->sendRequest('get', $endpoint, []);   
+        } catch (\Exception $e) {
+            // Return the error message from the exception
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
         
         try{
 
-            if ($response->successful()) {
-                $responseJSON = $response->json();
+            $responseJSON = $response->json();
 
-                AddressResponse::updateOrCreate([
-                    'address_id' => $addressRecordId,
-                    'endpoint' => $endpoint
-                ],
-                [
-                    'response' => $responseJSON
-                ]);
+            AddressResponse::updateOrCreate([
+                'address_id' => $addressRecordId,
+                'endpoint' => $endpoint
+            ],
+            [
+                'response' => $responseJSON
+            ]);
 
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Data fetched',
-                    'data' => $responseJSON,
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Failed to fetch data',
-                ], $response->status());
-            }
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data fetched',
+                'data' => $responseJSON,
+            ], 200);
+                
+
         } catch (\Exception $e) {
 
             return response()->json([
