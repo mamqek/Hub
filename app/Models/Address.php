@@ -9,6 +9,8 @@ class Address extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['nummeraanduidingIdentificatie'];
+
     public function addressSearchAddress() {
         return $this->hasMany(AddressSearchAddress::class, 'address_search_id');
     }
