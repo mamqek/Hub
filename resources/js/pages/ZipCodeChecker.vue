@@ -198,24 +198,26 @@ export default {
 
 <style scoped>
 
-.addresses {
-    display: flex;
-    justify-content: center;
-    gap: var(--div-gap);
-    padding-top: 20px;
-    width: 100%;
 
-    form { 
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
+
+form { 
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
+
 .content {
-    gap: var(--div-gap);
-    padding-left: 50px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    place-items: start center;
+    gap: 30px var(--div-gap);
+    padding-left: 50px; 
     padding-right: 50px;
+}
+
+.content > * {
+    height: 100%;
 }
 
 .data-boxes {

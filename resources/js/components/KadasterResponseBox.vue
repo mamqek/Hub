@@ -1,22 +1,23 @@
 <template>
     <div class="box">
-        <h3>{{ name }}</h3>
-        <p v-for="(propVal, propName) in data.data" :key="propName" >
-            <template v-if="typeof propVal === 'object' && propVal !== null">
-                <span>{{ propName }}</span> :
-                <ul>
-                    <li v-for="(value, key) in propVal" :key="key">
-                        <span>{{ key }}</span> : {{ value }}
-                    </li>
-                </ul>
-            </template>
-            <template v-else>
-                <span>{{ propName }}</span> : {{ propVal }}
-            </template>
-        </p>
+        <div class="text">
+
+            <h3>{{ name }}</h3>
+            <p class="info" v-for="(propVal, propName) in data.data" :key="propName" :data-label="propName">
+                <template v-if="typeof propVal === 'object' && propVal !== null">
+                    <ul>
+                        <li v-for="(value, key) in propVal" :key="key">
+                            <span>{{ key }}</span> : {{ value }}
+                        </li>
+                    </ul>
+                </template>
+                <template v-else>
+                    {{ propVal }}
+                </template>
+            </p>
+        </div>
         
         <div class="bottom-slot">
-
             <slot></slot>
         </div>
 
@@ -35,8 +36,22 @@ export default {
 <style scoped>
 
 .box {
-    flex-grow: 1;
-    max-width: calc(50% - var(--div-gap)); 
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    contain: layout;
+    container-type: inline-size; /* or block-size, depending on your layout needs */
+
+
+    h3 {
+        margin-bottom: 1rem;
+    }
+
+    p.info {
+        background-color: var(--light-grey-color);
+    }
+
 
     span {
         font-weight: 600;
@@ -50,6 +65,7 @@ export default {
     gap: 10px;
     flex-wrap: wrap;
     margin-top: 10px;
+    place-items: end center;
 }
 
 
