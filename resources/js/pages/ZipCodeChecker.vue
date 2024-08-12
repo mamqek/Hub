@@ -1,7 +1,6 @@
 <template>
         <div class="content">
 
-            <div class="addresses">
 
                 <form @submit.prevent="checkZipCode">
                     <h1>Zip code</h1>
@@ -37,10 +36,10 @@
                 
                 <KadasterResponseBox v-for="(data, name) in addresses"
                     :key="name"
-                    :name="hasManyAddresses ? name : ''"
+                    :name="'Found address' + (multipleAddresses ? '#'+name : '')"
                     :data="data" 
                 > 
-                    <button v-if="hasManyAddresses" 
+                    <button v-if="multipleAddresses" 
                         class="btn" 
                         @click="chooseAddress(name)"
                     > 
@@ -53,24 +52,20 @@
                     />
                 </KadasterResponseBox>
 
-            </div>
-            
-            <div v-if="responses" class="data-boxes">
+
                 <KadasterResponseBox v-for="(data, name) in responses"
                     :key="name"
                     :name="name"
                     :data="data"
-                    @send-link="sendLink"
                 >
 
-                <LinksButtons 
-                    :links="data.links"
-                    :alreadyFetched="alreadyFetched"
-                    @send-link="sendLink"
-                />  
-                
-            </KadasterResponseBox>
-            </div>
+                    <LinksButtons 
+                        :links="data.links"
+                        :alreadyFetched="alreadyFetched"
+                        @send-link="sendLink"
+                    />  
+                    
+                </KadasterResponseBox>
         </div>
 
 
@@ -100,6 +95,7 @@ export default {
 
             addresses: [],
             addressRecords : [],
+            multipleAddresses: false,
 
             responses: {},
             alreadyFetched: new Set(),
@@ -114,12 +110,6 @@ export default {
         Checkbox
     },
 
-    computed: {
-        hasManyAddresses() {
-            return this.addresses.length > 1;
-        }
-    },
-
     methods: {
 
         checkZipCode() {
@@ -130,10 +120,6 @@ export default {
                 exactMatch : this.exactMatch,
             })
             .then(({ data }) => {
-                if (data.status == "error") {
-                    alert(data.message);
-                    return;
-                }
                 this.responses = {};
                 this.alreadyFetched.clear();
 
@@ -143,6 +129,7 @@ export default {
                     delete address._links;
                     return {data : address, links : links};
                 })
+                this.multipleAddresses = this.addresses.length > 1;
             })
             .catch(error => {
                 console.log(error);
