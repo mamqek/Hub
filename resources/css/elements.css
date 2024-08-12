@@ -31,6 +31,7 @@
 
     /* Subtle shadow for a lifted effect */
     min-height: 48px;
+    max-height: 50px;
     text-align: center;
     vertical-align: middle;
 
@@ -107,12 +108,26 @@ p.info {
     padding: 7px;
     background-color: var(--grey-color);
     border-radius: var(--border-radius-sm);
+    margin: 10px 0;
 }
 
 p.info::before {
     content: attr(data-label)": ";
     font-weight: 600;
 }
+
+/* @container (min-width: 450px) {
+    p.info{
+        background-color: aquamarine;
+    }
+} */
+
+/* @media (max-width: 400px){
+    p.info::before {
+        content: attr(data-label)": ";
+        font-weight: 600;
+    }    
+} */
 
 
 /* INPUT  */
