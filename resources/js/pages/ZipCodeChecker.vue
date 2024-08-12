@@ -98,7 +98,8 @@ export default {
             houseLetter: "",
             exactMatch: false,
 
-            addresses: {},
+            addresses: [],
+            addressRecords : [],
 
             responses: {},
             alreadyFetched: new Set(),
@@ -135,6 +136,8 @@ export default {
                 }
                 this.responses = {};
                 this.alreadyFetched.clear();
+
+                this.addressRecords = data.addressRecords;
                 this.addresses = data.data._embedded.adressen.map( address => {
                     let links = address._links;
                     delete address._links;
@@ -145,16 +148,18 @@ export default {
 
         chooseAddress(chosenAddressNumber){
             let chosenAddress = this.addresses[chosenAddressNumber];
-            this.addresses = this.addresses.filter(address => {
-                if (address == chosenAddress) {
-                    return true;
-                }
-            })
+            this.addresses = this.addresses.filter(address => address === chosenAddress);
+            this.addressRecords = this.addressRecords.filter(addressRecord => 
+                this.addresses[0].nummeraanduidingIdentificatie == addressRecord.nummeraanduidingIdentificatie);
         },
 
         sendLink(name, link) {
             var endpoint = link.slice(this.APIBaseUrl.length);
-            this.$axios.get(`/check-zip-code?endpoint=${endpoint}`)
+
+            this.$axios.post(`/link`, { 
+                endpoint : endpoint,
+                addressRecordId : this.addressRecords[0].id
+            })
             .then(({ data }) => {
                 this.extractResponse(name, data)
             })

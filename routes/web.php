@@ -7,7 +7,7 @@ Route::get('/', function () {
 });
 
 Route::post('/check-zip-code', 'App\Http\Controllers\BagAPIController@checkZipCode');
-Route::get('/check-zip-code', 'App\Http\Controllers\BagAPIController@link');
+Route::post('/link', 'App\Http\Controllers\BagAPIController@link');
 
 Route::group(['prefix' => 'soulmap'], function () {
     Route::get('/souls', 'App\Http\Controllers\SoulController@getAllRecordsGrouped');

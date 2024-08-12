@@ -73,6 +73,7 @@ class BagAPIController extends Controller
 
     public function link(Request $request) {
         $endpoint = $request->input('endpoint');
+        $addressRecordId = $request->input('addressRecordId');
 
         $response = $this->sendRequest('get', $endpoint, []);
 
