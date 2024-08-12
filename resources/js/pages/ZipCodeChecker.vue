@@ -144,6 +144,10 @@ export default {
                     return {data : address, links : links};
                 })
             })
+            .catch(error => {
+                console.log(error);
+                alert(error.message);
+            });
         },
 
         chooseAddress(chosenAddressNumber){
@@ -163,6 +167,10 @@ export default {
             .then(({ data }) => {
                 this.extractResponse(name, data)
             })
+            .catch(error => {
+                console.log(error);
+                alert(error.message);
+            });
         },
 
         extractResponse(name, response) {
