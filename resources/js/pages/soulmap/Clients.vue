@@ -4,10 +4,22 @@
 
         <table class="table">
             <thead>
-                <tr>
-                    <th v-for="(column, index) in columnsRus" :key="column" :colspan="index == 4 ? 7 : 1" :rowspan="index != 4 ? 2 : 1">
-                        {{ column }}
+                <tr class="toolbar">
+                    <th colspan="11">
+                        <div class="search-container">
+                            <input v-model="search" class="search-bar" type="text">
+                        </div>
                     </th>
+                </tr>
+                <tr>
+                    <template v-for="(column, index) in columnsRus" :key="column">
+                        <th v-if="index==4" colspan="7" style="border-bottom: 2px solid var(--dark-color);">
+                            {{ column }}
+                        </th>
+                        <th v-else  rowspan="2">
+                            {{ column }}
+                        </th>
+                    </template>
                 </tr>
                 <tr>
                     <th v-for="(soulGroupName, index) in soulGroupNamesRus">
@@ -15,8 +27,11 @@
                     </th>
                 </tr>
             </thead>
+            <tr class="spacing">
+
+            </tr>
             <tbody>
-                <tr v-for="(client, index) in clients" @click="showClient(client)" class="pressable">
+                <tr v-for="(client, index) in searched" @click="showClient(client)" class="pressable">
                     <template v-for="(value, key) in client">
                         <td v-if="key == 'souls'" v-for="(soulObj, index) in value">
                             {{ soulObj.number }}
@@ -58,6 +73,7 @@ export default {
 
     data(){
         return {
+            search: "",
             clients: [],
             columnsRus: ["#","Имя", "Дата", "Дата рождения", "Числа души"],
             columns: ["Id", "Name", "Date", "Date of birth", "Soul numbers"],
@@ -79,25 +95,65 @@ export default {
         fetchClients() {
             this.$axios.get('/soulmap/clients')
             .then(({data}) => {
-                console.log(data);
                 this.clients = data;
-                console.log(this.columns)
             })
         },
 
         showClient(client){
-            console.log("show")
             this.showedClient = client;
+        },
+
+    },
+
+    computed: {
+
+    searched() {
+        if (typeof this.search !== 'string') {
+            return [];
         }
-    }
+
+        return this.clients.filter(client =>
+            client.name.toLowerCase().includes(this.search.toLowerCase()))
+    },
+
+
+    },
 
 }
 </script>
 
 <style scoped>
 
+
+.toolbar {
+
+    .search-container {
+        position: relative;
+    }
+    .search-container::before {
+        position: absolute;
+        transform: translate(50%, 30%);
+        content: "\f002"; /* Unicode for the user icon */
+        color: var(--dark-color);
+        font-family: "Font Awesome 6 Free"; /* Set the font family to Font Awesome */
+        font-weight: 900; /* Use 900 for solid icons, 400 for regular, etc. */
+        margin-right: 5px; /* Optional: add space between icon and text */
+    }
+    .search-bar {
+        width: 100%;
+        border: none;
+        border-radius: var(--border-radius-md);
+        height: 32px;
+        padding: 0 0 0 30px;
+    }
+
+    .search-bar:focus{
+        outline: solid var(--dark-color) 2px ;
+    }
+}
+
 .content {
-    padding: 0 80px;
+    overflow-x: auto;
     gap: 50px;
 }
 
@@ -110,14 +166,17 @@ export default {
 
 
 .table {
-	width: 100%;
 	border: none;
 	margin-bottom: 20px;
     border-collapse: separate;
-    border-spacing: 0 1px;
+    border-spacing: 0;
     background-color: inherit;
+    padding: 0 30px;
 }
 
+.spacing {
+    height: 10px;
+}
 
 .table thead th {
 	font-weight: bold;
@@ -128,14 +187,21 @@ export default {
 	font-size: 14px;
 }
 
+
+
 /* Rounded thead */
+
 .table thead tr:first-child th:first-child {
-	border-radius: 8px 0 0 8px;
+	border-radius: 8px 8px 0 0;
 }
 
-.table thead tr:first-child th:last-child {
-	border-radius: 0 8px 0 0;
+.table thead tr:nth-child(2) th:first-child {
+	border-radius: 0 0 0 8px;
 }
+
+/* .table thead tr:first-child th:last-child {
+	border-radius: 0 8px 0 0;
+} */
 
 .table thead tr:last-child th:last-child {
 	border-radius: 0 0 8px 0;
