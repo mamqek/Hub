@@ -185,27 +185,27 @@ export default {
 
 <style scoped>
 
-
-
 form { 
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-
 .content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    place-items: start center;
+    place-items: center center;
+
+    /* grid-auto-rows: min(100%, 100vh); */
+
     gap: 30px var(--div-gap);
     padding-left: 50px; 
     padding-right: 50px;
-    width: 100%;
 }
 
-.content > * {
-    height: 100%;
+.content .box .text p{ 
+    /* height: min(100%, 100vh) */
+    overflow-wrap:normal;
 }
 
 .data-boxes {
