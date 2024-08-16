@@ -11,6 +11,13 @@
     --div-gap: 30px;
     --border-radius-sm: 5px;
     --border-radius-md: 10px;
+
+    /* --breakpoint-mobile-portrait: 320px; */
+    --breakpoint-mobile-landscape: 480px;
+    --breakpoint-tablet-portrait: 768px;
+    --breakpoint-tablet-landscape: 1024px;
+    --breakpoint-desktop: 1200px;
+    --breakpoint-large-desktop: 1440px;
 }
 
 /* label {
@@ -18,18 +25,20 @@
 } */
 
 html, body{
-    height: 100%; 
-    min-height:100vh;    
+    /* width: 100%; */
 }
 
 #app {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: auto;
+    display: block; /* Ensures they behave as block elements */
+    width: 100%;
+    position: relative;
 }
 
-.main-nav {
+#app, #layout, .content {
+    min-height: 100vh;
+}
+
+nav {
     position: absolute;
     z-index: 1;
 
@@ -38,7 +47,6 @@ html, body{
     align-items: center;
     gap: 2rem;
     
-    margin-left: auto;
     width: 100%;
     max-width: calc(100% + 4px);
     height: var(--navbar-height);
@@ -46,16 +54,21 @@ html, body{
     pointer-events: none;
     
     padding: 1rem;
-    
+
+    a {
+        pointer-events: auto;
+        font-size: min(3vw, 30px);
+        color: inherit;
+    }
+}
+
+.main-nav {
     mix-blend-mode: difference;
     /* color: var(--medium-grey-color); */
     color: var(--background);
 
     a {
-        pointer-events: auto;
-        font-size: min(3vw, 30px);
         text-decoration: none;
-        color: inherit;
         font-weight: 600;
         transition: color 0.3s ease;
         padding: 0.25rem;
@@ -72,12 +85,8 @@ html, body{
 }
 
 #layout {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: block; /* Ensures they behave as block elements */
+    width: 100%;
 
 
     background-color: var(--background);
@@ -86,18 +95,15 @@ html, body{
 }
 
 .content {
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 
-    flex: 0 0 auto;
-    width: auto;
+    width: 100%;
     max-width: 100%;
 
-    padding: var(--navbar-height) 0;
-
+    padding: var(--navbar-height) 20px;
 }
 
 
