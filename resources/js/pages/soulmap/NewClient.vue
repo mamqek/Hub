@@ -149,6 +149,7 @@ export default {
 
 .content {
     gap: 30px;
+    padding: calc(2*var(--navbar-height)) 20px;
 }
 
 form {
@@ -157,9 +158,11 @@ form {
 
 .client-info {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 30px;
 
-    max-width: 70%;
+    width: 70%;
 }
 
 .soul-choose-numbers {
