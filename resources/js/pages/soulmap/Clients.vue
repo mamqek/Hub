@@ -1,50 +1,51 @@
 <template>
 
     <div class="content">
-
-        <table class="table">
-            <thead>
-                <tr class="toolbar">
-                    <th colspan="11">
-                        <div class="search-container">
-                            <input v-model="search" class="search-bar" type="text">
-                        </div>
-                    </th>
-                </tr>
-                <tr>
-                    <template v-for="(column, index) in columnsRus" :key="column">
-                        <th v-if="index==4" colspan="7" style="border-bottom: 2px solid var(--dark-color);">
-                            {{ column }}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr class="toolbar">
+                        <th colspan="11">
+                            <div class="search-container">
+                                <input v-model="search" class="search-bar" type="text">
+                            </div>
                         </th>
-                        <th v-else  rowspan="2">
-                            {{ column }}
+                    </tr>
+                    <tr>
+                        <template v-for="(column, index) in columnsRus" :key="column">
+                            <th v-if="index==4" colspan="7" style="border-bottom: 2px solid var(--dark-color);">
+                                {{ column }}
+                            </th>
+                            <th v-else  rowspan="2">
+                                {{ column }}
+                            </th>
+                        </template>
+                    </tr>
+                    <tr>
+                        <th v-for="(soulGroupName, index) in soulGroupNamesRus">
+                            {{ soulGroupName }}
                         </th>
-                    </template>
+                    </tr>
+                </thead>
+                <tr class="spacing">
+                    
                 </tr>
-                <tr>
-                    <th v-for="(soulGroupName, index) in soulGroupNamesRus">
-                        {{ soulGroupName }}
-                    </th>
-                </tr>
-            </thead>
-            <tr class="spacing">
-
-            </tr>
-            <tbody>
-                <tr v-for="(client, index) in searched" @click="showClient(client)" class="pressable">
-                    <template v-for="(value, key) in client">
-                        <td v-if="key == 'souls'" v-for="(soulObj, index) in value">
-                            {{ soulObj.number }}
-                        </td>
-                        <td v-else-if="key != 'created_at' && key != 'updated_at'">
-                            {{ value }}
-                        </td>
-                    </template>
-                </tr>
-            </tbody>
-        </table>
-
-         <div v-if="showedClient">
+                <tbody>
+                    <tr v-for="(client, index) in searched" @click="showClient(client)" class="pressable">
+                        <template v-for="(key, index) in Object.keys(client).filter(k => k !== 'created_at' && k !== 'updated_at')">
+                            <td v-if="key == 'souls'" v-for="(soulObj, sIndex) in client[key]" :data-label="soulGroupNamesRus[sIndex]">
+                                {{ soulObj.number }}
+                            </td>
+                            <td v-else :data-label="columnsRus[index]">
+                                {{ client[key] }}
+                            </td>
+                        </template>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div v-if="showedClient">
             <div class="client">
                 <p class="info" data-label="Имя">{{ showedClient.name }}</p>
                 <p class="info" data-label="Дата">{{ showedClient.date }}</p>
@@ -58,7 +59,7 @@
              />
          </div>
 
-    </div>
+</div>
 
     
     
@@ -155,6 +156,8 @@ export default {
 .content {
     overflow-x: auto;
     gap: 50px;
+    height: 100%;
+    padding: calc(2*var(--navbar-height)) 20px;
 }
 
 .client {
@@ -222,10 +225,10 @@ export default {
 	min-width: fit-content;
 }
 
-.table tbody tr > *{
+.table tbody tr {
     background: var(--light-grey-color);
 }
-.table tbody tr:nth-child(even) > *{
+.table tbody tr:nth-child(even) {
 	background: var(--primary-color);
 }
 
