@@ -1,21 +1,24 @@
 <template>
 
-
-    <nav>
-        <!-- Link to subpage without leading / (for some reason doesnt work) -->
-        <router-link to="/soul-map/clients">Clients</router-link>
-        <router-link to="/soul-map/new-client">New Client</router-link>
-    </nav>
-
-    <router-view v-slot="{ Component, route }">
-        <Component :key="route.name"
-            :is="Component"
-            :colors 
-            :soulGroupNamesRus
-            :soulGroupNames
-        />
-    </router-view>
+    <div id="app">
+        <nav>
+            <!-- Link to subpage without leading / (for some reason doesnt work) -->
+            <router-link to="/soul-map/clients">Clients</router-link>
+            <router-link to="/soul-map/new-client">New Client</router-link>
+        </nav>
         
+        <router-view v-slot="{ Component, route }">
+            <div id="layout">
+                <Component :key="route.name"
+                    :is="Component"
+                    :colors 
+                    :soulGroupNamesRus
+                    :soulGroupNames
+                />
+            </div>
+        </router-view>
+        
+    </div>
 
 </template>
 
@@ -32,18 +35,27 @@ export default {
 }
 </script>
 
+<style>
+
+
+</style>
+
 <style scoped>
 
-nav {
-    display: flex;
-    justify-content: center;
-    gap: 50px;
-    padding: var(--navbar-height) 0 40px;
+#app {
+    background-image: url(/public/images/pink_gradient.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
 
-    a {
-        font-size: 28px;
-        color: var(--dark-color);
-    }
+#layout {
+    background: transparent;
+    backdrop-filter: blur(10px);
+}
+
+nav {
+    justify-content: center;
+    padding-top: calc(var(--navbar-height) + 30px);
 }
 
 </style>
