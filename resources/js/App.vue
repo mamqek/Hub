@@ -1,7 +1,7 @@
 <template>    
     <nav class="main-nav">
         
-        <router-link v-if="!CHECKSTORE" to="/auth">Login/Register</router-link>
+        <router-link v-if="!authenticated" to="/auth">Login/Register</router-link>
         <router-link to="/soul-map">Soul Map</router-link>
         <router-link to="/zip-code-checker">Zip Code Checker</router-link>
         <router-link to="/">Home</router-link>
@@ -18,20 +18,20 @@
 
 <script>
 import { useUserStore } from '@/stores/userStore';
+import { mapState } from "pinia";
+
 
 export default {
     name: 'App',
 
-    data(){
-        return {
-            authorized: false,
-        }
+    computed: {
+        ...mapState(useUserStore, ['user', 'authenticated']),
     },
 
     created() {
         this.$axios.post(`authenticate`)
             .then(({ data }) => {
-
+                // sync with store later
                 console.log('User authenticated');
                 this.authorized = data;
             })
