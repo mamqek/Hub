@@ -18,6 +18,7 @@
 </template>
     
 <script>
+import { useUserStore } from '@/stores/userStore';
 import InputText from "@/elements/InputText.vue"
 
 export default {
@@ -42,6 +43,7 @@ export default {
             })
             .then(({data}) => {
                 console.log(data)
+                useUserStore().authorize(data.user)
             })
             .catch(error => {
                 alert(error.message)
