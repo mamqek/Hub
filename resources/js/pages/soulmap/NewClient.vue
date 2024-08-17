@@ -172,10 +172,10 @@ form {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 30px;
     width: min(70%, 510px);
-    justify-items: center;
-    justify-content: center;
 
-
+    div {
+        place-self: center center;
+    }
 }
 
 
