@@ -87,4 +87,10 @@ export default {
     }
 }
 
+@media (max-width: 768px) {
+    .soul-texts {
+        padding: 0;
+    }
+}
+
 </style>
