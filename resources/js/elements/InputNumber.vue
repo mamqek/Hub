@@ -77,6 +77,7 @@ export default {
         border-radius: var(--border-radius-sm);
         width: fit-content;
         padding: 6px;
+        height: 38px;
         
 
         position: relative;
@@ -110,6 +111,7 @@ export default {
     }
 
     .custom-number-input button {
+        aspect-ratio: 1 / 1;
         background: var(--medium-grey-color);
         border-radius: var(--border-radius-sm);
         border: none;
@@ -118,7 +120,6 @@ export default {
         font-size: 16px;
         font-weight: 800;
         height: 100%;
-        padding: 0 10px;
     }
 
     .custom-number-input button:focus {
