@@ -166,15 +166,25 @@ form {
 }
 
 .soul-choose-numbers {
+    flex-shrink: 1;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 30px;
+    width: min(70%, 510px);
+    justify-items: center;
+    justify-content: center;
 
-    .center {
-        grid-column: 2 / 3;
-    }
+
 }
 
+
+@media (min-width: 768px) {
+    .center {
+        grid-column: 2;
+    }
+
+}
 
 
 
