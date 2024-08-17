@@ -6,6 +6,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::post('login', ['App\Http\Controllers\UserController', 'login']);
+Route::post('authenticate', ['App\Http\Controllers\UserController', 'authenticate']);
+
 Route::post('/check-zip-code', 'App\Http\Controllers\BagAPIController@checkZipCode');
 Route::post('/link', 'App\Http\Controllers\BagAPIController@link');
 
