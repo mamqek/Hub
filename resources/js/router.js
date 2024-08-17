@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useUserStore } from '@/stores/userStore';
+
 
 const routes = [
     {
@@ -12,10 +14,12 @@ const routes = [
     {
         path: "/zip-code-checker",
         component: () => import("./pages/ZipCodeChecker.vue"),
+        meta: { requiresAuth: true}
     },
     {
         path: "/soul-map",
         component: () => import("./pages/soulmap/SoulMap.vue"),
+        meta: { requiresAuth: true, requiredRole: 'soulUser' }, // This route requires the 'admin' role
         children: [
             {
                 path: 'clients',
@@ -26,7 +30,12 @@ const routes = [
                 component : () => import("./pages/soulmap/NewClient.vue")
             }
         ]
-    }
+    },
+    {
+        path: "/unauthorized",
+        name: 'Unauthorized',
+        component: () => import("./pages/Unauthorized.vue"),
+    },
     // {
     //     path: "/",
     //     redirect: "/item/1"
@@ -42,7 +51,28 @@ const routes = [
 ];
 
 
-export default createRouter({
+const router =  createRouter({
     history: createWebHistory(),
     routes,
 });
+
+router.beforeEach((to, from, next) => {
+    const isAuthenticated = useUserStore().authenticated;
+    const userRole = useUserStore().getAttribute('role');
+    console.log(isAuthenticated)
+    console.log(userRole)
+
+    if (to.meta.requiresAuth && !isAuthenticated) {
+        // Redirect to unauthorized if the route requires auth and the user isn't authenticated
+        return next({ name: 'Unauthorized' });
+    }
+
+    if (to.meta.requiredRole && to.meta.requiredRole !== userRole) {
+        // Redirect to unauthorized if the user doesn't have the required role
+        return next({ name: 'Unauthorized' });
+    }
+    console.log("route")
+    next(); // Proceed to the route
+});
+
+export default router;
