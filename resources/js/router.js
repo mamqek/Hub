@@ -2,6 +2,10 @@ import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
     {
+        path: "/auth",
+        component: () => import("./pages/Authorization.vue"),
+    }, 
+    {
         path: "/",
         component: () => import("./pages/Home.vue"),
     }, 
