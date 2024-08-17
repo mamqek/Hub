@@ -26,7 +26,7 @@ export default {
 
     data(){
         return {
-            username: "test@example.com",
+            username: "test",
             password: "password",
         }
     },
@@ -44,6 +44,7 @@ export default {
             .then(({data}) => {
                 console.log(data)
                 useUserStore().authorize(data.user)
+                this.$router.push('/');
             })
             .catch(error => {
                 alert(error.message)
