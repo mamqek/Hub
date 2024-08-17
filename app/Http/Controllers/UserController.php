@@ -24,7 +24,7 @@ class UserController extends Controller
      */
     public function login(Request $request) {
         // Retrieve the user by email
-        $user = User::where('email', $request->username)->first();
+        $user = User::where('username', $request->username)->first();
 
         // Check if the user exists and the password is correct
         if ($user && Hash::check($request->password, $user->password)) {
