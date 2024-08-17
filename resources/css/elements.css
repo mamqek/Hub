@@ -141,9 +141,11 @@ p.info::before {
 
 .table-responsive {
     display: block;
-    width: 100%;
+    /* width: 100%; */
     /* overflow: visible; */
     overflow-x: auto;
+    padding: 0 30px;
+
 }
 
 @media (max-width: 1024px) {

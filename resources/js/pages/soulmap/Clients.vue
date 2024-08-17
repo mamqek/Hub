@@ -5,7 +5,7 @@
             <table class="table">
                 <thead>
                     <tr class="toolbar">
-                        <th colspan="11">
+                        <th colspan="11" style="border-bottom: 2px solid var(--dark-color);">
                             <div class="search-container">
                                 <input v-model="search" class="search-bar" type="text">
                             </div>
@@ -27,9 +27,7 @@
                         </th>
                     </tr>
                 </thead>
-                <tr class="spacing">
-                    
-                </tr>
+                <tr class="spacing"></tr>
                 <tbody>
                     <tr v-for="(client, index) in searched" @click="showClient(client)" class="pressable">
                         <template v-for="(key, index) in Object.keys(client).filter(k => k !== 'created_at' && k !== 'updated_at')">
@@ -43,6 +41,9 @@
                     </tr>
                 </tbody>
             </table>
+            <div v-if="noDataToDisplay" class="no-data">
+                <h2>No data found</h2>
+            </div>
         </div>
         
         <div v-if="showedClient">
@@ -108,14 +109,18 @@ export default {
 
     computed: {
 
-    searched() {
-        if (typeof this.search !== 'string') {
-            return [];
-        }
+        searched() {
+            if (typeof this.search !== 'string') {
+                return [];
+            }
 
-        return this.clients.filter(client =>
-            client.name.toLowerCase().includes(this.search.toLowerCase()))
-    },
+            return this.clients.filter(client =>
+                client.name.toLowerCase().includes(this.search.toLowerCase()))
+        },
+
+        noDataToDisplay(){
+            return !(this.searched.length > 0)
+        }
 
 
     },
@@ -127,7 +132,6 @@ export default {
 
 
 .toolbar {
-
     .search-container {
         position: relative;
     }
@@ -170,11 +174,10 @@ export default {
 
 .table {
 	border: none;
-	margin-bottom: 20px;
     border-collapse: separate;
     border-spacing: 0;
+
     background-color: inherit;
-    padding: 0 30px;
 }
 
 .spacing {
@@ -239,6 +242,18 @@ export default {
 	border-radius: 0 8px 8px 0;
 }
 
+.no-data {
+    background-color: var(--light-grey-color);
+    border-radius: 8px;
+    width: 100%;
+    height: 41px;
+    text-align: center;
+
+    h2 {
+        margin: auto 0 ;
+    }
+
+}
 
 
 
