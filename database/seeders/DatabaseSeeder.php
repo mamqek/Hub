@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'username' => 'test',
             'email' => 'test@example.com',
+            'role' => 'soulUser'
         ]);
 
         $this->call(SoulSeeder::class);
