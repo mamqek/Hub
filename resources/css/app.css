@@ -77,7 +77,8 @@ nav {
         transition: color 0.3s ease, border-color 0.7s ease, background-color 0.3s ease;
     }
 
-    a:hover {
+    a:hover,
+    a.router-link-active {
         color: var(--dark-color);
         border-color: var(--background);
         background-color: var(--background);
