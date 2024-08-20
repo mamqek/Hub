@@ -45,6 +45,36 @@ class UserController extends Controller
 
     }
 
+    /**
+     * User register
+     *
+     * @param \Illuminate\Http\Request $request
+     * 
+     * Request data:
+     * - username: string (required) How we call user in app. Can be name or nickname
+     * - email: string (required) User's email address
+     * - password: string (required) The user's password.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function register(Request $request) {
+
+        $request->validate([
+            'username' => 'required|unique:users,username',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed'
+        ], [
+            'username.unique' => 'This username is already taken.',
+            'email.unique' => 'This email is already taken.',
+            'email.email' => 'Please enter a valid email',
+        ]);
+
+        Log::info("all good");
+            
+
+        
+    }
+
 
     public function authenticate()
     {   
