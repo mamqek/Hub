@@ -12,19 +12,22 @@ class UserController extends Controller
 {
 
     /**
-     * Handle a login request to the application.
+     * User login
      *
      * @param \Illuminate\Http\Request $request
      * 
      * Request data:
-     * - email: string (required) The email address of the user.
+     * - identifier: string (required) Either email or username of the user
      * - password: string (required) The user's password.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request) {
         // Retrieve the user by email
-        $user = User::where('username', $request->username)->first();
+        $user = User::where('username', $request->identifier)->first();
+        if (!$user) {
+            $user = User::where('email', $request->identifier)->first();
+        }
 
         // Check if the user exists and the password is correct
         if ($user && Hash::check($request->password, $user->password)) {
