@@ -67,15 +67,31 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed'
         ], [
-            'username.unique' => 'This username is already taken.',
-            'email.unique' => 'This email is already taken.',
-            'email.email' => 'Please enter a valid email',
+            // could be custom messages, but default are good enough
+            // 'username.unique' => 'This username is already taken.',
+            // 'email.unique' => 'This email is already taken.',
         ]);
 
-        Log::info("all good");
-            
+        $role = "user";
 
-        
+        $soulUsers = ["Olga Mukhacheva"];
+
+        if (in_array($request->username, $soulUsers)) {
+            $role = "soulUser";
+        }
+
+        $user = User::create([
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => $request->password,
+            'role' => $role,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Registration succesfull!',
+            'user' => $user
+        ], 200);
     }
 
 
