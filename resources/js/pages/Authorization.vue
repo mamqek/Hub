@@ -14,12 +14,16 @@
                     <span>Register with E-mail</span>
 
                     <input type="text" v-model="username" placeholder="How should we call you?">
+                    <span v-if="validationErrors.username" class="error">{{ validationErrors.username[0] }}</span>
 
                     <input type="email" v-model="email" placeholder="Your E-mail">
+                    <span v-if="validationErrors.email" class="error">{{ validationErrors.email[0] }}</span>
 
                     <input type="password" v-model="password" placeholder="Password">
+                    <span v-if="validationErrors.password" class="error">{{ validationErrors.password[0] }}</span>
 
                     <input type="password" v-model="password_confirmation" placeholder="Password">
+                    <span v-if="validationErrors.password_confirmation" class="error">{{ validationErrors.password_confirmation[0] }}</span>
                     <button>Sign Up</button>
                 </form>
             </div>
@@ -78,6 +82,7 @@ export default {
             password: "password",
             password_confirmation: "password",
             registerSide: false, 
+            validationErrors: {}
         }
     },
 
@@ -115,6 +120,11 @@ export default {
             })
             .catch(error => {
                 console.log(error)
+                if (error.status == 422) {
+                    console.log("validation")
+                    this.validationErrors = error.message;
+                    return
+                }
                 alert(error.message)
             })
         }

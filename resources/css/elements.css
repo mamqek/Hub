@@ -134,6 +134,9 @@ p.info::before {
 
 /* INPUT  */
 
+.error {
+    color: red;
+}
 
 
 /* TABLE */

@@ -16,12 +16,21 @@ const axiosInstance  = axios.create({
 axiosInstance.interceptors.response.use(
     response => response, 
     error => {
+        console.log(error)
         // Create an object with message, error, status code
+
+        let message = error.response?.data?.message
+        // if validation error 
+        if (error.response?.status == 422 && error.response?.statusText == "Unprocessable Content") {
+            message = error.response?.data?.errors
+        }
+
         const errorDetails = {
-            message: error.response?.data?.message || 'An error occurred',
+            message: message || 'An error occurred',
             error: error.response?.data?.error || error.response?.statusText,
             status: error.response?.status || 500,
         };
+
         return Promise.reject(errorDetails);
     }
 );
