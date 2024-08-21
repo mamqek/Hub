@@ -59,8 +59,6 @@ const router =  createRouter({
 router.beforeEach((to, from, next) => {
     const isAuthenticated = useUserStore().authenticated;
     const userRole = useUserStore().getAttribute('role');
-    console.log(isAuthenticated)
-    console.log(userRole)
 
     if (to.meta.requiresAuth && !isAuthenticated) {
         // Redirect to unauthorized if the route requires auth and the user isn't authenticated
@@ -71,7 +69,7 @@ router.beforeEach((to, from, next) => {
         // Redirect to unauthorized if the user doesn't have the required role
         return next({ name: 'Unauthorized' });
     }
-    console.log("route")
+
     next(); // Proceed to the route
 });
 
