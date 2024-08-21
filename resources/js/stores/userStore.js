@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { $axios } from '@/axios.js'
+import i18n, {loadMessages} from '@/lang.js'
+
 
 export const useUserStore = defineStore('user', {
     state: () => ({
@@ -8,11 +10,17 @@ export const useUserStore = defineStore('user', {
             // full_name: null,
             role: null,
         }, 
-        authenticated: false
+        authenticated: false,
+    
+        language: null,
+        translations: {}
     }),
     persist: true,
 
     actions: {
+        async initStore(){
+            await this.initLanguage()
+        },
         setUser(userData) {
             this.user = userData;
         },
@@ -54,6 +62,28 @@ export const useUserStore = defineStore('user', {
             } catch (error) {
                 console.error("[Logout function failed]: ", error)
             }
+        },
+
+        async initLanguage() {
+            console.log("language initializing")
+            // if saved in the store
+            if (this.language) {
+                i18n.global.setLocaleMessage(this.language, this.translations);
+                return
+            }
+            // otherwise retrieve the one set default in i18n (lang.js)
+            let defaultLang = i18n.global.locale;
+            await this.setLanguage(defaultLang);
+        },
+
+        async setLanguage(language) {
+            console.log(language)
+            await loadMessages(language)
+            .then((translations) => {
+                this.language = language;
+                this.translations = translations;
+            })
+
         }
     },
 });
