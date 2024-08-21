@@ -23,28 +23,34 @@ class UserController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request) {
-        // Retrieve the user by email
-        $user = User::where('username', $request->identifier)->first();
-        if (!$user) {
-            $user = User::where('email', $request->identifier)->first();
-        }
 
-        // Check if the user exists and the password is correct
-        if ($user && Hash::check($request->password, $user->password)) {
-            Auth::login($user);
+        // Retrieve the user by username or email
+        $user = User::where('username', $request->identifier)
+        ->orWhere('email', $request->identifier)
+        ->first();
+
+        if (!$user) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'Login successful',
-                'user' => $user
-            ], 200);
-        } else {
-            // Password does not match or user doesn't exist
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid credentials',
-                'error' => "User not found"
+            'status' => 'error',
+            'message' => __('auth.failed'), // User not found
             ], 401);
         }
+
+        // Check if the password is correct
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+            'status' => 'error',
+            'message' => __('auth.password'), // Incorrect password
+            ], 401);
+        }
+        
+        // If everything is correct, log in the user
+        Auth::login($user);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Login successful',
+            'user' => $user
+        ], 200);
 
     }
 

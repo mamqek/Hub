@@ -37,7 +37,8 @@
                     </div> -->
                     <span>Login With E-mail or Username</span>
                     <input type="text" v-model="identifier" placeholder="Your Username or E-mail">
-                    <input type="password" placeholder="Password">
+                    <input type="password" v-model="password" placeholder="Password">
+                    <span v-if="validationErrors.login" class="error">{{ validationErrors.login }}</span>
                     <a href="#">Forget Password?</a>
                     <button>Sign In</button>
                 </form>
@@ -97,6 +98,12 @@ export default {
                 this.$router.push('/');
             })
             .catch(error => {
+                if (error.status == 401) {
+                    this.validationErrors = {
+                        login: error.message
+                    };
+                    return
+                }
                 alert(error.message)
             })
         },
