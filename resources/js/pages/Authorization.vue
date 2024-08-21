@@ -1,29 +1,26 @@
 <template>
-    <div class="content">
-        <div class="container" id="container" :class="{ active: registerSide }">
+    <div class="content container" id="container" :class="{ active: registerSide }">
             <div class="form-container sign-up">
                 <form @submit.prevent="register">
                     <h1>Create Account</h1>
-                    <div class="social-icons">
+                    <!-- <div class="social-icons">
                         <a href="#" class="icons"><i class='bx bxl-google'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-facebook'></i></a>
-                        <span>WIP</span>
                         <a href="#" class="icons"><i class='bx bxl-github'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-linkedin'></i></a>
-                    </div>
+                    </div> -->
                     <span>Register with E-mail</span>
 
                     <input type="text" v-model="username" placeholder="How should we call you?">
                     <span v-if="validationErrors.username" class="error">{{ validationErrors.username[0] }}</span>
 
-                    <input type="email" v-model="email" placeholder="Your E-mail">
+                    <input type="text" v-model="email" placeholder="Your E-mail">
                     <span v-if="validationErrors.email" class="error">{{ validationErrors.email[0] }}</span>
 
                     <input type="password" v-model="password" placeholder="Password">
                     <span v-if="validationErrors.password" class="error">{{ validationErrors.password[0] }}</span>
 
-                    <input type="password" v-model="password_confirmation" placeholder="Password">
-                    <span v-if="validationErrors.password_confirmation" class="error">{{ validationErrors.password_confirmation[0] }}</span>
+                    <input type="password" v-model="password_confirmation" placeholder="Confirm password">
                     <button>Sign Up</button>
                 </form>
             </div>
@@ -32,13 +29,12 @@
             <div class="form-container sign-in">
                 <form @submit.prevent="login">
                     <h1>Sign In</h1>
-                    <div class="social-icons">
+                    <!-- <div class="social-icons">
                         <a href="#" class="icons"><i class='bx bxl-google'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-facebook'></i></a>
-                        <span>WIP</span>
                         <a href="#" class="icons"><i class='bx bxl-github'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-linkedin'></i></a>
-                    </div>
+                    </div> -->
                     <span>Login With Email & Password</span>
                     <input type="text" v-model="identifier" placeholder="Your Username or E-mail">
                     <input type="password" placeholder="Password">
@@ -63,7 +59,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
 </template>
     
@@ -135,14 +130,13 @@ export default {
 <style scoped>
 
 .container{
-    background-color: #fff;
-    border-radius: 30px;
+    /* border-radius: 30px; */
     box-shadow: 0 5px 15px rgba(255, 255, 255, 0.35);
     position: relative;
     overflow: hidden;
-    width: 768px;
+    /* width: 768px;
     max-width: 100%;
-    min-height: 480px;
+    min-height: 480px; */
 }
 
 .container p{
@@ -213,7 +207,6 @@ export default {
 .sign-in{
     left: 0;
     width: 50%;
-    z-index: 2;
 }
 
 .container.active .sign-in{
@@ -224,13 +217,12 @@ export default {
     left: 0;
     width: 50%;
     opacity: 0;
-    z-index: 1;
 }
 
 .container.active .sign-up{
     transform: translateX(100%);
     opacity: 1;
-    z-index: 5;
+    z-index: 2;
     animation: move 0.6s;
 }
 
@@ -241,7 +233,7 @@ export default {
     }
     50%, 100%{
         opacity: 1;
-        z-index: 5;
+        z-index: 2;
     }
 }
 
@@ -268,17 +260,17 @@ export default {
     height: 100%;
     overflow: hidden;
     transition: all 0.6s ease-in-out;
-    border-radius: 20px;
-    z-index: 1000;
+    /* border-radius: 20px; */
+    z-index: 2;
 }
 
 .container.active .toggle-container{
     transform: translateX(-100%);
-    border-radius: 20px;
+    /* border-radius: 20px; */
 }
 
 .toggle{
-    background-color: rgba(255, 4, 4, 0.952);
+    background-color: var(--dark-background);
     height: 100%;
     color: #fff;
     position: relative;

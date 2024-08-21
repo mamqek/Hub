@@ -1,7 +1,7 @@
 <template>    
     <nav class="main-nav">
         
-        <router-link v-if="!authenticated" to="/auth">Login/Register</router-link>
+        <router-link v-if="!authenticated" to="/auth">Sign (In/Up)</router-link>
         <router-link to="/soul-map">Soul Map</router-link>
         <router-link to="/zip-code-checker">Zip Code Checker</router-link>
         <router-link to="/">Home</router-link>
