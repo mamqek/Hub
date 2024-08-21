@@ -13,16 +13,27 @@
             <Component :is="Component" />
         </div>
     </router-view>
+    <select v-model="language" @change="changeLanguage(language)">
+        <option value="ru">Russian</option>
+        <option value="en">English</option>
+    </select>
 
 </template>
 
 <script>
 import { useUserStore } from '@/stores/userStore';
 import { mapState } from "pinia";
+import i18n, {changeLanguage} from "./lang.js"
 
 
 export default {
     name: 'App',
+
+    data() {
+        return {
+            language: i18n.global.locale
+        }
+    },
 
     computed: {
         ...mapState(useUserStore, ['user', 'authenticated']),
@@ -36,6 +47,10 @@ export default {
                 this.authorized = data;
             })
     },
+
+    methods: {
+        changeLanguage
+    }
 }
 </script>
 
