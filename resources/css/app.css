@@ -86,6 +86,10 @@ nav {
         border-color: var(--background);
         background-color: var(--background);
     }
+
+    a.router-link-active.authorize {
+        display: none;
+    }    
 }
 
 #layout {
