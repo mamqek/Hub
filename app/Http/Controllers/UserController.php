@@ -103,6 +103,7 @@ class UserController extends Controller
 
     public function authenticate()
     {   
+        // TODO: store language for user and retrieve here
         // if (!Auth::check()) {
         //     Log::info('User is not logged in');
         //     $user = User::where('email', 'test@example.com')->first();
