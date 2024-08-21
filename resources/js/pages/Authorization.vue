@@ -9,7 +9,7 @@
                         <a href="#" class="icons"><i class='bx bxl-github'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-linkedin'></i></a>
                     </div> -->
-                    <span>Register with E-mail</span>
+                    <span>Register With Unique Username and E-mail</span>
 
                     <input type="text" v-model="username" placeholder="How should we call you?">
                     <span v-if="validationErrors.username" class="error">{{ validationErrors.username[0] }}</span>
@@ -35,7 +35,7 @@
                         <a href="#" class="icons"><i class='bx bxl-github'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-linkedin'></i></a>
                     </div> -->
-                    <span>Login With Email & Password</span>
+                    <span>Login With E-mail or Username</span>
                     <input type="text" v-model="identifier" placeholder="Your Username or E-mail">
                     <input type="password" placeholder="Password">
                     <a href="#">Forget Password?</a>
@@ -47,13 +47,13 @@
             <div class="toggle-container">
                 <div class="toggle">
                     <div class="toggle-panel toggle-left">
-                        <h1>Welcome To <br>Vladislav Codespace</h1>
-                        <p>Sign in With ID & Password</p>
+                        <h1>Already have an account?</h1>
+                        <p>Sign in With Username or E-mail</p>
                         <button class="hidden" id="login" @click="registerSide = false">Sign In</button>
                     </div>
                     <div class="toggle-panel toggle-right">
-                        <h1>Hii Coder's</h1>
-                        <p>Join "Code With Patel" to Improve Your Coding Skills</p>
+                        <h1>Don't have an account?</h1>
+                        <p>Sign Up With Username And E-mail</p>
                         <button class="hidden" id="register" @click="registerSide = true">Sign Up</button>
                     </div>
                 </div>
