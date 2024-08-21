@@ -6,7 +6,7 @@ import App from "./App.vue";
 import { $axios } from './axios.js'
 import router from "@/router.js";
 
-import i18n from './lang.js'
+import i18n, {initLanguage} from './lang.js'
 
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
@@ -30,8 +30,7 @@ app.use(i18n);
 async function initializeApp() {
     const userStore = useUserStore();
 
-    // Wait for the store to initialize the language
-    await userStore.initStore();
+    await initLanguage();
 
     // Once the language is set, mount the app
     app.mount('#app');
