@@ -6,6 +6,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('translations/{locale}', ['App\Http\Controllers\LocaleController', 'getMessages']);
+
 Route::post('login', ['App\Http\Controllers\UserController', 'login']);
 Route::post('register', ['App\Http\Controllers\UserController', 'register']);
 Route::post('authenticate', ['App\Http\Controllers\UserController', 'authenticate']);
