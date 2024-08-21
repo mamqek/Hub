@@ -56,6 +56,7 @@ export async function loadMessages(locale) {
 }
 
 export async function changeLanguage(locale){
+    // TODO: connect this to backend setting
     try {
         let translations = await loadMessages(locale);
         i18n.global.locale = locale;

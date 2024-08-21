@@ -13,6 +13,7 @@
             <Component :is="Component" />
         </div>
     </router-view>
+    <!-- TODO: beutify and fetch available languages from backend -->
     <select v-model="language" @change="changeLanguage(language)">
         <option value="ru">Russian</option>
         <option value="en">English</option>
@@ -40,9 +41,9 @@ export default {
     },
 
     created() {
+        // TODO: sync with store, if in store, check which is more relaible, maybe move in store setup method
         this.$axios.post(`authenticate`)
             .then(({ data }) => {
-                // sync with store later
                 console.log('User authenticated');
                 this.authorized = data;
             })
