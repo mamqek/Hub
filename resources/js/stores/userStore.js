@@ -59,5 +59,10 @@ export const useUserStore = defineStore('user', {
                 console.error("[Logout function failed]: ", error)
             }
         },
+
+        setLanguage(language, translations){
+            this.language = language;
+            this.translations = translations;
+        }
     },
 });
