@@ -1,5 +1,6 @@
 <template>
         <div class="content">
+        <div class="content" :style="addresses ? 'align-items: start;' : ''">
 
 
                 <form @submit.prevent="checkZipCode">
@@ -94,6 +95,7 @@ export default {
             exactMatch: false,
 
             addresses: [],
+            addresses: null,
             addressRecords : [],
             multipleAddresses: false,
 
