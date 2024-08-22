@@ -18,6 +18,7 @@
 
     "with" : "with",
     "optional" : "(optional)",
+    "try" : "Try",
 
     "unauthorized" : "Access Restricted",
     "unauthorized_auth": "Please sign in to continue",
@@ -67,6 +68,7 @@
     "exact_match": "Exact Match",
     "find_buiding" : "Find building",
     "choose_building" : "I meant this building! I want more info!",
+    "example" : "@:try 1012RJ and 147 for Royal Palace in Amsterdam",
 
     "home" : "Home"
 }

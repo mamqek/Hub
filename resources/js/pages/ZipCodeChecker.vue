@@ -1,72 +1,71 @@
 <template>
-        <div class="content" :style="addresses ? 'align-items: start;' : ''">
+    <div class="content" :style="addresses ? 'align-items: start;' : ''">
+        
+        <form @submit.prevent="checkZipCode">
+            <h1>{{ $t('zip_code_checker') }}</h1>
+            <p>{{ $t('example') }}</p>
+            <InputText
+                v-model="zipCode"
+                id="zip-code"
+                :label="`${$t('zip_code')}:`"
+                required
+            />
+
+            <InputText
+                v-model="houseNumber"
+                id="house-letter"
+                :label="`${$t('house_number')}:`"
+                required
+            />
+
+            <InputText
+                v-model="houseLetter"
+                id="house-letter"
+                :label="`${$t('house_letter')}:`"
+            />
+
+            <Checkbox
+                v-model="exactMatch"
+                name="exact-match"
+                :text="$t('exact_match')"
+            />
+            
+            <button class="btn" type="submit">{{ $t('find_buiding') }}</button>
+        </form>
+        
+        <KadasterResponseBox v-for="(data, name) in addresses"
+            :key="name"
+            :name="'Found address' + (multipleAddresses ? '#'+name : '')"
+            :data="data" 
+        > 
+            <button v-if="multipleAddresses" 
+                class="btn" 
+                @click="chooseAddress(name)"
+            > 
+                {{ $t('choose_building') }} 
+            </button>
+            <LinksButtons v-else
+                :links="data.links"
+                :alreadyFetched="alreadyFetched"
+                @send-link="sendLink"
+            />
+        </KadasterResponseBox>
 
 
-                <form @submit.prevent="checkZipCode">
-                    <h1>{{ $t('zip_code_checker') }}</h1>
-                    
-                    <InputText
-                        v-model="zipCode"
-                        id="zip-code"
-                        :label="`${$t('zip_code')}:`"
-                        required
-                    />
+        <KadasterResponseBox v-for="(data, name) in responses"
+            :key="name"
+            :name="name"
+            :data="data"
+        >
 
-                    <InputText
-                        v-model="houseNumber"
-                        id="house-letter"
-                        :label="`${$t('house_number')}:`"
-                        required
-                    />
-
-                    <InputText
-                        v-model="houseLetter"
-                        id="house-letter"
-                        :label="`${$t('house_letter')}:`"
-                    />
-
-                    <Checkbox
-                        v-model="exactMatch"
-                        name="exact-match"
-                        :text="$t('exact_match')"
-                    />
-                    
-                    <button class="btn" type="submit">{{ $t('find_buiding') }}</button>
-                </form>
-                
-                <KadasterResponseBox v-for="(data, name) in addresses"
-                    :key="name"
-                    :name="'Found address' + (multipleAddresses ? '#'+name : '')"
-                    :data="data" 
-                > 
-                    <button v-if="multipleAddresses" 
-                        class="btn" 
-                        @click="chooseAddress(name)"
-                    > 
-                        {{ $t('choose_building') }} 
-                    </button>
-                    <LinksButtons v-else
-                        :links="data.links"
-                        :alreadyFetched="alreadyFetched"
-                        @send-link="sendLink"
-                    />
-                </KadasterResponseBox>
-
-
-                <KadasterResponseBox v-for="(data, name) in responses"
-                    :key="name"
-                    :name="name"
-                    :data="data"
-                >
-
-                    <LinksButtons 
-                        :links="data.links"
-                        :alreadyFetched="alreadyFetched"
-                        @send-link="sendLink"
-                    />  
-                    
-                </KadasterResponseBox>
-        </div>
+            <LinksButtons 
+                :links="data.links"
+                :alreadyFetched="alreadyFetched"
+                @send-link="sendLink"
+            />  
+            
+        </KadasterResponseBox>
+    </div>
 
 
 
@@ -189,6 +188,11 @@ form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    align-items: center;
+
+    button {
+        width: 300px;
+    }
 }
 
 .content {
