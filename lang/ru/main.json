@@ -1,6 +1,68 @@
 {
+    "ru": "Русский",
+    "en": "Английский",
+
     "welcome": "Добро пожаловать",
     "goodbye": "До свидания",
-    "login": "Войти",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "submit": "Отправить",
+
+    "welcome_to_dev": "Добро пожаловать в рабочее пространство разработчика Mamqek",
+    "welcome_description_1": "Здесь я создаю решения для различных задач и точно проектирую модульную архитектуру веб-сайта.",
+    "welcome_description_2": "Каждая функция разработана так, чтобы ее можно было легко перенести в другие проекты и изменить при необходимости",
+
+    "save_*": "Сохранить {item}",
+    "new_*": "Новый {item}",
+    "your_*": "Ваш {item}",
+
+    "with": "с",
+    "optional" : "(необязательный)",
+
+    "unauthorized": "Доступ ограничен",
+    "unauthorized_auth": "Пожалуйста, войдите в систему, чтобы продолжить.",
+    "unauthorized_role": "К сожалению, похоже, у вас нет необходимых прав для просмотра этой страницы.",
+
+    "no_data": "Данные не найдены",
+
+    "password": "Пароль",
+    "username": "Имя пользователя",
+    "email": "Электронная почта",
+
+    "dont_have_an_account": "Нет аккаунта?",
+    "how_call": "Как вас называть?",
+    "already_have": "Уже есть аккаунт?",
+    
+    "username_and_email": "Именем пользователя и электронной почтой",
+    "username_or_email": "Именем пользователя или электронной почтой",
+
+    "sign_in": "Войти",
+    "sign_up": "Зарегистрироваться",
+    "login": "Авторизоваться",
+    "create_account": "Создать аккаунт",
+
+    "sign_up_with": "@:sign_up @:with @:username_and_email",
+    "sign_in_with": "@:sign_in @:with @:username_or_email",
+    "confirm": "Подтвердить",
+    "confirm_password": "@:confirm @:password",
+    "forget_password": "Забыли пароль?",
+
+    "soul_map": "Карта души",
+
+    "clients": "Клиенты",
+    "client": "Клиент",
+
+    "name": "Имя",
+    "date": "Дата",
+    "date_of_birth": "Дата рождения",
+
+    "zip_code_checker": "Поиск NL адреса",
+
+    "zip_code": "Почтовый индекс",
+    "house_number": "Номер дома",
+    "house_letter": "Литера @:optional",
+    "exact_match": "Полное совпадение",
+    "find_buiding" : "Найти здание",
+    "choose_building" : "Да, это здание",
+
+    "home": "Главная"
 }
