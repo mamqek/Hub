@@ -1,12 +1,13 @@
 <template>
 <div class="content">
-    <h1>Home</h1>
 
-    <p>Welcome to the home page!</p>
+    <img src="../../../public/images/logo.png" alt="Logo">
 
-    <p>Here you can find information about our company and our products.</p>
+    <p>{{ $t('welcome_to_dev') }}</p>
 
-    <p>Feel free to browse around and contact us if you have any questions.</p>
+    <p>{{ $t('welcome_description_1') }}</p>
+
+    <p>{{ $t('welcome_description_2') }}</p>
 </div>
 </template>
 
@@ -18,5 +19,12 @@ export default {
 
 <style scoped>
 
+.content {
+    text-align: center;
+}
+
+    img {
+        width: 200px;
+    }
 
 </style>
