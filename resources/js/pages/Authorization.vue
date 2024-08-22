@@ -2,45 +2,45 @@
     <div class="content container" id="container" :class="{ active: registerSide }">
             <div class="form-container sign-up">
                 <form @submit.prevent="register">
-                    <h1>Create Account</h1>
+                    <h1>{{ $t('create_account') }}</h1>
                     <!-- <div class="social-icons">
                         <a href="#" class="icons"><i class='bx bxl-google'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-facebook'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-github'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-linkedin'></i></a>
                     </div> -->
-                    <span>Register With Unique Username and E-mail</span>
+                    <span>{{ $t('sign_up_with') }}</span>
 
-                    <input type="text" v-model="username" placeholder="How should we call you?">
+                    <input type="text" v-model="username" :placeholder="$t('how_call')">
                     <span v-if="validationErrors.username" class="error">{{ validationErrors.username[0] }}</span>
 
-                    <input type="text" v-model="email" placeholder="Your E-mail">
+                    <input type="text" v-model="email" :placeholder="$t('your_*', {message: $t('email')} )">
                     <span v-if="validationErrors.email" class="error">{{ validationErrors.email[0] }}</span>
 
-                    <input type="password" v-model="password" placeholder="Password">
+                    <input type="password" v-model="password" :placeholder="$t('password')">
                     <span v-if="validationErrors.password" class="error">{{ validationErrors.password[0] }}</span>
 
-                    <input type="password" v-model="password_confirmation" placeholder="Confirm password">
-                    <button>Sign Up</button>
+                    <input type="password" v-model="password_confirmation" :placeholder="$t('confirm_password')">
+                    <button>{{ $t('sign_up') }}</button>
                 </form>
             </div>
 
 
             <div class="form-container sign-in">
                 <form @submit.prevent="login">
-                    <h1>Sign In</h1>
+                    <h1>{{ $t('login') }}</h1>
                     <!-- <div class="social-icons">
                         <a href="#" class="icons"><i class='bx bxl-google'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-facebook'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-github'></i></a>
                         <a href="#" class="icons"><i class='bx bxl-linkedin'></i></a>
                     </div> -->
-                    <span>Login With E-mail or Username</span>
-                    <input type="text" v-model="identifier" placeholder="Your Username or E-mail">
-                    <input type="password" v-model="password" placeholder="Password">
+                    <span>{{ $t('sign_in_with') }}</span>
+                    <input type="text" v-model="identifier" :placeholder="$t('your_*', {item: $t('username_or_email')})">
+                    <input type="password" v-model="password" :placeholder="$t('password')">
                     <span v-if="validationErrors.login" class="error">{{ validationErrors.login }}</span>
-                    <a href="#">Forget Password?</a>
-                    <button>Sign In</button>
+                    <a href="#">{{ $t('forget_password') }} WIP</a>
+                    <button>{{ $t('sign_in') }}</button>
                 </form>
             </div>
 
@@ -48,14 +48,14 @@
             <div class="toggle-container">
                 <div class="toggle">
                     <div class="toggle-panel toggle-left">
-                        <h1>Already have an account?</h1>
-                        <p>Sign in With Username or E-mail</p>
-                        <button class="hidden" id="login" @click="registerSide = false">Sign In</button>
+                        <h1>{{ $t('already_have') }}</h1>
+                        <p>{{ $t('sign_in_with') }}</p>
+                        <button class="hidden" id="login" @click="registerSide = false">{{ $t('sign_in') }}</button>
                     </div>
                     <div class="toggle-panel toggle-right">
-                        <h1>Don't have an account?</h1>
-                        <p>Sign Up With Username And E-mail</p>
-                        <button class="hidden" id="register" @click="registerSide = true">Sign Up</button>
+                        <h1>{{ $t('dont_have_an_account') }}</h1>
+                        <p>{{ $t('sign_up_with') }}</p>
+                        <button class="hidden" id="register" @click="registerSide = true">{{ $t('create_account') }}</button>
                     </div>
                 </div>
             </div>
@@ -72,11 +72,11 @@ export default {
 
     data(){
         return {
-            identifier: "test",
-            username: "test",
+            identifier: "",
+            username: "",
             email: "",
-            password: "password",
-            password_confirmation: "password",
+            password: "",
+            password_confirmation: "",
             registerSide: false, 
             validationErrors: {}
         }

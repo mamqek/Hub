@@ -7,7 +7,7 @@
             <InputText
                 v-model="client.name"
                 id="name"
-                label="Имя:"
+                :label="`${$t('name')}:`"
                 required
             />
 
@@ -15,7 +15,7 @@
                 v-model="client.date"
                 type="date"
                 id="date"
-                label="Дата:"
+                :label="`${$t('date')}:`"
                 required
             />
 
@@ -23,7 +23,7 @@
                 v-model="client.dateOfBirth"
                 type="date"
                 id="date_of_birth"
-                label="Дата рождения:"
+                :label="`${$t('date_of_birth')}:`"
                 required
             />
 
@@ -36,22 +36,22 @@
                 :min="1"
                 :max="7"
                 :id="`${key}-num`"
-                :label="soulGroupNamesRus[index]"
+                :label="soulGroupNamesByLang[index]"
                 :class="index == 6 ? 'center' : ''" 
                 :style="`background-color: ${colors[value-1]};`"
             />
 
-            <button type="button" @click="showSoulsText" class="btn center">Submit</button>
+            <button type="button" @click="showSoulsText" class="btn center">{{ $t('submit') }}</button>
         
         </div>
 
         <SoulNumbersList v-if="chosenSouls.length > 0"
             :objArr="chosenSouls"
             :colors="colors"
-            :headers="soulGroupNamesRus"
+            :headers="soulGroupNamesByLang"
         />
         
-        <button v-if="chosenSouls.length > 0" class="btn">Сохранить клиента и числа</button>
+        <button v-if="chosenSouls.length > 0" class="btn">{{ $t('save_*', {item:  $t('client') }) }}</button>
         
     </form>
     
@@ -87,7 +87,7 @@ export default {
         }
     },
 
-    props: ['colors', 'soulGroupNamesRus'],
+    props: ['colors', 'soulGroupNamesByLang'],
 
     computed: {
         entries() {

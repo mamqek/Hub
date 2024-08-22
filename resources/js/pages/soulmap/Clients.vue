@@ -12,7 +12,7 @@
                         </th>
                     </tr>
                     <tr>
-                        <template v-for="(column, index) in columnsRus" :key="column">
+                        <template v-for="(column, index) in columnsByLang" :key="column">
                             <th v-if="index==4" colspan="7" style="border-bottom: 2px solid var(--dark-color);">
                                 {{ column }}
                             </th>
@@ -22,7 +22,7 @@
                         </template>
                     </tr>
                     <tr>
-                        <th v-for="(soulGroupName, index) in soulGroupNamesRus">
+                        <th v-for="(soulGroupName, index) in soulGroupNamesByLang">
                             {{ soulGroupName }}
                         </th>
                     </tr>
@@ -31,10 +31,10 @@
                 <tbody>
                     <tr v-for="(client, index) in searched" @click="showClient(client)" class="pressable">
                         <template v-for="(key, index) in Object.keys(client).filter(k => k !== 'created_at' && k !== 'updated_at')">
-                            <td v-if="key == 'souls'" v-for="(soulObj, sIndex) in client[key]" :data-label="soulGroupNamesRus[sIndex]">
+                            <td v-if="key == 'souls'" v-for="(soulObj, sIndex) in client[key]" :data-label="soulGroupNamesByLang[sIndex]">
                                 {{ soulObj.number }}
                             </td>
-                            <td v-else :data-label="columnsRus[index]">
+                            <td v-else :data-label="columnsByLang[index]">
                                 {{ client[key] }}
                             </td>
                         </template>
@@ -48,15 +48,15 @@
         
         <div v-if="showedClient">
             <div class="client">
-                <p class="info" data-label="Имя">{{ showedClient.name }}</p>
-                <p class="info" data-label="Дата">{{ showedClient.date }}</p>
-                <p class="info" data-label="Дата рождения">{{ showedClient.date_of_birth }}</p>
+                <p class="info" :data-label="$t('name')">{{ showedClient.name }}</p>
+                <p class="info" :data-label="$t('date')">{{ showedClient.date }}</p>
+                <p class="info" :data-label="$t('date_of_birth')">{{ showedClient.date_of_birth }}</p>
             </div>
 
             <SoulNumbersList 
                  :objArr="showedClient.souls"
                  :colors="colors"
-                 :headers="soulGroupNamesRus"
+                 :headers="soulGroupNamesByLang"
              />
          </div>
 
@@ -70,6 +70,7 @@
 
 <script>
 import SoulNumbersList from "@/components/SoulNumbersList.vue"
+import i18n from "@/lang.js"
 
 export default {
 
@@ -77,8 +78,8 @@ export default {
         return {
             search: "",
             clients: [],
-            columnsRus: ["#","Имя", "Дата", "Дата рождения", "Числа души"],
-            columns: ["Id", "Name", "Date", "Date of birth", "Soul numbers"],
+            columns_ru: ["#","Имя", "Дата", "Дата рождения", "Числа души"],
+            columns_en: ["Id", "Name", "Date", "Date of birth", "Soul numbers"],
             showedClient: null,
         }
     },
@@ -87,7 +88,7 @@ export default {
         this.fetchClients();
     },
 
-    props: ["soulGroupNamesRus", "colors"],
+    props: ["soulGroupNamesByLang", "colors"],
 
     components:{
         SoulNumbersList
@@ -118,8 +119,12 @@ export default {
                 client.name.toLowerCase().includes(this.search.toLowerCase()))
         },
 
-        noDataToDisplay(){
+        noDataToDisplay() {
             return !(this.searched.length > 0)
+        },
+
+        columnsByLang() {
+            return this[`columns_${i18n.global.locale}`];
         }
 
 

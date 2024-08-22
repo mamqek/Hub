@@ -3,8 +3,8 @@
     <div id="app">
         <nav>
             <!-- Link to subpage without leading / (for some reason doesnt work) -->
-            <router-link to="/soul-map/clients">Clients</router-link>
-            <router-link to="/soul-map/new-client">New Client</router-link>
+            <router-link to="/soul-map/clients">{{ $t('clients') }}</router-link>
+            <router-link to="/soul-map/new-client">{{ $t('new_*', {item: $t('client')}) }}</router-link>
         </nav>
         
         <router-view v-slot="{ Component, route }">
@@ -12,8 +12,7 @@
                 <Component :key="route.name"
                     :is="Component"
                     :colors 
-                    :soulGroupNamesRus
-                    :soulGroupNames
+                    :soulGroupNamesByLang
                 />
             </div>
         </router-view>
@@ -23,14 +22,22 @@
 </template>
 
 <script>
+import i18n from "@/lang.js"
+
 export default {
     data(){
         return {
-            soulGroupNames: ["soul", "monada", "ego", "emotional_body", "mental_body", "physical_body", "genetic_body"],
-            soulGroupNamesRus: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело"],
+            soulGroupNames_en: ["Soul", "Monada", "Ego", "Emotional body", "Mental body", "Physical body", "Genetic body"],
+            soulGroupNames_ru: ["Душа", "Монада", "Эго", "Эмоциональное тело", "Ментальное тело", "Физическое тело", "Генетическое тело"],
             colors: ["red", "#2200ff", "yellow", "green", "orange", "pink", "#54067d"],
         }
-    }
+    },
+
+    computed: {
+        soulGroupNamesByLang() {
+            return this[`soulGroupNames_${i18n.global.locale}`]; // Returns the array based on the current locale
+        }
+    } 
 
 }
 </script>

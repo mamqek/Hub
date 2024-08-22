@@ -1,38 +1,37 @@
 <template>
-        <div class="content">
         <div class="content" :style="addresses ? 'align-items: start;' : ''">
 
 
                 <form @submit.prevent="checkZipCode">
-                    <h1>Zip code</h1>
+                    <h1>{{ $t('zip_code_checker') }}</h1>
                     
                     <InputText
                         v-model="zipCode"
                         id="zip-code"
-                        label="Zip code:"
+                        :label="`${$t('zip_code')}:`"
                         required
                     />
 
                     <InputText
                         v-model="houseNumber"
                         id="house-letter"
-                        label="House number:"
+                        :label="`${$t('house_number')}:`"
                         required
                     />
 
                     <InputText
                         v-model="houseLetter"
                         id="house-letter"
-                        label="House letter (optional):"
+                        :label="`${$t('house_letter')}:`"
                     />
 
                     <Checkbox
                         v-model="exactMatch"
                         name="exact-match"
-                        text="Exact Match"
+                        :text="$t('exact_match')"
                     />
                     
-                    <button class="btn" type="submit">Find building</button>
+                    <button class="btn" type="submit">{{ $t('find_buiding') }}</button>
                 </form>
                 
                 <KadasterResponseBox v-for="(data, name) in addresses"
@@ -44,7 +43,7 @@
                         class="btn" 
                         @click="chooseAddress(name)"
                     > 
-                        I meant this building! I want more info! 
+                        {{ $t('choose_building') }} 
                     </button>
                     <LinksButtons v-else
                         :links="data.links"
@@ -94,7 +93,6 @@ export default {
             houseLetter: "",
             exactMatch: false,
 
-            addresses: [],
             addresses: null,
             addressRecords : [],
             multipleAddresses: false,
