@@ -9,9 +9,9 @@
                 <option value="en">{{ $t('en') }}</option>
             </select>
         </div>
-        <router-link to="/soul-map">{{ $t('soul_map') }}</router-link>
-        <router-link to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
-        <router-link v-if="!authenticated" to="/auth" class="authorize">{{ $t('sign_in') }}</router-link>
+        <router-link class="page-link" to="/soul-map">{{ $t('soul_map') }}</router-link>
+        <router-link class="page-link" to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
+        <router-link class="page-link" v-if="!authenticated" to="/auth" id="authorize">{{ $t('sign_in') }}</router-link>
 
     </nav>
 

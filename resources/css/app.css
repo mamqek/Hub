@@ -88,10 +88,6 @@ nav {
         border-color: var(--background);
         background-color: var(--background);
     }
-
-    a.router-link-active.authorize {
-        display: none;
-    }   
     
     .logo-link {
         pointer-events: auto;
@@ -107,6 +103,18 @@ nav {
         margin-right: auto;
         width: fit-content;
 
+    }
+}
+
+.main-nav:has(.page-link#authorize.router-link-active) {
+    .page-link {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        gap: 0;
     }
 }
 
