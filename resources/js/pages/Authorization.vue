@@ -329,5 +329,101 @@ export default {
     transform: translateX(0);
 }
 
+@media (max-width: 780px) {
+
+.sign-in, .sign-up {
+    top: 0;
+    width: 100%;
+    height: 50%;
+}
+
+/* base animation state */
+.sign-in{
+    z-index: 2;
+    visibility: visible;
+}
+    /* after animation */
+.container.active {
+
+    .sign-in{
+        transform: translateY(100%);
+        z-index: 1;
+        visibility: hidden;
+        animation: move 0.6s reverse;
+    }
+
+    .sign-up{
+        transform: translateY(100%);
+        z-index: 2;
+        visibility: visible;
+        animation: move 0.6s;
+    }
+}
+
+.toggle-container{
+position: absolute;
+top: 50%;
+left: 0;
+width: 100%;
+height: 50%;
+overflow: hidden;
+transition: all 0.6s ease-in-out;
+z-index: 2;
+}
+
+.container.active .toggle-container{
+transform: translateY(-100%);
+}
+
+.toggle{
+background-color: var(--dark-background);
+color: #fff;
+position: relative;
+height: 200%;
+width: 100%;
+left: 0%;
+/* transform: translateY(0); */
+transition: all 0.6s ease-in-out;
+}
+
+.container.active .toggle{
+    transform: translate(0);
+    
+}
+
+.toggle-panel{
+position: absolute;
+width: 100%;
+height: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
+padding: 0 30px;
+text-align: center;
+top: 0;
+/* transform: translateY(0); */
+transition: all 0.6s ease-in-out;
+}
+
+.toggle-left{
+transform: translate(0, -200%);
+}
+
+.container.active .toggle-left{
+/* transform: translateX(100%); */
+}
+
+.container.active .toggle-right{
+transform: translateY(100%);
+top: 0;
+}
+
+.toggle-right{
+    /* top: -25%;
+    transform: translateY(100%); */
+}
+
+}
 
 </style>
