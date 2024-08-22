@@ -62,12 +62,18 @@ router.beforeEach((to, from, next) => {
 
     if (to.meta.requiresAuth && !isAuthenticated) {
         // Redirect to unauthorized if the route requires auth and the user isn't authenticated
-        return next({ name: 'Unauthorized' });
+        return next({ 
+            name: 'Unauthorized',
+            query: {reason: "authentication"}
+        });
     }
 
     if (to.meta.requiredRole && to.meta.requiredRole !== userRole) {
         // Redirect to unauthorized if the user doesn't have the required role
-        return next({ name: 'Unauthorized' });
+        return next({ 
+            name: 'Unauthorized',
+            query: {reason: "role"}
+        });
     }
 
     next(); // Proceed to the route

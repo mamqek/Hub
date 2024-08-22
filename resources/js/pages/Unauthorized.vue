@@ -1,16 +1,27 @@
 <template>
 <div class="content">
-    <h1>Unauthorized</h1>
+    <img src="../../../public/images/logo.png" alt="Logo">
+    <h1>{{ $t('unauthorized') }}</h1>
+    <h2 v-if="reason == 'authentication'">{{ $t('unauthorized_auth') }}</h2>
+    <h2 v-if="reason == 'role'">{{ $t('unauthorized_role') }}</h2>
 </div>
 </template>
-<!-- TODO: Beutify and add reason for why not available  -->
+
 <script>
 export default {
-    name: 'Home',
+    name: 'Unauthorized',
+
+    computed: {
+        reason() {
+            return this.$route.query.reason;
+        }
+  }
 }
 </script>
 
 <style scoped>
-
+    img {
+        width: 100px;
+    }
 
 </style>
