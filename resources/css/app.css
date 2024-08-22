@@ -66,6 +66,12 @@ nav {
         .logo {
             height: 100%;
         }
+        .select-container {
+            position: absolute;
+            width: fit-content;
+            top: 50%;
+            left: 100%;
+        }
     }
 
     a {

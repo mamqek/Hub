@@ -236,3 +236,65 @@ p.info::before {
     }
 
 }
+
+/* SELECT */
+
+/* Container to hold the select and the custom arrow */
+.select-container {
+    position: relative;
+    width: 100%; /* Adjust width as needed */
+
+
+    /* Styling the select element */
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: transparent;
+        border: none;
+        padding: 10px;
+        padding-left: 0;
+        margin-left: 10px;
+        font-size: 16px;
+        color: #fff; /* Adjust color to match the design */
+        width: fit-content;
+        outline: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    select option {
+        padding: 5px;
+    }
+
+    /* Placeholder styling */
+    select:invalid {
+        color: gray;
+    }
+
+    /* Styling when the select is focused */
+    select:focus {
+        background-color: #000;
+    }
+
+}
+
+/* Custom arrow */
+.select-container::after {
+    content: "\f078";
+    font-family: 'Font Awesome 5 Free';
+    font-size: 16px;
+    position: absolute;
+    color: #fff;
+    top:45%;
+    right: 10px;
+    pointer-events: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #000;
+    transform: translateY(-50%);
+}
+
+.select-container:has(select:focus)::after {
+    content: "\f077";
+}

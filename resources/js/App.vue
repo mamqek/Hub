@@ -1,12 +1,17 @@
 <template>    
     <nav class="main-nav">
-        
-        <router-link v-if="!authenticated" to="/auth" class="authorize">Sign (In/Up)</router-link>
-        <router-link to="/soul-map">Soul Map</router-link>
-        <router-link to="/zip-code-checker">Zip Code Checker</router-link>
         <router-link to="/" class="logo-link">
             <img class="logo" src="./../../public/images/logo.png" alt="Logo">
+            <div class="select-container">
+                <select class="lang-select" v-model="language" @change="changeLanguage(language)">
+                    <option value="ru">{{ $t('ru') }}</option>
+                    <option value="en">{{ $t('en') }}</option>
+                </select>
+            </div>
         </router-link>
+        <router-link to="/soul-map">{{ $t('soul_map') }}</router-link>
+        <router-link to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
+        <router-link v-if="!authenticated" to="/auth" class="authorize">{{ $t('sign_in') }}</router-link>
 
     </nav>
 
@@ -16,10 +21,6 @@
         </div>
     </router-view>
     <!-- TODO: beutify and fetch available languages from backend -->
-    <select v-model="language" @change="changeLanguage(language)">
-        <option value="ru">Russian</option>
-        <option value="en">English</option>
-    </select>
 
 </template>
 
