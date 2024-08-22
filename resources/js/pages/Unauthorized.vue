@@ -20,8 +20,12 @@ export default {
 </script>
 
 <style scoped>
-    img {
-        width: 100px;
-    }
+.content {
+    text-align: center;
+}
+
+img {
+    width: 100px;
+}
 
 </style>
