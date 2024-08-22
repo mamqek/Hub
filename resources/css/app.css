@@ -58,21 +58,7 @@ nav {
     
     padding: 1rem 0.25rem;
 
-    .logo-link {
-        position: relative;
-        height: calc(100% + 2rem);
-        margin-right: auto;
-        margin-top: 0.25rem;
-        .logo {
-            height: 100%;
-        }
-        .select-container {
-            position: absolute;
-            width: fit-content;
-            top: 50%;
-            left: 100%;
-        }
-    }
+
 
     a {
         pointer-events: auto;
@@ -105,7 +91,23 @@ nav {
 
     a.router-link-active.authorize {
         display: none;
-    }    
+    }   
+    
+    .logo-link {
+        pointer-events: auto;
+        position: relative;
+        height: calc(100% + 2rem);
+        margin-top: 0.25rem;
+        .logo {
+            height: 100%;
+        }
+
+    }
+    .select-container {
+        margin-right: auto;
+        width: fit-content;
+
+    }
 }
 
 #layout {

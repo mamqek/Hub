@@ -242,8 +242,7 @@ p.info::before {
 /* Container to hold the select and the custom arrow */
 .select-container {
     position: relative;
-    width: 100%; /* Adjust width as needed */
-
+    pointer-events: auto;
 
     /* Styling the select element */
     select {
@@ -281,20 +280,26 @@ p.info::before {
 
 /* Custom arrow */
 .select-container::after {
-    content: "\f078";
-    font-family: 'Font Awesome 5 Free';
+    content: '';
     font-size: 16px;
     position: absolute;
     color: #fff;
-    top:45%;
-    right: 10px;
+    top:50%;
+    right: 0;
+    width: 0;
+    height: 0;
     pointer-events: none;
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
-    border-top: 5px solid #000;
+    border-top: 7px solid #fff;
     transform: translateY(-50%);
 }
 
 .select-container:has(select:focus)::after {
-    content: "\f077";
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: none;
+    border-bottom: 7px solid #fff; /* Adjust size as needed */
 }

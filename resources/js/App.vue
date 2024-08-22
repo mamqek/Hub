@@ -2,13 +2,13 @@
     <nav class="main-nav">
         <router-link to="/" class="logo-link">
             <img class="logo" src="./../../public/images/logo.png" alt="Logo">
-            <div class="select-container">
-                <select class="lang-select" v-model="language" @change="changeLanguage(language)">
-                    <option value="ru">{{ $t('ru') }}</option>
-                    <option value="en">{{ $t('en') }}</option>
-                </select>
-            </div>
         </router-link>
+        <div class="select-container">
+            <select class="lang-select" v-model="language" @change="changeLanguage(language)">
+                <option value="ru">{{ $t('ru') }}</option>
+                <option value="en">{{ $t('en') }}</option>
+            </select>
+        </div>
         <router-link to="/soul-map">{{ $t('soul_map') }}</router-link>
         <router-link to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
         <router-link v-if="!authenticated" to="/auth" class="authorize">{{ $t('sign_in') }}</router-link>
