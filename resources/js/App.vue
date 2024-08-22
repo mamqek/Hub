@@ -4,7 +4,9 @@
         <router-link v-if="!authenticated" to="/auth" class="authorize">Sign (In/Up)</router-link>
         <router-link to="/soul-map">Soul Map</router-link>
         <router-link to="/zip-code-checker">Zip Code Checker</router-link>
-        <router-link to="/">Home</router-link>
+        <router-link to="/" class="logo-link">
+            <img class="logo" src="./../../public/images/logo.png" alt="Logo">
+        </router-link>
 
     </nav>
 

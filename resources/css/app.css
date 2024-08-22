@@ -56,7 +56,17 @@ nav {
     max-height: var(--navbar-height);
     pointer-events: none;
     
-    padding: 1rem;
+    padding: 1rem 0.25rem;
+
+    .logo-link {
+        position: relative;
+        height: calc(100% + 2rem);
+        margin-right: auto;
+        margin-top: 0.25rem;
+        .logo {
+            height: 100%;
+        }
+    }
 
     a {
         pointer-events: auto;
