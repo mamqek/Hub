@@ -211,35 +211,46 @@ export default {
     transition: all 0.6s ease-in-out;
 }
 
-.sign-in{
+.sign-in, .sign-up {
     left: 0;
     width: 50%;
 }
 
-.container.active .sign-in{
-    transform: translateX(100%);
+/* base animation state */
+.sign-in{
+    z-index: 2;
+    visibility: visible;
 }
 
 .sign-up{
-    left: 0;
-    width: 50%;
-    opacity: 0;
+    z-index: 1;
+    visibility: hidden;
 }
 
-.container.active .sign-up{
-    transform: translateX(100%);
-    opacity: 1;
-    z-index: 2;
-    animation: move 0.6s;
+/* after animation */
+.container.active {
+
+    .sign-in{
+        transform: translateX(100%);
+        z-index: 1;
+        visibility: hidden;
+        animation: move 0.6s reverse;
+    }
+
+    .sign-up{
+        transform: translateX(100%);
+        z-index: 2;
+        visibility: visible;
+        animation: move 0.6s;
+    }
 }
 
+/* animation */
 @keyframes move{
     0%, 49.99%{
-        opacity: 0;
         z-index: 1;
     }
     50%, 100%{
-        opacity: 1;
         z-index: 2;
     }
 }
@@ -267,13 +278,11 @@ export default {
     height: 100%;
     overflow: hidden;
     transition: all 0.6s ease-in-out;
-    /* border-radius: 20px; */
     z-index: 2;
 }
 
 .container.active .toggle-container{
     transform: translateX(-100%);
-    /* border-radius: 20px; */
 }
 
 .toggle{
