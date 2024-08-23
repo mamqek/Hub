@@ -1,17 +1,21 @@
 <template>    
     <nav class="main-nav">
+
         <router-link to="/" class="logo-link">
             <img class="logo" src="./../../public/images/logo.png" alt="Logo">
         </router-link>
+
         <div class="select-container" v-if="languages">
             <select class="lang-select" v-model="language" @change="changeLanguage(language)">
                 <option v-for="lang in languages" :value="lang">{{ $t(`${lang}`) }}</option>
             </select>
         </div>
+
         <div class="page-links">
-            <router-link class="page-link" to="/soul-map">{{ $t('soul_map') }}</router-link>
-            <router-link class="page-link" to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
-            <router-link class="page-link" v-if="!authenticated" to="/auth" id="authorize">{{ $t('sign_in') }}</router-link>
+            <router-link to="/soul-map">{{ $t('soul_map') }}</router-link>
+            <router-link to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
+            <router-link v-if="!authenticated" to="/auth" id="authorize">{{ $t('sign_in') }}</router-link>
+            <a @click="logout" v-if="authenticated">{{ $t('logout') }}</a>
         </div>
 
     </nav>
@@ -46,11 +50,11 @@ export default {
 
     created() {
         // TODO: sync with store, if in store, check which is more relaible, maybe move in store setup method
-        this.$axios.post(`authenticate`)
-            .then(({ data }) => {
-                console.log('User authenticated');
-                this.authorized = data;
-            })
+        // this.$axios.post(`authenticate`)
+        //     .then(({ data }) => {
+        //         console.log('User authenticated');
+        //         this.authorized = data;
+        //     })
 
         this.$axios.get('translations')
         .then(({data}) => {
@@ -59,7 +63,14 @@ export default {
     },
 
     methods: {
-        changeLanguage
+        changeLanguage,
+
+        logout() {
+            this.$axios.post('auth/logout')
+            .then(({data}) => {
+                console.log(data)
+            })
+        }
     }
 }
 </script>
