@@ -13,6 +13,7 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('login', ['App\Http\Controllers\UserController', 'login']);
     Route::post('register', ['App\Http\Controllers\UserController', 'register']);
     Route::post('authenticate', ['App\Http\Controllers\UserController', 'authenticate']);
+    Route::post('logout', ['App\Http\Controllers\UserController', 'logout']);
 });
 
 Route::post('/check-zip-code', 'App\Http\Controllers\BagAPIController@checkZipCode');

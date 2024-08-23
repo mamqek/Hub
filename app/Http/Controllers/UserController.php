@@ -103,13 +103,23 @@ class UserController extends Controller
 
     public function authenticate()
     {   
-        // TODO: store language for user and retrieve here
-        // if (!Auth::check()) {
-        //     Log::info('User is not logged in');
-        //     $user = User::where('email', 'test@example.com')->first();
-        //     Auth::login($user);
-        // }
-        Log::info(Auth::check());
-        return Auth::check();
+        if (!Auth::check()) {
+            return false;
+        }
+
+        return Auth::user();
+    }
+
+    public function logout()
+    {
+        Auth::logout();
+
+        // Invalidate the session completely
+        request()->session()->invalidate();
+
+        // Regenerate the session ID to prevent session fixation attacks
+        request()->session()->regenerateToken();
+
+        return redirect('/');
     }
 }
