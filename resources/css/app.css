@@ -48,7 +48,7 @@ nav {
     display: flex;
     justify-content: end;
     align-items: center;
-    gap: 2rem;
+    gap: 1rem;
     
     width: 100%;
     max-width: calc(100% + 4px);
@@ -88,6 +88,12 @@ nav {
         border-color: var(--background);
         background-color: var(--background);
     }
+
+    .page-links {
+        display: flex;
+        margin-left: auto;
+        gap: 1rem;
+    }
     
     .logo-link {
         pointer-events: auto;
@@ -98,17 +104,12 @@ nav {
         .logo {
             height: 100%;
         }
-
     }
-    .select-container {
-        margin-right: auto;
-        width: fit-content;
 
-    }
 }
 
 .main-nav:has(.page-link#authorize.router-link-active) {
-    .page-link {
+    .page-links {
         display: none;
     }
 }
@@ -116,6 +117,10 @@ nav {
 @media (max-width: 480px) {
     .main-nav {
         gap: 0;
+
+        .page-links {
+            gap: 0;
+        }
     }
 }
 
