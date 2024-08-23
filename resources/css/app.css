@@ -124,7 +124,7 @@ nav {
     width: 100%;
 
 
-    background-color: red;
+    background-color: var(--background);
     color : var(--dark-color);
     /* overflow: auto; */
 }
