@@ -9,9 +9,11 @@ Route::get('/', function () {
 Route::get('translations/{locale}', ['App\Http\Controllers\LocaleController', 'getMessages']);
 Route::get('translations', ['App\Http\Controllers\LocaleController', 'getLanguages']);
 
-Route::post('login', ['App\Http\Controllers\UserController', 'login']);
-Route::post('register', ['App\Http\Controllers\UserController', 'register']);
-Route::post('authenticate', ['App\Http\Controllers\UserController', 'authenticate']);
+Route::group(['prefix' => 'auth'], function () {
+    Route::post('login', ['App\Http\Controllers\UserController', 'login']);
+    Route::post('register', ['App\Http\Controllers\UserController', 'register']);
+    Route::post('authenticate', ['App\Http\Controllers\UserController', 'authenticate']);
+});
 
 Route::post('/check-zip-code', 'App\Http\Controllers\BagAPIController@checkZipCode');
 Route::post('/link', 'App\Http\Controllers\BagAPIController@link');

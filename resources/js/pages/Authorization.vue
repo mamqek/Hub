@@ -88,7 +88,7 @@ export default {
 
     methods: {
         login() {
-            this.$axios.post("/login", {
+            this.$axios.post("/auth/login", {
                 identifier: this.identifier,
                 password: this.password
             })
@@ -109,7 +109,7 @@ export default {
         },
 
         register() {
-            this.$axios.post("/register", {
+            this.$axios.post("/auth/register", {
                 username: this.username,
                 email: this.email,
                 password: this.password,
