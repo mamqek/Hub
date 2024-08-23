@@ -3,10 +3,9 @@
         <router-link to="/" class="logo-link">
             <img class="logo" src="./../../public/images/logo.png" alt="Logo">
         </router-link>
-        <div class="select-container">
+        <div class="select-container" v-if="languages">
             <select class="lang-select" v-model="language" @change="changeLanguage(language)">
-                <option value="ru">{{ $t('ru') }}</option>
-                <option value="en">{{ $t('en') }}</option>
+                <option v-for="lang in languages" :value="lang">{{ $t(`${lang}`) }}</option>
             </select>
         </div>
         <div class="page-links">
@@ -22,7 +21,6 @@
             <Component :is="Component" />
         </div>
     </router-view>
-    <!-- TODO: beutify and fetch available languages from backend -->
 
 </template>
 
@@ -37,7 +35,8 @@ export default {
 
     data() {
         return {
-            language: i18n.global.locale
+            language: i18n.global.locale,
+            languages: null,
         }
     },
 
@@ -52,6 +51,11 @@ export default {
                 console.log('User authenticated');
                 this.authorized = data;
             })
+
+        this.$axios.get('translations')
+        .then(({data}) => {
+            this.languages = data;
+        })
     },
 
     methods: {

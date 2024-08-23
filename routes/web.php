@@ -7,6 +7,7 @@ Route::get('/', function () {
 });
 
 Route::get('translations/{locale}', ['App\Http\Controllers\LocaleController', 'getMessages']);
+Route::get('translations', ['App\Http\Controllers\LocaleController', 'getLanguages']);
 
 Route::post('login', ['App\Http\Controllers\UserController', 'login']);
 Route::post('register', ['App\Http\Controllers\UserController', 'register']);
