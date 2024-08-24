@@ -12,19 +12,25 @@ import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { useUserStore } from './stores/userStore.js'
 
-
+import Notifications from '@kyvg/vue3-notification'
 
 const app = createApp(App);
 
+// Router
 app.use(router)
 
 app.config.globalProperties.$axios = $axios;
 
+// Store
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 app.use(pinia);
 
+// Language lbrary
 app.use(i18n);
+
+// Notifications library
+app.use(Notifications)
 
 // Function to initialize the language before mounting the app
 async function initializeApp() {

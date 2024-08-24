@@ -88,6 +88,10 @@ export default {
 
     methods: {
         login() {
+            this.$notify({
+                title: "Important message",
+                text: "Hello user!",
+            });
             this.$axios.post("/auth/login", {
                 identifier: this.identifier,
                 password: this.password
