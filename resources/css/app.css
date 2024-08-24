@@ -46,7 +46,7 @@ nav {
     z-index: 100;
 
     display: flex;
-    justify-content: end;
+    /* justify-content: end; */
     align-items: center;
     gap: 1rem;
     
@@ -108,7 +108,7 @@ nav {
 
 }
 
-.main-nav:has(.page-link#authorize.router-link-active) {
+.main-nav:has(#authorize.router-link-active) {
     .page-links {
         display: none;
     }
