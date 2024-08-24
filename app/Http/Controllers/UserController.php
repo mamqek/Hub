@@ -112,14 +112,28 @@ class UserController extends Controller
 
     public function logout()
     {
-        Auth::logout();
+        try {
+            Auth::logout();
 
-        // Invalidate the session completely
-        request()->session()->invalidate();
+            // ANy of these 2 dont allow to login again if just logged out without page refresh, gives 419 CSRF mismatch
+            // Invalidate the session completely
+            // request()->session()->invalidate();
 
-        // Regenerate the session ID to prevent session fixation attacks
-        request()->session()->regenerateToken();
+            // Regenerate the session ID to prevent session fixation attacks
+            // request()->session()->regenerateToken();
 
-        return redirect('/');
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Logout succesfull!',
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => "Couldnt logout", // Incorrect password
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
