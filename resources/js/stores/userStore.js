@@ -46,13 +46,13 @@ export const useUserStore = defineStore('user', {
             try {
                 this.user = {
                     username: null,
-                    full_name: null,
+                    // full_name: null,
                     role: null,
                 };
                 this.authenticated = false;
-                await $axios.get("api/my_logout/");
-                delete_cookie('sessionid');
-                delete_cookie('csrftoken');
+                // await $axios.get("api/my_logout/");
+                // delete_cookie('sessionid');
+                // delete_cookie('csrftoken');
                 console.log('Logged out');
                 // location.reload();
             } catch (error) {

@@ -26,6 +26,8 @@
         </div>
     </router-view>
 
+    <!-- To make notifications available -->
+    <notifications position="bottom right"/>
 </template>
 
 <script>
@@ -69,6 +71,8 @@ export default {
             this.$axios.post('auth/logout')
             .then(({data}) => {
                 console.log(data)
+                useUserStore().logout();
+                this.$router.push('/');
             })
         }
     }
