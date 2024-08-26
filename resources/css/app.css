@@ -55,10 +55,7 @@ nav {
     height: var(--navbar-height);
     max-height: var(--navbar-height);
     pointer-events: none;
-    
     padding: 1rem 0.25rem;
-
-
 
     a {
         pointer-events: auto;
@@ -101,6 +98,7 @@ nav {
         height: calc(100% + 2rem);
         margin-top: 0.25rem;
         aspect-ratio: 1 / 1;
+
         .logo {
             height: 100%;
         }
@@ -127,7 +125,6 @@ nav {
 #layout {
     display: block; /* Ensures they behave as block elements */
     width: 100%;
-
 
     background-color: var(--background);
     color : var(--dark-color);

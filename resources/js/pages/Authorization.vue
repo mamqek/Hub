@@ -127,7 +127,6 @@ export default {
             .catch(error => {
                 console.log(error)
                 if (error.status == 422) {
-                    console.log("validation")
                     this.validationErrors = error.message;
                     return
                 }
