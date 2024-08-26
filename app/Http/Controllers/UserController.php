@@ -115,16 +115,19 @@ class UserController extends Controller
         try {
             Auth::logout();
 
-            // ANy of these 2 dont allow to login again if just logged out without page refresh, gives 419 CSRF mismatch
             // Invalidate the session completely
-            // request()->session()->invalidate();
+            request()->session()->invalidate();
 
             // Regenerate the session ID to prevent session fixation attacks
-            // request()->session()->regenerateToken();
+            request()->session()->regenerateToken();
 
+            // Regenerate CSRF token to avoid 419 which happens after 2 above calls until page reload
+            request()->session()->regenerateToken();
+            Log::info(csrf_token());
             return response()->json([
                 'status' => 'success',
                 'message' => 'Logout succesfull!',
+                'csrf_token' => csrf_token()
             ], 200);
 
         } catch (\Exception $e) {

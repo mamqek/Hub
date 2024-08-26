@@ -51,13 +51,6 @@ export default {
     },
 
     created() {
-        // TODO: sync with store, if in store, check which is more relaible, maybe move in store setup method
-        // this.$axios.post(`authenticate`)
-        //     .then(({ data }) => {
-        //         console.log('User authenticated');
-        //         this.authorized = data;
-        //     })
-
         this.$axios.get('translations')
         .then(({data}) => {
             this.languages = data;
@@ -70,7 +63,8 @@ export default {
         logout() {
             this.$axios.post('auth/logout')
             .then(({data}) => {
-                console.log(data)
+                // Update Axios defaults with the new CSRF token
+                this.$axios.defaults.headers['X-CSRF-TOKEN'] = data.csrf_token;
                 useUserStore().logout();
                 this.$router.push('/');
             })
