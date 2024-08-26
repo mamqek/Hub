@@ -22,14 +22,7 @@ export async function initLanguage(){
             return
         }
 
-        i18n.global.locale = store.language
-        
-        if (!store.translations) {
-            let translations = await loadMessages(store.language);
-            store.translations = translations;
-        }
-
-        i18n.global.setLocaleMessage(store.language, store.translations);
+        await changeLanguage(store.language, store.translations);
 
         checkForUpdate(store.language, store.translations);
     } catch (error) {
@@ -58,22 +51,33 @@ export async function loadMessages(locale) {
     }
 }
 
-export async function changeLanguage(locale){
+export async function changeLanguage(locale, translations = null){
     // TODO: connect this to backend setting
     try {
-        let translations = await loadMessages(locale);
+
+        if (translations) {
+            i18n.global.setLocaleMessage(locale, translations);
+        } else {
+            translations = await loadMessages(locale);
+        }
+
         i18n.global.locale = locale;
         useUserStore().setLanguage(locale, translations);
+        
+        $axios.post(`/translations/${locale}`, {
+            locale : locale
+        })
+        .then(({data}) => {
+            console.log(data)
+        })
     } catch (error) {
         console.error(`Failed to change language to ${locale}:`, error);
     }
 } 
 
-export function checkForUpdate(locale, translations){
+function checkForUpdate(locale, translations){
     $axios.get(`/translations/${locale}`)
-    .then(({ data: fetchedTranslations }) => {    
-        console.log("in");
-                        
+    .then(({ data: fetchedTranslations }) => {                            
         if (JSON.stringify(translations) !== JSON.stringify(fetchedTranslations)) {
             i18n.global.setLocaleMessage(locale, fetchedTranslations);
             useUserStore().setLanguage(locale, fetchedTranslations);
