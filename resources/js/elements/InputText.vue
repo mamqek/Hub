@@ -97,6 +97,17 @@ input[type="date"]:in-range::-webkit-datetime-edit-text {
     transform: translateY(-25px);
 }
 
+input:-webkit-autofill, 
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    box-shadow: 0 0 0px 1000px transparent inset !important;
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+
 /* .inputBox input:focus,
 .inputBox input:valid{
     border-bottom: 2px solid #000;
