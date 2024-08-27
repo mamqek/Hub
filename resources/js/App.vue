@@ -29,7 +29,7 @@
     <!-- To make notifications available -->
     <notifications 
         position="bottom center"
-        :width="500"
+        classes="notify"
         :duration="5000"
         :max="5"
         :pauseOnHover="true"
