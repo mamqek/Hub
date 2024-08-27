@@ -88,16 +88,11 @@ export default {
 
     methods: {
         login() {
-            this.$notify({
-                title: "Important message",
-                text: "Hello user!",
-            });
             this.$axios.post("/auth/login", {
                 identifier: this.identifier,
                 password: this.password
             })
             .then(({data}) => {
-                console.log(data)
                 useUserStore().authorize(data.user)
                 this.$router.push('/');
             })
@@ -108,7 +103,6 @@ export default {
                     };
                     return
                 }
-                alert(error.message)
             })
         },
 
@@ -120,17 +114,13 @@ export default {
                 password_confirmation: this.password_confirmation,
             })
             .then(({data}) => {
-                console.log(data);
-                useUserStore().authorize(data.user);
-                this.$router.push('/');
+                this.registerSide = false;
             })
             .catch(error => {
-                console.log(error)
                 if (error.status == 422) {
                     this.validationErrors = error.message;
                     return
                 }
-                alert(error.message)
             })
         }
     }

@@ -130,10 +130,6 @@ export default {
                 })
                 this.multipleAddresses = this.addresses.length > 1;
             })
-            .catch(error => {
-                console.log(error);
-                alert(error.message);
-            });
         },
 
         chooseAddress(chosenAddressNumber){
@@ -153,10 +149,6 @@ export default {
             .then(({ data }) => {
                 this.extractResponse(name, data)
             })
-            .catch(error => {
-                console.log(error);
-                alert(error.message);
-            });
         },
 
         extractResponse(name, response) {

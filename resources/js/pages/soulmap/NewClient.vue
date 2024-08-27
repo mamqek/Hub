@@ -105,9 +105,6 @@ export default {
             .then(({data}) => {
                 this.souls = data.souls;
             })
-            .catch(error => {
-                console.log(error)
-            });
 
         },
 
@@ -123,12 +120,6 @@ export default {
                 client: this.client, 
                 souls: this.chosenSouls,
             })
-            .then(({data}) => {
-                console.log(data);
-            })
-            .catch(error => {
-                console.log(error)
-            });
         },
 
 
