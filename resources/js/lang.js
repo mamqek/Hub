@@ -3,6 +3,7 @@ import { createI18n } from 'vue-i18n';
 import { $axios } from './axios.js'
 import { useUserStore } from './stores/userStore.js';
 import { notify } from "@kyvg/vue3-notification";
+import { error } from 'laravel-mix/src/Log.js';
 
 const i18n = createI18n({
   locale: 'ru',
@@ -32,7 +33,6 @@ export async function initLanguage(){
             type: "error",
             title: "Language settings error",
             text: "Could not initialize saved language",
-            position: 'top left',
         });
     }
 }
@@ -70,16 +70,16 @@ export async function changeLanguage(locale, translations = null){
         $axios.post(`/translations/${locale}`, {
             locale : locale
         })
-        .then(({data}) => {
-            console.log(data)
+        .catch((error) => {
+            console.error(`Could not change backend locale:`, error);
         })
+
     } catch (error) {
         console.error(`Failed to change language to ${locale}:`, error);
         notify({
             type: "error",
             title: "Language settings error",
             text: "Could not change the language",
-            position: 'top right',
         });
     }
 } 

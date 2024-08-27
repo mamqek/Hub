@@ -38,7 +38,7 @@ class LocaleController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Succesfully changed locale',
+                // 'message' => 'Succesfully changed locale',
             ], 200);
 
         } catch (Exception $e) {
