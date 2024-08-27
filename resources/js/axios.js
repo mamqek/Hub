@@ -1,4 +1,6 @@
 import axios from "axios";
+import { notify } from "@kyvg/vue3-notification";
+
 
 axios.defaults.xsrfCookieName = 'csrftoken'
 
@@ -14,23 +16,41 @@ const axiosInstance  = axios.create({
 })
 
 axiosInstance.interceptors.response.use(
-    response => response, 
-    error => {
-        console.log(error)
-        // Create an object with message, error, status code
-
-        let message = error.response?.data?.message
-        // if validation error 
-        if (error.response?.status == 422 && error.response?.statusText == "Unprocessable Content") {
-            message = error.response?.data?.errors
+    response => {
+        if (response?.data?.message) {
+            notify({
+                type: "success",
+                title: "Success",
+                text: response.data.message,
+            });
         }
 
+        return response
+    }, 
+    error => {
+        
+        let message = error.response?.data?.message;
+        let status = error.response?.status;
+        // if validation error 
+        if (status == 422 && error.response?.statusText == "Unprocessable Content") {
+            message = error.response?.data?.errors
+        } else if (status == 401){
+            
+        } else {
+            notify({
+                type: "error",
+                title: `Error ${error.response?.status}`,
+                text: message,
+            });
+        }
+        
+        // Create an object with message, error, status code
         const errorDetails = {
             message: message || 'An error occurred',
             error: error.response?.data?.error || error.response?.statusText,
-            status: error.response?.status || 500,
+            status: status || 500,
         };
-
+        console.error(errorDetails)
         return Promise.reject(errorDetails);
     }
 );
