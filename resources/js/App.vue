@@ -67,13 +67,8 @@ export default {
         changeLanguage,
 
         logout() {
-            this.$axios.post('auth/logout')
-            .then(({data}) => {
-                // Update Axios defaults with the new CSRF token
-                this.$axios.defaults.headers['X-CSRF-TOKEN'] = data.csrf_token;
-                useUserStore().logout();
-                this.$router.push('/');
-            })
+            useUserStore().logout();
+            this.$router.push('/');
         }
     }
 }

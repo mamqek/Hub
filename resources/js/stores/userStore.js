@@ -43,9 +43,6 @@ export const useUserStore = defineStore('user', {
             // this.user.full_name = data?.full_name;
             this.user.role = data?.role;
             this.authenticated = true;
-
-            console.log(' user: ', this.user)
-            console.log(' auth: ', this.authenticated)
         },
         async logout() {
 
@@ -56,17 +53,19 @@ export const useUserStore = defineStore('user', {
             }
 
             try {
+                $axios.post('auth/logout')
+                .then(({data}) => {
+                    // Update Axios defaults with the new CSRF token
+                    $axios.defaults.headers['X-CSRF-TOKEN'] = data.csrf_token;
+                });
                 this.user = {
                     username: null,
                     // full_name: null,
                     role: null,
                 };
                 this.authenticated = false;
-                // await $axios.get("api/my_logout/");
                 // delete_cookie('sessionid');
                 // delete_cookie('csrftoken');
-                console.log('Logged out');
-                // location.reload();
             } catch (error) {
                 console.error("[Logout function failed]: ", error)
             }
