@@ -14,7 +14,7 @@ return [
     */
 
     'success' => 'Success',
-    'successful' => 'Successful',
+    '*_successful' => ':action Successful',
     '*_saved_successfully' => ':attribute saved successfully',
     '*_is_valid' => ':attribute Is Valid',
 

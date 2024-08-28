@@ -14,7 +14,7 @@ return [
     */
 
     'success' => 'Операция успешна',
-    'successful' => 'Операция прошла успешно',
+    '*_successful' => 'Операция :action прошла успешно',
     '*_saved_successfully' => ':attribute успешно сохранён',
     '*_is_valid' => ':attribute действующий',
     

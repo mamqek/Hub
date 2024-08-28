@@ -35,6 +35,7 @@ class UserController extends Controller
             'message' => __('auth.failed'), // User not found
             ], 401);
         }
+        Log::info(session()->all());
 
         // Check if the password is correct
         if (!Hash::check($request->password, $user->password)) {
@@ -46,9 +47,10 @@ class UserController extends Controller
         
         // If everything is correct, log in the user
         Auth::login($user);
+        Log::info(session()->all());
         return response()->json([
             'status' => __('response.success'),
-            'message' => __('login')." ".__('response.successful'),
+            'message' => __('response.*_successful', ['action' => __('login')]),
             'user' => $user 
         ], 200);
 
@@ -126,7 +128,7 @@ class UserController extends Controller
             Log::info(csrf_token());
             return response()->json([
                 'status' => __('response.success'),
-                'message' => __('login')." ".__('response.successful'),
+                'message' => __('response.*_successful', ['action' => __('logout')]),
                 'csrf_token' => csrf_token()
             ], 200);
 
