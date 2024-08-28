@@ -33,7 +33,7 @@
 
     /* Subtle shadow for a lifted effect */
     min-height: 48px;
-    max-height: 50px;
+    max-height: fit-content;
     text-align: center;
     vertical-align: middle;
 
@@ -346,3 +346,66 @@ p.info::before {
     border-left-color: #b82e24;
   }
 }
+
+
+
+/* MAIN NAVBAR */
+
+.main-nav {
+    mix-blend-mode: difference;
+    /* color: var(--medium-grey-color); */
+    color: var(--background);
+
+    a {
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        padding: 0.25rem;
+        border: 2px solid transparent;
+        border-radius: var(--border-radius-md);
+        transition: color 0.3s ease, border-color 0.7s ease, background-color 0.3s ease;
+    }
+
+    a:hover,
+    a.router-link-active {
+        color: var(--dark-color);
+        border-color: var(--background);
+        background-color: var(--background);
+    }
+
+    .page-links {
+        display: flex;
+        margin-left: auto;
+        gap: 1rem;
+    }
+    
+    .logo-link {
+        pointer-events: auto;
+        position: relative;
+        height: calc(100% + 2rem);
+        margin-top: 0.25rem;
+        aspect-ratio: 1 / 1;
+
+        .logo {
+            height: 100%;
+        }
+    }
+
+}
+
+.main-nav:has(#authorize.router-link-active) {
+    .page-links {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        gap: 0;
+
+        .page-links {
+            gap: 0;
+        }
+    }
+}
+

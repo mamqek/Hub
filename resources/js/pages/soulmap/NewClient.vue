@@ -139,7 +139,7 @@ export default {
 <style scoped>
 
 .content {
-    gap: 30px;
+    gap: var(--margin-xxl);
     padding: calc(2*var(--navbar-height)) 20px;
 }
 
@@ -151,7 +151,7 @@ form {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 30px;
+    gap: var(--margin-l) var(--margin-xxl);
 
     width: 70%;
 }
@@ -161,7 +161,7 @@ form {
     display: grid;
     grid-template-rows: repeat(4, 1fr);
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 30px;
+    gap: var(--margin-xl) var(--margin-l);
     width: min(70%, 510px);
 
     div {

@@ -1,4 +1,13 @@
 :root {
+    --font-size: 16px;
+    --margin-xxs: .25rem;
+    --margin-xs: .5rem;
+    --margin-s: .75rem;
+    --margin-m: 1rem;
+    --margin-l: 1.25rem;
+    --margin-xl: 1.75rem;
+    --margin-xxl: 2.5rem;
+
     --navbar-height: 70px;
     --background: #ebebeb; 
     --dark-background: #29262C;
@@ -27,7 +36,7 @@
 
 html, body{
     font-family: 'Montserrat', sans-serif;
-
+    font-size: var(--font-size);
     /* width: 100%; */
 }
 
@@ -64,63 +73,7 @@ nav {
     }
 }
 
-.main-nav {
-    mix-blend-mode: difference;
-    /* color: var(--medium-grey-color); */
-    color: var(--background);
 
-    a {
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.3s ease;
-        padding: 0.25rem;
-        border: 2px solid transparent;
-        border-radius: var(--border-radius-md);
-        transition: color 0.3s ease, border-color 0.7s ease, background-color 0.3s ease;
-    }
-
-    a:hover,
-    a.router-link-active {
-        color: var(--dark-color);
-        border-color: var(--background);
-        background-color: var(--background);
-    }
-
-    .page-links {
-        display: flex;
-        margin-left: auto;
-        gap: 1rem;
-    }
-    
-    .logo-link {
-        pointer-events: auto;
-        position: relative;
-        height: calc(100% + 2rem);
-        margin-top: 0.25rem;
-        aspect-ratio: 1 / 1;
-
-        .logo {
-            height: 100%;
-        }
-    }
-
-}
-
-.main-nav:has(#authorize.router-link-active) {
-    .page-links {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .main-nav {
-        gap: 0;
-
-        .page-links {
-            gap: 0;
-        }
-    }
-}
 
 #layout {
     display: block; /* Ensures they behave as block elements */
@@ -159,5 +112,9 @@ nav {
 } */
 
 
+
+h1~p {
+    margin-top: var(--margin-xxs);
+}
 
 

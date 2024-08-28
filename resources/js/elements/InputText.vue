@@ -48,7 +48,7 @@ export default {
 .inputBox{
     position: relative;
     width: 300px;
-    margin-bottom: 40px;
+    /* margin-bottom: 40px; */
 }
 
 input[type="date"]:in-range::-webkit-datetime-edit-year-field,

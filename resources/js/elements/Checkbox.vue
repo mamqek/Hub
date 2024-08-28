@@ -58,9 +58,9 @@
     /* display: inline-block; */
     cursor: pointer;
     position: relative;
-    padding-left: calc(25px + 5px);
+    padding-left: calc(1.25rem + var(--margin-xs));
     padding-right: 5px;
-    font-size: 20px;
+    font-size: 1.25rem;
     user-select: none;
     width: fit-content;
 }
@@ -69,8 +69,8 @@
 .primary-checkbox-box {
     position: absolute;
     transform: translate(-120%, 25%);
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
     border: 2px solid var(--dark-grey-color);
     border-radius: var(--border-radius-sm);
     background-color: transparent;
@@ -78,8 +78,7 @@
 }
 
 .primary-checkbox-text {
-    margin-left: 10px;
-    font-size: 20px;
+    margin-left: var(--margin-xs);
     color: var(--dark-grey-color);
 }
 
@@ -88,9 +87,7 @@
     content: '\2713';
     /* Unicode character for check mark */
     position: absolute;
-    top: -3px;
-    left: 2px;
-    font-size: 18px;
+    top: calc(var(--margin-xxs) * -1 );
     color: var(--dark-color);
     font-weight: 700;
 }

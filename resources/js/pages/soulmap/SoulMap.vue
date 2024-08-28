@@ -62,7 +62,7 @@ export default {
 
 nav {
     justify-content: center;
-    padding-top: calc(var(--navbar-height) + 30px);
+    padding-top: calc(var(--navbar-height) + var(--margin-xxl));
 }
 
 </style>

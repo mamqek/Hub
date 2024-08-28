@@ -2,8 +2,11 @@
     <div class="content" :style="addresses ? 'align-items: start;' : ''">
         
         <form @submit.prevent="checkZipCode">
-            <h1>{{ $t('zip_code_checker') }}</h1>
-            <p>{{ $t('example') }}</p>
+            <div>
+
+                <h1>{{ $t('zip_code_checker') }}</h1>
+                <p>{{ $t('example') }}</p>
+            </div>
             <InputText
                 v-model="zipCode"
                 id="zip-code"
@@ -179,8 +182,12 @@ export default {
 form { 
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--margin-xxl);
     /* align-items: center; */
+
+    p {
+        width: 300px;
+    }
 
     button {
         width: 300px;
@@ -194,7 +201,7 @@ form {
 
     /* grid-auto-rows: min(100%, 100vh); */
 
-    gap: 30px var(--div-gap);
+    gap: var(--margin-l) var(--margin-xxl);
     padding-left: 50px; 
     padding-right: 50px;
 }
@@ -203,14 +210,5 @@ form {
     /* height: min(100%, 100vh) */
     overflow-wrap:normal;
 }
-
-.data-boxes {
-    display: flex;
-    gap: var(--div-gap);
-    flex-wrap: wrap;
-    width: 100%;
-}
-
-
 
 </style>
