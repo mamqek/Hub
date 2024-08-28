@@ -35,7 +35,7 @@ app.use(i18n);
 
 // Function to initialize the language before mounting the app
 async function initializeApp() {
-    const userStore = useUserStore();
+    useUserStore().setup();
 
     await initLanguage();
 

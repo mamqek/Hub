@@ -17,6 +17,9 @@ export const useUserStore = defineStore('user', {
     persist: true,
 
     actions: {
+        setup() {
+            this.authenticate();
+        },
         setUser(userData) {
             this.user = userData;
         },
@@ -25,6 +28,15 @@ export const useUserStore = defineStore('user', {
         },
         getAttribute(attribute) {
             return this.user[attribute];
+        },
+        authenticate() {
+            $axios.post('auth/authenticate')
+            .then(({data}) => {
+                if(!data && this.authenticated) {
+                    this.logout()
+                    
+                }
+            })
         },
         authorize(data = null) {
             this.user.username = data?.username;
