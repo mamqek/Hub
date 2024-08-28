@@ -17,6 +17,7 @@ class SoulClientController extends Controller
     }
 
     public function saveClient(Request $request){
+        $user = Auth::user();
         $client = $request->input('client');
         $souls = $request->input('souls');
 
@@ -27,6 +28,7 @@ class SoulClientController extends Controller
                 'name' => $client['name'],
                 'date' => $client['date'],
                 'date_of_birth' => $client['dateOfBirth'],
+                'user_id' => $user->id,
             ],
             [
                 'souls' => $souls,
