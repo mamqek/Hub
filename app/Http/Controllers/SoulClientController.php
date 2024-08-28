@@ -12,7 +12,8 @@ class SoulClientController extends Controller
     }
 
     public function getAllClients(){
-        $clients = SoulClient::all();
+        $user = Auth::user();
+        $clients = SoulClient::where('user_id', $user->id)->get();
         return $clients;
     }
 
