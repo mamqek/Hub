@@ -2,6 +2,11 @@
     "ru": "Russian",
     "en": "English",
 
+    "database" : "Database",
+    "data" : "Data",
+    "address" : "Address",
+    "language" : "Language",
+
     "welcome": "Welcome",
     "goodbye": "Goodbye",
     "logout": "Logout",
@@ -10,7 +15,6 @@
     "welcome_to_dev": "Welcome to Mamqek's Developer Workspace",
     "welcome_description_1": "Here, I create solutions for various challenges and precisely design modular website architecture.",
     "welcome_description_2": "Every feature is designed to be easily transfered to other projects and modified if nesessary",
-
 
     "save_*" : "Save {item}",
     "new_*" : "New {item}",
@@ -50,6 +54,8 @@
 
     "soul_map" : "Soul Map",
 
+    "soul_numbers" : "Soul Numbers",
+
     "clients" : "Clients",
     "client" : "Client",
 
@@ -59,8 +65,7 @@
     "no_data" : "No data found",
 
 
-
-    "zip_code_checker": "Search NL address",
+    "zip_code_checker": "Search NL Building",
 
     "zip_code" : "Zip Code",
     "house_number": "House number",
@@ -71,4 +76,10 @@
     "example" : "@:try 1012RJ and 147 for Royal Palace in Amsterdam",
 
     "home" : "Home"
+
+
+
+
+
+
 }

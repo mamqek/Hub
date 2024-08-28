@@ -12,7 +12,7 @@ class LocaleController extends Controller
 {
 
     function getMessages($locale) {
-        $path = base_path("lang/{$locale}/main.json");
+        $path = base_path("lang/{$locale}.json");
 
         if (!File::exists($path)) {
             abort(404, 'Translation file not found.');
