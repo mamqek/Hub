@@ -27,13 +27,26 @@
     </router-view>
 
     <!-- To make notifications available -->
-    <notifications 
+    <!-- used template to add icon  -->
+    <notifications
         position="bottom center"
-        classes="notify"
         :duration="5000"
         :max="5"
         :pauseOnHover="true"
-    />
+    >
+        <template #body="props">
+            <div :class="['notify', props.item?.type]" @click="props.close">
+                <div class="notification-content">
+                    <div class='notification-title'>
+                        {{ props.item.title }}
+                    </div>
+                    <div class='notification-content'>
+                        {{ props.item.text }}
+                    </div>
+                </div>
+            </div>
+        </template>
+    </notifications>
 </template>
 
 <script>
