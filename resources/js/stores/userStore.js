@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { $axios } from '@/axios.js'
+import router from '../router'
 
 
 export const useUserStore = defineStore('user', {
@@ -64,8 +65,7 @@ export const useUserStore = defineStore('user', {
                     role: null,
                 };
                 this.authenticated = false;
-                // delete_cookie('sessionid');
-                // delete_cookie('csrftoken');
+                router.push('/');
             } catch (error) {
                 console.error("[Logout function failed]: ", error)
             }

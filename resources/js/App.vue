@@ -15,7 +15,7 @@
             <router-link to="/soul-map">{{ $t('soul_map') }}</router-link>
             <router-link to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
             <router-link v-if="!authenticated" to="/auth" id="authorize">{{ $t('sign_in') }}</router-link>
-            <a @click="logout" v-if="authenticated">{{ $t('logout') }}</a>
+            <a @click="useUserStore().logout()" v-if="authenticated">{{ $t('logout') }}</a>
         </div>
 
     </nav>
@@ -53,7 +53,7 @@ export default {
     },
 
     computed: {
-        ...mapState(useUserStore, ['user', 'authenticated']),
+        ...mapState(useUserStore, ['authenticated']),
     },
 
     created() {
@@ -65,11 +65,8 @@ export default {
 
     methods: {
         changeLanguage,
+        useUserStore,
 
-        logout() {
-            useUserStore().logout();
-            this.$router.push('/');
-        }
     }
 }
 </script>
