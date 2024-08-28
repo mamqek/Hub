@@ -3,7 +3,6 @@ import { createI18n } from 'vue-i18n';
 import { $axios } from './axios.js'
 import { useUserStore } from './stores/userStore.js';
 import { notify } from "@kyvg/vue3-notification";
-import { error } from 'laravel-mix/src/Log.js';
 
 const i18n = createI18n({
   locale: 'ru',
@@ -99,3 +98,4 @@ function checkForUpdate(locale, translations){
 
 
 export default i18n;
+export const { t } = i18n.global;
