@@ -116,16 +116,16 @@ class UserController extends Controller
     {
         try {
             Auth::logout();
-
+            $locale = session('locale');
             // Invalidate the session completely
             request()->session()->invalidate();
 
             // Regenerate the session ID to prevent session fixation attacks
-            request()->session()->regenerateToken();
-
             // Regenerate CSRF token to avoid 419 which happens after 2 above calls until page reload
             request()->session()->regenerateToken();
-            Log::info(csrf_token());
+
+            session(['locale' => $locale]);
+
             return response()->json([
                 'status' => __('response.success'),
                 'message' => __('response.*_successful', ['action' => __('logout')]),
