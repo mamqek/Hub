@@ -31,18 +31,18 @@ class SoulClientController extends Controller
             [
                 'souls' => $souls,
             ]);
-            
+
             return response()->json([
-                'status' => 'success',
-                'message' => 'Client saved successfully',
+                'status' => __('response.success'),
+                'message' => __('response.*_saved_successfully', ['attribute' => __('client')]),
                 'client' => $client
             ], 200);
 
         } catch (\Exception $e) {
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while saving client',
+                'status' => __('response.error'),
+                'message' => __('response.error_while_*', ['action' => __('response.saving'), 'attribute' => __('client')]),
                 'error' => $e->getMessage()
             ], 500);
 

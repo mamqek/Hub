@@ -31,7 +31,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-            'status' => 'error',
+            'status' => __('response.error'),
             'message' => __('auth.failed'), // User not found
             ], 401);
         }
@@ -39,7 +39,7 @@ class UserController extends Controller
         // Check if the password is correct
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
-            'status' => 'error',
+            'status' => __('response.error'),
             'message' => __('auth.password'), // Incorrect password
             ], 401);
         }
@@ -47,9 +47,9 @@ class UserController extends Controller
         // If everything is correct, log in the user
         Auth::login($user);
         return response()->json([
-            'status' => 'success',
-            'message' => 'Login successful',
-            'user' => $user
+            'status' => __('response.success'),
+            'message' => __('login')." ".__('response.successful'),
+            'user' => $user 
         ], 200);
 
     }
@@ -94,8 +94,8 @@ class UserController extends Controller
         ]);
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Registration succesfull!',
+            'status' => __('response.success'),
+            'message' => __('response.account_created'),
             'user' => $user
         ], 200);
     }
@@ -125,16 +125,16 @@ class UserController extends Controller
             request()->session()->regenerateToken();
             Log::info(csrf_token());
             return response()->json([
-                'status' => 'success',
-                'message' => 'Logout succesfull!',
+                'status' => __('response.success'),
+                'message' => __('login')." ".__('response.successful'),
                 'csrf_token' => csrf_token()
             ], 200);
 
         } catch (\Exception $e) {
 
             return response()->json([
-                'status' => 'error',
-                'message' => "Couldnt logout", // Incorrect password
+                'status' => __('response.error'),
+                'message' => __('response.error_while_*', ['action' => __('logout'), 'attribute' => ""]), // Incorrect password
                 'error' => $e->getMessage()
             ], 500);
         }

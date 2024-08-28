@@ -72,7 +72,7 @@ class BagAPIController extends Controller
         } catch (\Exception $e) {
             // Return the error message from the exception
             return response()->json([
-                'status' => 'error',
+                'status' => __('response.error'),
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -100,16 +100,16 @@ class BagAPIController extends Controller
                 }
 
                 return response()->json([
-                    'status' => 'success',
-                    'message' => 'Address is valid',
+                    'status' => __('response.success'),
+                    'message' => __('response.*_is_valid', ['attribute' => __('address')]),
                     'data' => $response->json(),
                     'addressRecords' => $addressRecords
                 ], 200);
                 
             } else {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Address is not found',
+                    'status' => __('response.error'),
+                    'message' => __('response.*_not_found', ['attribute' => __('address')]),
                 ], 500);
             }
             
@@ -117,8 +117,8 @@ class BagAPIController extends Controller
         } catch (\Exception $e) {
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'Database error',
+                'status' => __('response.error'),
+                'message' => __('error_while_*', [ 'action' => __('response.fetching') , 'attribute' => __('database') ]),
                 'error' => $e->getMessage()
             ], 500);
 
@@ -136,7 +136,7 @@ class BagAPIController extends Controller
         } catch (\Exception $e) {
             // Return the error message from the exception
             return response()->json([
-                'status' => 'error',
+                'status' => __('response.error'),
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -154,8 +154,8 @@ class BagAPIController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'success',
-                'message' => 'Data fetched',
+                'status' => __('response.success'),
+                'message' => __('data')." ".__('response.fetched'),
                 'data' => $responseJSON,
             ], 200);
                 
@@ -163,8 +163,8 @@ class BagAPIController extends Controller
         } catch (\Exception $e) {
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'Database error',
+                'status' => __('response.error'),
+                'message' => __('error_while_*', [ 'action' => __('response.fetching') , 'attribute' => __('database') ]),
                 'error' => $e->getMessage()
             ], 500);
 

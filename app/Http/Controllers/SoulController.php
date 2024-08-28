@@ -30,16 +30,16 @@ class SoulController extends Controller
             })->values()->toArray();
             
             return response()->json([
-                'status' => 'success',
-                'message' => 'Souls fetched succesfully',
+                'status' => __('response.success'),
+                'message' => __('soul_numbers')." ".__('response.fetched'),
                 'souls' => $data
             ], 200);
 
         } catch (\Exception $e) {
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while saving client',
+                'status' => __('response.error'),
+                'message' => __('error_while_*', [ 'action' => __('response.fetching') , 'attribute' => __('soul_numbers') ]),
                 'error' => $e->getMessage()
             ], 500);
 

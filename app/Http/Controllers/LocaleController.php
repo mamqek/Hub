@@ -15,7 +15,7 @@ class LocaleController extends Controller
         $path = base_path("lang/{$locale}.json");
 
         if (!File::exists($path)) {
-            abort(404, 'Translation file not found.');
+            abort(404, __('response.*_not_found', ['attribute' => __('language')]));
         }
     
         return response()->file($path);
@@ -37,14 +37,14 @@ class LocaleController extends Controller
             session(['locale' => $locale]);
 
             return response()->json([
-                'status' => 'success',
+                'status' => __('response.success'),
                 // 'message' => 'Succesfully changed locale',
             ], 200);
 
         } catch (Exception $e) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while changing the locale',
+                'status' => __('response.error'),
+                'message' => __('response.error_while_*', ['action' => __('response.changing'), 'attribute' => __('language')]),
                 'error' => $e->getMessage()
             ], 500);
         }
