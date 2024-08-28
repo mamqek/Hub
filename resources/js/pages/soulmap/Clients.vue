@@ -104,6 +104,14 @@ export default {
 
         showClient(client){
             this.showedClient = client;
+
+            // scroll to vlient info
+            setTimeout(() => {
+                const element = document.getElementsByClassName("client")[0];
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 300);
         },
 
     },

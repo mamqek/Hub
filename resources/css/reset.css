@@ -48,6 +48,7 @@ p, h1, h2, h3, h4, h5, h6 {
 /* 9. When scrolled to by required input or href=#, make it more to the middle rather strict top */
 * {
     scroll-margin-top: 120px; 
+    scroll-behavior: smooth;
   }
 
 /* 10. Hide scrollbar  */
