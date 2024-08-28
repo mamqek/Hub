@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { $axios } from '@/axios.js'
+import { notify } from "@kyvg/vue3-notification";
+import { t } from '../lang';
 import router from '../router'
 
 
@@ -19,6 +21,7 @@ export const useUserStore = defineStore('user', {
 
     actions: {
         setup() {
+
             this.authenticate();
         },
         setUser(userData) {
@@ -31,11 +34,19 @@ export const useUserStore = defineStore('user', {
             return this.user[attribute];
         },
         authenticate() {
+            if (!this.authenticated) {
+                return;
+            }
+
             $axios.post('auth/authenticate')
             .then(({data}) => {
                 if(!data && this.authenticated) {
-                    this.logout()
-                    
+                    this.logout();
+                    notify({
+                        type: "warn",
+                        title: t('session_expired'),
+                        text: t('session_expired_message')
+                    })
                 }
             })
         },
@@ -59,6 +70,7 @@ export const useUserStore = defineStore('user', {
                     // Update Axios defaults with the new CSRF token
                     $axios.defaults.headers['X-CSRF-TOKEN'] = data.csrf_token;
                 });
+
                 this.user = {
                     username: null,
                     // full_name: null,

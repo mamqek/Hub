@@ -6,11 +6,17 @@
     "data" : "Data",
     "address" : "Address",
     "language" : "Language",
+    "session" : "Session",
+
 
     "welcome": "Welcome",
     "goodbye": "Goodbye",
     "logout": "Logout",
     "submit" : "Submit",
+
+    "error" : "Error",
+    "session_expired" : "@:session expired",
+    "session_expired_message" : "You were away for too long. Please Login again to continue",
 
     "welcome_to_dev": "Welcome to Mamqek's Developer Workspace",
     "welcome_description_1": "Here, I create solutions for various challenges and precisely design modular website architecture.",
