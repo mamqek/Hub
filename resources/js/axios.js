@@ -20,7 +20,7 @@ axiosInstance.interceptors.response.use(
         if (response?.data?.message) {
             notify({
                 type: "success",
-                title: "Success",
+                title: response.data?.status || "Success",
                 text: response.data.message,
             });
         }
