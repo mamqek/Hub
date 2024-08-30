@@ -3,6 +3,8 @@ import '@fortawesome/fontawesome-free/css/all.css'
 import { createApp } from 'vue';
 import App from "./App.vue";
 
+import i18n, {initLanguage} from './lang.js'
+
 import { $axios } from './axios.js'
 import router from "@/router.js";
 
@@ -12,12 +14,9 @@ import { useUserStore } from './stores/userStore.js'
 
 import Notifications from '@kyvg/vue3-notification'
 
-import i18n, {initLanguage} from './lang.js'
 
 const app = createApp(App);
 
-// Router
-app.use(router)
 
 app.config.globalProperties.$axios = $axios;
 
@@ -38,6 +37,9 @@ async function initializeApp() {
     useUserStore().setup();
 
     await initLanguage();
+
+    // Router
+    app.use(router)
 
     // Once the language is set, mount the app
     app.mount('#app');

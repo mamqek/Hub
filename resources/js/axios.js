@@ -29,8 +29,8 @@ axiosInstance.interceptors.response.use(
     }, 
     error => {
         
-        let message = error.response?.data?.message;
         let status = error.response?.status;
+        let message = error.response?.data?.message;
         // if validation error 
         if (status == 422 && error.response?.statusText == "Unprocessable Content") {
             message = error.response?.data?.errors
@@ -39,7 +39,7 @@ axiosInstance.interceptors.response.use(
         } else {
             notify({
                 type: "error",
-                title: `Error ${error.response?.status}`,
+                title: `Error ${status}`,
                 text: message,
             });
         }
@@ -50,6 +50,7 @@ axiosInstance.interceptors.response.use(
             error: error.response?.data?.error || error.response?.statusText,
             status: status || 500,
         };
+
         console.error(errorDetails)
         return Promise.reject(errorDetails);
     }
