@@ -1,40 +1,53 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from '@/stores/userStore';
+import { t } from '@/lang';
 
 
 const routes = [
     {
         path: "/auth",
         component: () => import("./pages/Authorization.vue"),
+        name: 'Authorization',
+        meta : {title : 'sign_in'}
     }, 
     {
         path: "/",
         component: () => import("./pages/Home.vue"),
+        name: 'Home',
+        meta : {title : 'home'}
     }, 
     {
         path: "/zip-code-checker",
         component: () => import("./pages/ZipCodeChecker.vue"),
-        meta: { requiresAuth: true}
+        name: "Zip Code Checker",
+        meta: { title: 'zip_code_checker', requiresAuth: true}
     },
     {
         path: "/soul-map",
         component: () => import("./pages/soulmap/SoulMap.vue"),
-        meta: { requiresAuth: true, requiredRole: 'soulUser' }, // This route requires the 'admin' role
+        name: "Soul Map",
+        meta: { title: 'soul_map', requiresAuth: true, requiredRole: 'soulUser' }, // This route requires the 'admin' role
         children: [
             {
                 path: 'clients',
-                component: () => import("./pages/soulmap/Clients.vue")
+                component: () => import("./pages/soulmap/Clients.vue"),
+                name: "Clients",
+                meta: {title: 'clients',}
             },
             {
                 path: 'new-client',
-                component : () => import("./pages/soulmap/NewClient.vue")
+                component : () => import("./pages/soulmap/NewClient.vue"),
+                name: "New Client",
+                meta: {title: 'new_client'}
             }
         ]
     },
     {
         path: "/unauthorized",
-        name: 'Unauthorized',
         component: () => import("./pages/Unauthorized.vue"),
+        name: 'Unauthorized',
+        meta: {title: 'unauthorized'}
+
     },
     // {
     //     path: "/",
@@ -57,6 +70,8 @@ const router =  createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+    document.title = t(to.meta.title) || to.name || 'Default Title'
+
     const isAuthenticated = useUserStore().authenticated;
     const userRole = useUserStore().getAttribute('role');
 
