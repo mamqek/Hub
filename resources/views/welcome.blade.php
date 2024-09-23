@@ -7,8 +7,7 @@
 
         <link rel='shortcut icon' type="image/png" href="{{ asset('images/logo.png') }}">
 
-
-        @vite(['resources/js/app.js'])
+        @vite(['resources/js/vue/app.js'])
         @vite(['resources/css/app.css'])
         @vite(['resources/css/reset.css'])
         @vite(['resources/css/elements.css'])

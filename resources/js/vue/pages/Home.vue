@@ -1,7 +1,7 @@
 <template>
 <div class="content">
 
-    <img src="../../../public/images/logo.png" alt="Logo">
+    <img src="../../../../public/images/logo.png" alt="Logo">
 
     <p>{{ $t('welcome_to_dev') }}</p>
 

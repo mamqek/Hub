@@ -2,7 +2,7 @@
     <nav class="main-nav">
 
         <router-link to="/" class="logo-link">
-            <img class="logo" src="./../../public/images/logo.png" alt="Logo">
+            <img class="logo" src="./../../../public/images/logo.png" alt="Logo">
         </router-link>
 
         <div class="select-container" v-if="languages">
