@@ -7,12 +7,21 @@
 
         <link rel='shortcut icon' type="image/png" href="{{ asset('images/logo.png') }}">
 
+    <!-- TODO: Satisfactory calculator graphical with algular -->
         @vite(['resources/js/vue/app.js'])
         @vite(['resources/css/app.css'])
         @vite(['resources/css/reset.css'])
         @vite(['resources/css/elements.css'])
 
-        <title>Laravel</title>
+        <!-- @if (request()->is('vue-route*'))
+    <script type="module" src="{{ mix('js/app.js') }}"></script> {{-- Vue --}}
+    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+@elseif (request()->is('angular-route*'))
+    <script type="module" src="{{ mix('js/angular-app.js') }}"></script> {{-- Angular --}}
+    <link rel="stylesheet" href="{{ mix('css/angular-app.css') }}">
+@endif -->
+
+        <title>Mamqek's Dev space</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
