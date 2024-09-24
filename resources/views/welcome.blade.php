@@ -7,19 +7,14 @@
 
         <link rel='shortcut icon' type="image/png" href="{{ asset('images/logo.png') }}">
 
-    <!-- TODO: Satisfactory calculator graphical with algular -->
-        @vite(['resources/js/vue/app.js'])
-        @vite(['resources/css/app.css'])
-        @vite(['resources/css/reset.css'])
-        @vite(['resources/css/elements.css'])
+        <!-- TODO: Satisfactory calculator graphical with algular -->
 
-        <!-- @if (request()->is('vue-route*'))
-    <script type="module" src="{{ mix('js/app.js') }}"></script> {{-- Vue --}}
-    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
-@elseif (request()->is('angular-route*'))
-    <script type="module" src="{{ mix('js/angular-app.js') }}"></script> {{-- Angular --}}
-    <link rel="stylesheet" href="{{ mix('css/angular-app.css') }}">
-@endif -->
+        @vite([
+            'resources/css/app.css',
+            'resources/css/reset.css',
+            'resources/css/elements.css',
+            'resources/js/vue/app.js'
+        ])
 
         <title>Mamqek's Dev space</title>
 
