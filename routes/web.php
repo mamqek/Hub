@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 
@@ -19,12 +20,17 @@ Route::post('/link', 'App\Http\Controllers\BagAPIController@link');
 
 Route::group(['prefix' => 'soulmap'], function () {
     Route::get('/souls', 'App\Http\Controllers\SoulController@getAllRecordsGrouped');
-
     Route::get('/clients', 'App\Http\Controllers\SoulClientController@getAllClients');
     Route::post('/saveClient', 'App\Http\Controllers\SoulClientController@saveClient');
 });
 
+// Route::get('angular/{angular_capture?}', function () {
+//     return response()->file(resource_path('js/angular/index.html'));
+// })->where('angular_capture', '[\/\w\.-]*');
 
+Route::get('angular/{angular_capture?}', function () {
+    return view('angular');
+})->where('angular_capture', '[\/\w\.-]*');
 
 Route::get('/{vue_capture?}', function () {
     return view('welcome');
