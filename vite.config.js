@@ -10,15 +10,8 @@ export default defineConfig({
     plugins: [
         vue(),
         laravel({
-            input: [
-                "resources/css/app.css", 
-                "resources/css/reset.css", 
-                "resources/css/elements.css", 
-
-                "resources/js/vue/app.js",
-
-                "resources/js/angular/src/main.ts"
-            ],
+            // for files which are loaded on every page (css), other page specific are in welcome.blade (but if removed from blade are not recognized, ask someone)
+            input: [],
             refresh: true,
         }),
     ],
@@ -26,8 +19,6 @@ export default defineConfig({
         alias: {
             vue: "vue/dist/vue.esm-bundler.js",
             '@': fileURLToPath(new URL('./resources/js/vue', import.meta.url)), // Alias for Vue
-
-            '@angular': resolve(__dirname, 'resources/angular'), // Alias for Angular
         },
     },
 });
