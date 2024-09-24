@@ -3,8 +3,11 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "vue" : "vite",
+        "angular": "cd resources/js/angular && npm start",
+        "all": "vite && cd resources/js/angular && npm start",
         "build": "vite build",
-        "prod": "cross-env NODE_ENV=production vite build"
+        "prod": "cross-env NODE_ENV=production vite build && cd resources/js/angular && npm build:prod"
     },
     "devDependencies": {
         "axios": "^1.6.4",
