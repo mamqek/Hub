@@ -43,6 +43,8 @@
           },
           "configurations": {
             "production": {
+              "outputPath": "../../../public/assets/angular",
+              "deployUrl": "/assets/angular/browser/",
               "budgets": [
                 {
                   "type": "initial",
@@ -58,6 +60,8 @@
               "outputHashing": "all"
             },
             "development": {
+                "outputPath": "dist/assets/angular",
+                "baseHref": "/assets/angular/browser/",
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
