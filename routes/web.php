@@ -24,6 +24,12 @@ Route::group(['prefix' => 'soulmap'], function () {
     Route::post('/saveClient', 'App\Http\Controllers\SoulClientController@saveClient');
 });
 
+Route::group(['prefix' => 'satisfactory'], function () {
+    Route::get('/getRecipe', 'App\Http\Controllers\RecipeController@getRecipe');
+    Route::get('/parse', 'App\Http\Controllers\RecipeController@parse');
+
+});
+
 // Route::get('angular/{angular_capture?}', function () {
 //     return response()->file(resource_path('js/angular/index.html'));
 // })->where('angular_capture', '[\/\w\.-]*');
