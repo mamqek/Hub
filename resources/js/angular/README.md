@@ -1,3 +1,7 @@
+
+fnm env | Out-String | Invoke-Expression; fnm use 20; - to change npm version in console (needed on Laptop)
+
+
 # Angular
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.0.

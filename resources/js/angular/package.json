@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "powershell -Command \"fnm env | Out-String | Invoke-Expression; fnm use 20; ng serve --configuration=development -o\"",
+    "start": "ng serve --configuration=development -o",
     "build": "ng build",
-    "build:prod": "powershell -Command \"fnm env --use-on-cd && ng build --configuration=production && copy \"C:\\study\\Hub\\public\\assets\\angular\\browser\\index.html\" \"C:\\study\\Hub\\resources\\views\\angular.blade.php\"\"",
+    "build:prod": "ng build --configuration=production && copy \"C:\\study\\Hub\\public\\assets\\angular\\browser\\index.html\" \"C:\\study\\Hub\\resources\\views\\angular.blade.php\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:angular": "node dist/angular/server/server.mjs"
