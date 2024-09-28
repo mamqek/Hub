@@ -11,6 +11,8 @@ class AddressSearchAddress extends Model
 
     protected $fillable = ['address_search_id', 'address_id'];
 
+    // TODO: try getting rid of this model in favor of using belongsToMany in AddressSearch and Address models
+    // https://laravel.com/docs/11.x/eloquent-relationships#many-to-many
     public function addressSearch()
     {
         return $this->belongsTo(AddressSearch::class, 'address_search_id');
