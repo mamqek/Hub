@@ -12,6 +12,7 @@
         </div>
 
         <div class="page-links">
+            <a href="angular">Angular</a>
             <router-link to="/soul-map">{{ $t('soul_map') }}</router-link>
             <router-link to="/zip-code-checker">{{ $t('zip_code_checker') }}</router-link>
             <router-link v-if="!authenticated" to="/auth" id="authorize">{{ $t('sign_in') }}</router-link>
