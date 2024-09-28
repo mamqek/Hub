@@ -1,0 +1,10 @@
+<div class="card">
+    <img class="card-image"/>
+    <p class="card-title">{{data.machineName}}</p>
+    <div class="card-hint">
+        <h5 class="card-hint-title">{{data.itemName}}</h5>
+        <p *ngIf="data.machineCount" class="card-hint-text">{{data.machineCount}} machines required</p>
+        <p class="card-hint-text">{{data.productionRate}} p/m</p>
+
+    </div>
+</div>
