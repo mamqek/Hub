@@ -1,0 +1,21 @@
+<div class="board" cdkDropListGroup>
+    <div
+        class="cell"
+        *ngFor="let cell of board; let i = index"
+        cdkDropList
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListData]="i"
+        [cdkDropListEnterPredicate]="enterPredicate"
+    >
+
+        <satisfactory-card
+            *ngIf="cell"
+            cdkDrag 
+            [cdkDragData]="cell"
+            [data]="cell"
+        ></satisfactory-card>
+
+    </div>
+</div>
+  
+
