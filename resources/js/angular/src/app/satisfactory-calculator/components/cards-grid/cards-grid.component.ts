@@ -2,9 +2,7 @@ import { Component,  HostListener, OnInit, AfterViewInit, ElementRef, ViewChild,
 import { RecipeService, RecipeNode } from '../../services/recipe.service';
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
-import { jsPlumb } from 'jsplumb';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
-import { BaseNodeComponent } from "jsplumbtoolkit-angular"
 
 interface Position {
     x: number;
@@ -203,51 +201,45 @@ export class CardsGridComponent implements OnInit, AfterViewInit, AfterViewCheck
     ngAfterViewChecked(): void {
         // Check if cards are initialized and perform jsPlumb logic
         if (this.data.length > 0 && !this.cardsInitialized) {
-            this.plumb();
             this.cardsInitialized = true; // Prevent re-initialization
+            this.plumb();
         }
     }
 
     plumb () {
         
-        this.instance = jsPlumb.getInstance({
-            Container: this.el.nativeElement
-        });
-
-        // this.instance = jsPlumb.getInstance({
-        //     Container: 'jsplumb-canvas',
-        //     Connector: ['Flowchart', { cornerRadius: 5 }],
-        //     Endpoint: ['Dot', { radius: 5 }],
-        //     PaintStyle: { stroke: '#456', strokeWidth: 2 },
-        //     Anchors: ['Continuous', 'Continuous']
-        //   });
-        
         const box1 = document.getElementById("card-0");
         const box2 = document.getElementById("card-1");
+        const box3 = document.getElementById("card-2");
         console.log("box1", box1);
         console.log("box2", box2);
         
+        const line = new LeaderLine(box1, box2, {
+            startPLug: 'square', 
+            endPlug: 'arrow3',
+            color: 'blue',
+            size: 4
+        })
+        const line1 = new LeaderLine(box1, box3, {
+            startPLug: 'square', 
+            endPlug: 'arrow3',
+            color: 'blue',
+            size: 4
+        })
+        console.log("drew");
+        
+        
+        setTimeout(() => {  
+            line.position();
+            line1.position();
+            console.log("position");
+            
+        }, 200);
     
-        this.instance.draggable(box1);
-        this.instance.draggable(box2);
-    
-        this.instance.connect({
-          source: box1,
-          target: box2,
-          connector: "Straight",
-        //   anchor: "Continuous",
-        //   endpoint: "Dot",
-        //   paintStyle: { stroke: "blue", strokeWidth: 3 },
-        //   overlays: [["Arrow", { width: 10, length: 10, location: 1 }]]
+        window.addEventListener('load', function() {
+            console.log("loaded");
+            
         });
-    
-        // this.instance.bind("connectionDragStop", () => {
-        //   this.redrawConnections();
-        // });
-    
-        // this.instance.bind("endpointDragStop", () => {
-        //   this.redrawConnections();
-        // });
     }
 
     drop(event: CdkDragDrop<{ x: number; y: number }>) {

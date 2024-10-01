@@ -25,6 +25,7 @@
     "angular": "file:",
     "jsplumb": "^2.15.6",
     "jsplumbtoolkit-angular": "^2.4.2",
+    "leader-line": "^1.0.7",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"

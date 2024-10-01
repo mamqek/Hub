@@ -35,7 +35,7 @@
               "src/styles.scss",
               "../../css/reset.css"
             ],
-            "scripts": []
+            "scripts": ["node_modules/leader-line/leader-line.min.js"]
           },
           "configurations": {
             "production": {
