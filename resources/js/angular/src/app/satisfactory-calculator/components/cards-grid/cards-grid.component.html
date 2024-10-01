@@ -3,9 +3,9 @@
         #boardDiv           
         [ngStyle]="{
             'grid-template-columns': 'repeat(' + size + ' , 50px)',
-            'transform': 'translate(' + position.x + 'px, ' + position.y + 'px) scale(' + scale + ')'
         }"
-        cdkDropListGroup (mousedown)="onMouseDown($event)"
+        cdkDropListGroup 
+        (mousedown)="onMouseDown($event)"
     >
         <ng-container *ngFor="let row of board; let y = index">
             <div

@@ -1,4 +1,4 @@
-import { Component,  HostListener, OnInit, AfterViewInit, ElementRef, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
+import { Component,  HostListener, OnInit, ElementRef, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
 import { RecipeService, RecipeNode } from '../../services/recipe.service';
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
@@ -14,7 +14,7 @@ interface Position {
   templateUrl: './cards-grid.component.html',
   styleUrl: './cards-grid.component.scss'
 })
-export class CardsGridComponent implements OnInit, AfterViewInit, AfterViewChecked  {
+export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
     size: number = 50;
 
@@ -183,21 +183,6 @@ export class CardsGridComponent implements OnInit, AfterViewInit, AfterViewCheck
         return circleCoords;
     }
 
-    ngAfterViewInit() {
-        const divElement = this.boardDiv.nativeElement;
-
-        const computedStyle = window.getComputedStyle(divElement);
-        const cssWidth = parseFloat(computedStyle.width);
-        const cssHeight = parseFloat(computedStyle.height); 
-        // console.log("CSS width:", cssWidth);
-        // console.log("CSS cssHeight:", cssHeight);
-        this.position.x = -(cssWidth / 2);
-        this.position.y = -(cssHeight / 2); 
-
-        this.cdr.detectChanges(); // Notify Angular that changes have been made
-        console.log("ngAfterViewInit");        
-    }
-
     ngAfterViewChecked(): void {
         // Check if cards are initialized and perform jsPlumb logic
         if (this.data.length > 0 && !this.cardsInitialized) {
@@ -291,34 +276,39 @@ export class CardsGridComponent implements OnInit, AfterViewInit, AfterViewCheck
     //     this.scale = newScale;
     //   });
     }
+
+    private scrollLeft = 0;
+    private scrollTop = 0;
+    private startX = 0;
+    private startY = 0;
   
     onMouseDown(event: MouseEvent) {
-      if (event.button === 2) { // Right-click
-        event.preventDefault()
-        this.isDragging = true;
-        this.dragStart.x = event.clientX - this.position.x;
-        this.dragStart.y = event.clientY - this.position.y;
+        console.log("mousedown");
         
-      // Throttle mousemove event to limit frequency of position updates
-      this.mouseMoveSubscription = fromEvent<MouseEvent>(document, 'mousemove')
-        .subscribe(moveEvent => this.onMouseMove(moveEvent));
+      if (event.button === 2) { // Right-click
+            event.preventDefault()
+            this.isDragging = true;
+            this.startX = event.clientX;
+            this.startY = event.clientY;
 
-        this.mouseUpSubscription = fromEvent(document, 'mouseup').subscribe(() => this.onMouseUp());
-      }
+            this.scrollLeft = window.scrollX;
+            this.scrollTop = window.scrollY;
+            
+            // Throttle mousemove event to limit frequency of position updates
+            this.mouseMoveSubscription = fromEvent<MouseEvent>(document, 'mousemove')
+            .subscribe(moveEvent => this.onMouseMove(moveEvent));
+
+            this.mouseUpSubscription = fromEvent(document, 'mouseup').subscribe(() => this.onMouseUp());
+        }
     }
   
-    onMouseMove(event: MouseEvent) {
-        // console.log("onMouseMove", event);
-        
-      if (this.isDragging) {
-        // console.log(this.dragStart);
-        // console.log(this.position);
-        // console.log("clientX" + event.clientX);
-        // console.log("clientY" + event.clientY);
-        
-        this.position.x = event.clientX - this.dragStart.x;
-        this.position.y = event.clientY - this.dragStart.y;
-      }
+    onMouseMove(event: MouseEvent) {        
+      if (!this.isDragging) return;
+      
+        const x = event.clientX - this.startX;
+        const y = event.clientY - this.startY;
+
+        window.scrollTo(this.scrollLeft - x, this.scrollTop - y)
     }
   
     onMouseUp() {
@@ -334,11 +324,13 @@ export class CardsGridComponent implements OnInit, AfterViewInit, AfterViewCheck
           this.mouseUpSubscription.unsubscribe();
           this.mouseUpSubscription = null;
         }
-      }
+    }
 
     @HostListener('document:contextmenu', ['$event'])
     disableContextMenu(event: MouseEvent) {
-    event.preventDefault();
+        event.preventDefault();
+        console.log("right click");
+    
     }
 
 }
