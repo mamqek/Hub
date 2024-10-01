@@ -1,18 +1,22 @@
+
 .board {
     position: absolute;
-    transform: translateX(-50%);
-    overflow-x: scroll;
+    transition: transform 0.1s ease;  /* Smooth transition */
 
     display: grid;
-    grid-template-columns: repeat(auto-fill, 50px);  /* Creates 8 columns of 100px */
-    width: 200vw;
-    gap: 10px;
+    gap: 5px;
+}
+
+.space {
+    position: relative;
+    height: 50px;
+    width: 50px;
 }
 
 .cell {
     height: 50px;
     width: 50px;
-
+    border: 1px solid black;
     display: flex;
     justify-content: center;
     align-items: center;

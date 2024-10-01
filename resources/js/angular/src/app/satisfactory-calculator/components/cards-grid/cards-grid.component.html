@@ -1,20 +1,33 @@
-<div class="board" cdkDropListGroup>
-    <div
-        class="cell"
-        *ngFor="let cell of board; let i = index"
-        cdkDropList
-        (cdkDropListDropped)="drop($event)"
-        [cdkDropListData]="i"
-        [cdkDropListEnterPredicate]="enterPredicate"
+<div class="space">
+    <div class="board" 
+        #boardDiv           
+        [ngStyle]="{
+            'grid-template-columns': 'repeat(' + size + ' , 50px)',
+            'transform': 'translate(' + position.x + 'px, ' + position.y + 'px) scale(' + scale + ')'
+        }"
+        cdkDropListGroup (mousedown)="onMouseDown($event)"
     >
-
-        <satisfactory-card
-            *ngIf="cell"
-            cdkDrag 
-            [cdkDragData]="cell"
-            [data]="cell"
-        ></satisfactory-card>
-
+        <ng-container *ngFor="let row of board; let y = index">
+            <div
+                class="cell"
+                *ngFor="let cell of row; let x = index"
+                cdkDropList
+                (cdkDropListDropped)="drop($event)"
+                [cdkDropListData]="{x: x, y: y}"
+                [cdkDropListEnterPredicate]="enterPredicate"
+            >
+                <satisfactory-card
+                data-jtk-target="true"
+                data-jtk-source="true"
+                    *ngIf="cell"
+                    cdkDrag 
+                    [cdkDragData]="cell"
+                    [data]="cell"
+                    
+                ></satisfactory-card>
+                
+            </div>
+        </ng-container>
     </div>
 </div>
   
