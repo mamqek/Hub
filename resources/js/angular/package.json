@@ -21,7 +21,10 @@
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
+    "@jsplumb/browser-ui": "^6.2.10",
     "angular": "file:",
+    "jsplumb": "^2.15.6",
+    "jsplumbtoolkit-angular": "^2.4.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"

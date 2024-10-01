@@ -199,11 +199,55 @@ export class CardsGridComponent implements OnInit, AfterViewInit, AfterViewCheck
         this.cdr.detectChanges(); // Notify Angular that changes have been made
         console.log("ngAfterViewInit");        
     }
+
+    ngAfterViewChecked(): void {
+        // Check if cards are initialized and perform jsPlumb logic
+        if (this.data.length > 0 && !this.cardsInitialized) {
+            this.plumb();
+            this.cardsInitialized = true; // Prevent re-initialization
+        }
+    }
+
+    plumb () {
+        
+        this.instance = jsPlumb.getInstance({
+            Container: this.el.nativeElement
         });
+
+        // this.instance = jsPlumb.getInstance({
+        //     Container: 'jsplumb-canvas',
+        //     Connector: ['Flowchart', { cornerRadius: 5 }],
+        //     Endpoint: ['Dot', { radius: 5 }],
+        //     PaintStyle: { stroke: '#456', strokeWidth: 2 },
+        //     Anchors: ['Continuous', 'Continuous']
+        //   });
         
-        console.log(this.ingridientsArr$);
+        const box1 = document.getElementById("card-0");
+        const box2 = document.getElementById("card-1");
+        console.log("box1", box1);
+        console.log("box2", box2);
         
-                    // Initial placement of nodes
+    
+        this.instance.draggable(box1);
+        this.instance.draggable(box2);
+    
+        this.instance.connect({
+          source: box1,
+          target: box2,
+          connector: "Straight",
+        //   anchor: "Continuous",
+        //   endpoint: "Dot",
+        //   paintStyle: { stroke: "blue", strokeWidth: 3 },
+        //   overlays: [["Arrow", { width: 10, length: 10, location: 1 }]]
+        });
+    
+        // this.instance.bind("connectionDragStop", () => {
+        //   this.redrawConnections();
+        // });
+    
+        // this.instance.bind("endpointDragStop", () => {
+        //   this.redrawConnections();
+        // });
     }
 
     drop(event: CdkDragDrop<{ x: number; y: number }>) {

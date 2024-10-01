@@ -16,11 +16,11 @@ import { SatisfactoryCardComponent } from './components/satisfactory-card/satisf
         SatisfactoryCardComponent,
     ],
     exports: [
-        CardsGridComponent
+        CardsGridComponent,
     ],
     imports: [
         CommonModule,
-        DragDropModule,
+        DragDropModule
     ],
     providers: [
         RecipeService,
