@@ -29,10 +29,7 @@ class RecipeController extends Controller
         // return response()->json(['output' =>  $output], 200);
     }
     
-    function getIndentLevel($line) {
-        return ((strlen($line) - strlen(ltrim($line, ' '))) - 1) / 2; // Assuming 3 spaces per indent level
-    }
-    
+
 
     protected function parseOutput($output) {
 
@@ -104,8 +101,13 @@ class RecipeController extends Controller
         // ];
     }
 
+    function getIndentLevel($line) {
+        return ((strlen($line) - strlen(ltrim($line, ' '))) - 1) / 2; // Assuming 3 spaces per indent level
+    }
+
     protected function parseRow($row, $count, $indentLevel) {
         preg_match('/^\s*[\*\-<]\s*(\d+\.\d+)\s+([a-zA-Z\s\-]+):\s+(\d+\.\d+)\s+([a-zA-Z\s]+)/', $row, $matches);
+
 
         // Return the parsed values in an associative array if matched
         if ($matches) {
