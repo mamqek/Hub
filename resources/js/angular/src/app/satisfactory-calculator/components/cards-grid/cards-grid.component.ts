@@ -286,6 +286,50 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
         console.log(this.scale);
         
+    
+
+    }
+
+    private transitionStartTimeout: any = null;
+
+    @HostListener('transitionstart', ['$event'])
+    onTransitionStart(event: TransitionEvent) {
+        // Check if the event is for the transform property and the element is targeted
+        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('space')) {
+    
+            // Clear any previous timeout to debounce
+            if (this.transitionStartTimeout) {
+                clearTimeout(this.transitionStartTimeout);
+            }
+    
+            // Set a new timeout to ensure the handler only fires once within a time period
+            this.transitionStartTimeout = setTimeout(() => {
+                console.log("transitionstart triggered once");
+                this.hideLines();
+            }, 100);  // Delay time in milliseconds
+        }
+    }
+
+    @HostListener('transitionend', ['$event'])
+    onTransitionEnd(event: TransitionEvent) {
+        console.log("transitionend");
+        
+        // Check if the transition is for the 'transform' property and the element has the 'space' class
+        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('space')) {
+            console.log("transitionend in");
+            
+            this.redrawLines();
+        }
+    }
+
+    hideLines() {
+        console.log("hideLines");
+        
+        this.lines.forEach(line => line.hide("none"));
+    }
+
+    showLines() {
+        this.lines.forEach(line => line.show("draw"));
     }
 
     @HostListener('window:keydown', ['$event'])
