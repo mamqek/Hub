@@ -387,19 +387,30 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             
             // Throttle mousemove event to limit frequency of position updates
             this.mouseMoveSubscription = fromEvent<MouseEvent>(document, 'mousemove')
-            .subscribe(moveEvent => this.onMouseMove(moveEvent));
+            
+            .subscribe(moveEvent => this.scheduleScroll(moveEvent));
 
             this.mouseUpSubscription = fromEvent(document, 'mouseup').subscribe(() => this.onMouseUp());
         }
     }
-  
-    onMouseMove(event: MouseEvent) {        
-      if (!this.isDragging) return;
-      
-        const x = event.clientX - this.startX;
-        const y = event.clientY - this.startY;
+    private animationFrameId: number | null = null;
 
-        window.scrollTo(this.scrollLeft - x, this.scrollTop - y)
+    scheduleScroll(event: MouseEvent) {
+        if (!this.isDragging) return;
+        console.log("scheduleScroll");
+        
+        // Cancel any pending animation frame request
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+    
+        // Schedule the next scroll update
+        this.animationFrameId = requestAnimationFrame(() => {
+            const x = event.clientX - this.startX;
+            const y = event.clientY - this.startY;
+        
+            window.scrollTo(this.scrollLeft - x, this.scrollTop - y);
+        });
     }
   
     onMouseUp() {
