@@ -74,7 +74,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             
         // Initial placement of nodes
 
-        this.setupScrollListener();
 
 
         let circle : { [degree: number]: Position } = this.getFullCircleCoordinates(5);
@@ -221,9 +220,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             
         }, 200);
     
-        window.addEventListener('load', function() {
-            console.log("loaded");
-            
         });
     }
 
@@ -253,29 +249,67 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
 
 
-    scale = 1;
-    position = { x: 0, y: 0 };
-    isDragging = false;
-    dragStart = { x: 0, y: 0 };
-    mouseMoveSubscription: Subscription | null = null;
-    mouseUpSubscription: Subscription | null = null;
-  
-    setupScrollListener() {
-      const scroll$: Observable<number> = fromEvent(window, 'scroll').pipe(
-        throttleTime(50),  
-        map(() => window.scrollY ),
-        map(scrollY => Math.max(0.7, 1.5 - scrollY / 1000))
-      );
-    //   console.log(" scrolls", window.scrollY);
-      
-    //   scroll$.subscribe(newScale => {
-    //   console.log(" scrolls", window.scrollY);
 
-    //     console.log("newScale", newScale);
+    scale = 1; // Default scale
+    scaleStep = 0.1; // Step for zooming in and out
+
+    // Limit zooming between 0.5x and 3x
+    minScale = 0.5;
+    maxScale = 3;
+    private zoomTimeout: any;
+
+    @HostListener('wheel', ['$event'])
+    onWheel(event: WheelEvent) {
+        event.preventDefault(); // Prevent the default behavior of scrolling the page
+        console.log("wheel");
+    
+        if (event.deltaY < 0) {
+            // Scroll up -> Zoom in
+            this.zoomIn();
+        } else {
+            // Scroll down -> Zoom out
+            this.zoomOut();
+        }
+
+        if (this.zoomTimeout) {
+            clearTimeout(this.zoomTimeout);
+        }
+        console.log(this.scale);
         
     //     this.scale = newScale;
     //   });
     }
+
+    @HostListener('window:keydown', ['$event'])
+    onKeyDown(event: KeyboardEvent) {
+        console.log("keydown");
+        
+        if (event.key === '+' || event.key === '=') {
+            // "+" key -> Zoom in
+            this.zoomIn();
+        } else if (event.key === '-') {
+            // "-" key -> Zoom out
+            this.zoomOut();
+        } else if ((event.ctrlKey || event.metaKey) && event.key === '0') {
+            // Ctrl/Cmd + "0" -> Reset zoom
+            this.resetZoom();
+        }
+    }
+
+    zoomIn() {    
+        this.scale = Math.min(this.maxScale, this.scale + this.scaleStep);
+        
+    }
+
+    zoomOut() {    
+        this.scale = Math.max(this.minScale, this.scale - this.scaleStep);
+    }
+
+    resetZoom() {
+        this.scale = 1; // Reset scale to default
+    }
+
+
 
     private scrollLeft = 0;
     private scrollTop = 0;

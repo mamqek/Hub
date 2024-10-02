@@ -1,4 +1,9 @@
-<div class="space">
+<div 
+    class="space"
+    [ngStyle]="{
+        'transform': 'scale(' + scale + ')',
+    }"
+    >
     <div class="board" 
         #boardDiv           
         [ngStyle]="{
