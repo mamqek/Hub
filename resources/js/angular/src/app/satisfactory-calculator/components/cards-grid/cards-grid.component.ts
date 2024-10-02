@@ -86,9 +86,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         // this.board[pos.y][pos.x] = { id: 1, itemName: "1", machineCount: "5.00", machineName: "Assembler", productionRate: "10.00", ingredients: [1, 9], indentLevel: 0 };
 
 
-        
-        console.log("getFullCircleCoordinates", circle );
-        // for (const [degree, pos] of Object.entries(circle)) {
+        // let triangleCircle : { [degree: number]: Position } = this.getFullCircleCoordinates(4.5, this.boardMiddle);
+        // console.log("getFullCircleCoordinatesTriangle", triangleCircle );
+        // for (const [degree, pos] of Object.entries(triangleCircle)) {
         //     this.board[pos.y][pos.x] = { id: parseInt(degree), itemName: degree, machineCount: "5.00", machineName: "Assembler", productionRate: "10.00", ingredients: [1, 9], indentLevel: 0 };
         // }
     }
@@ -156,31 +156,42 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         return closestDegree !== null ? filteredDegrees[closestDegree] : null;
     }
 
-    getFullCircleCoordinates(radius: number): { [degree: number]: Position } {
-        const circleCoords: { [degree: number]: Position } = {};
+
+    getFullCircleCoordinates(radius: number, center: Position): { [degree: number]: Position } {
+        const circle: { [degree: number]: Position } = {};
     
-        // Calculate the number of points based on the circumference of the circle
-        const circumference = 2 * Math.PI * radius + 0.5;
+        const limit = Math.floor(radius * Math.sqrt(0.5)); // Limit for r
     
-        // Set the step dynamically based on the circumference (this ensures no overlapping)
-        const degreeStep = Math.max(1, Math.round(360 / circumference));
-     
-        for (let degree = 0; degree < 360; degree += degreeStep) {
-            const angleInRadians = ((360 - degree) * Math.PI) / 180;
+        for (let r = 0; r <= limit; r++) {
+            const d = Math.floor(Math.sqrt(radius * radius - r * r));
     
-            // Calculate x and y coordinates and round them to the nearest integer
-            const x = Math.round(this.boardMiddle.x + radius * Math.cos(angleInRadians));
-            const y = Math.round(this.boardMiddle.y + radius * Math.sin(angleInRadians));
-    
-            // Avoid adding duplicate coordinates by checking if they already exist
+            // Draw 8 symmetric points
+            addCirclePoint(circle, center, center.x - d, center.y + r); // Left, Top
+            addCirclePoint(circle, center, center.x + d, center.y + r); // Right, Top
+            addCirclePoint(circle, center, center.x - d, center.y - r); // Left, Bottom
+            addCirclePoint(circle, center, center.x + d, center.y - r); // Right, Bottom
+            addCirclePoint(circle, center, center.x + r, center.y - d); // Top, Right
+            addCirclePoint(circle, center, center.x + r, center.y + d); // Bottom, Right
+            addCirclePoint(circle, center, center.x - r, center.y - d); // Top, Left
+            addCirclePoint(circle, center, center.x - r, center.y + d); // Bottom, Left
+        }
+
+        return circle;
+
+        function addCirclePoint(circleCoords: { [degree: number]: Position }, center: Position, x: number, y: number) {
             const coordExists = Object.values(circleCoords).some(pos => pos.x === x && pos.y === y);
             if (!coordExists) {
-                circleCoords[degree] = { x, y };
+                let angle = Math.atan2(y - center.y, x - center.x) * (180 / Math.PI);
+                // Ensure angle is positive
+                if (angle < 0) {
+                    angle += 360;
+                }
+                circleCoords[Math.round(angle)] = { x, y };
             }
         }
     
-        return circleCoords;
     }
+
 
     ngAfterViewChecked(): void {
         // Check if cards are initialized and perform jsPlumb logic
