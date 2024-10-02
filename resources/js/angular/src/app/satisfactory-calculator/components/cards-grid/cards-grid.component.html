@@ -1,13 +1,9 @@
-<div 
-    class="space"
-    [ngStyle]="{
-        'transform': 'scale(' + scale + ')',
-    }"
-    >
+<div class="space">
     <div class="board" 
         #boardDiv           
         [ngStyle]="{
-            'grid-template-columns': 'repeat(' + size + ' , 50px)',
+            'grid-template-columns': 'repeat(' + gridSize + ' , 50px)',
+            'transform': 'scale(' + scale + ')',
         }"
         cdkDropListGroup 
         (mousedown)="onMouseDown($event)"

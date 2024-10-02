@@ -16,10 +16,10 @@ interface Position {
 })
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
-    size: number = 70;
+    gridSize: number = 40;
 
-    board: (RecipeNode | null)[][] = Array.from({ length: this.size }, () => Array(this.size).fill(null));
-    boardMiddle: Position = { x: this.size / 2, y: this.size / 2 };
+    board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
+    boardMiddle: Position = { x: this.gridSize / 2, y: this.gridSize / 2 };
     nodes: RecipeNode[] = [];
     cardsInitialized: boolean = false;
 
@@ -295,7 +295,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     @HostListener('transitionstart', ['$event'])
     onTransitionStart(event: TransitionEvent) {
         // Check if the event is for the transform property and the element is targeted
-        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('space')) {
+        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
     
             // Clear any previous timeout to debounce
             if (this.transitionStartTimeout) {
@@ -315,7 +315,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         console.log("transitionend");
         
         // Check if the transition is for the 'transform' property and the element has the 'space' class
-        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('space')) {
+        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
             console.log("transitionend in");
             
             this.redrawLines();
