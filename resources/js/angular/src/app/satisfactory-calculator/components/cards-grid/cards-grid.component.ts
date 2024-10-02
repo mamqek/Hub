@@ -42,49 +42,21 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     public ngOnInit(): void {
 
-
-
-        window.addEventListener('load', () => {
-        setTimeout(() => {
-            // console.log("Initial scroll position after page load", window.scrollY);
-
-            window.scrollTo(0, 0); // Force scroll position to 0,0 after reload
-            // console.log("Initial scroll position after page load", window.scrollY);        
-          }, 0);
-        });
+        // Place user camera to default position
+        // setTimeout(() => {
+        //     window.scrollTo(0, 0); // Force scroll position to 0,0 after reload
+        //   }, 0);
         console.log("initialized");
         
-        this.ingridientsArr$ = this.recipeService.getRecipe("modular frame", 10);
+        this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
         
         this.ingridientsArr$.subscribe((data) => {
             console.log("data", data);
-            this.data = data;
-            // either 2 dimensonal array to put intnd_level as a row
-            // or dynamicaly set amount of colemns based on recepy, amd count index by full/2 = middle
-            data.forEach((element) => {
-                console.log(element);
-                // this.board[middleHeight][middleWidth +  element.id] = element;
-                
-            });
-            this.drawGraph(data[0], data);
-            this.board[this.boardMiddle.y][this.boardMiddle.y] = data[0];
-            console.log("end subscribe");
-            
-        });
-            
-        // Initial placement of nodes
+            this.nodes = data;
 
-
-
-        let circle : { [degree: number]: Position } = this.getFullCircleCoordinates(5);
-        
-
-
-
-        // let pos = getDegreeCoordinate(115, 150, circle, this.board) ?? { x: 0, y: 0 };
-        // console.log("getDegreeCoordinate", pos);
-        // this.board[pos.y][pos.x] = { id: 1, itemName: "1", machineCount: "5.00", machineName: "Assembler", productionRate: "10.00", ingredients: [1, 9], indentLevel: 0 };
-
+            this.drawGraph(this.nodes[0], this.boardMiddle);
+            this.board[this.boardMiddle.y][this.boardMiddle.x] = this.nodes[0];            
+        })
 
         // let triangleCircle : { [degree: number]: Position } = this.getFullCircleCoordinates(4.5, this.boardMiddle);
         // console.log("getFullCircleCoordinatesTriangle", triangleCircle );
@@ -94,31 +66,56 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
-    drawGraph (node: RecipeNode, data: RecipeNode[], degrees: {upper: number, lower: number} = {upper: 360, lower: 0}) {
-        if (!node.ingredients || !Array.isArray(node.ingredients)) {
-            return; // Exit if ingredients is undefined or not an array
-        }
+    drawGraph (node: RecipeNode, center: Position, degrees: {lower: number, upper: number} = {lower: 0, upper: 360}) {
+        // Exit if ingredients is undefined or not an array
+        if (!node.ingredients || !Array.isArray(node.ingredients)) return;
 
-        let level = node.indentLevel + 3;
-        let circle = this.getFullCircleCoordinates(level + 2);
+        let radius = 2.5;       
 
         let num_of_ingredients = node.ingredients.length;
-        let circle_segment = degrees.upper - degrees.lower;
-        let ingredient_segment = circle_segment / num_of_ingredients;
 
+        // Minimum angle for each ingredient
+        const minAngle = 30; 
+    
+        // Calculate the total angle available to the current node
+        let circle_segment = degrees.upper - degrees.lower;
+        
+        // Calculate total required angle based on minAngle
+        const totalRequiredAngle = num_of_ingredients * minAngle;
+
+        // Check if we have enough space to place all ingredients
+        if (totalRequiredAngle > circle_segment) {
+            console.warn("Not enough space for all ingredients, adjusting...");
+            console.warn(node.itemName);
+            
+            // Increase radius to get more space for ingredients
+            circle_segment = totalRequiredAngle;
+            radius +=1
+        }
+        let circle = this.getFullCircleCoordinates(radius, center); 
+
+        // Calculate the angle segment based on the number of ingredients that can fit
+        const ingredient_segment = circle_segment / num_of_ingredients;    
+    
         for (const [index, ingredientId] of node.ingredients.entries()) {
             const lowerBoundDegree = degrees.lower + index * ingredient_segment;
-            const upperBoundDegree = lowerBoundDegree + ingredient_segment;
+            const upperBoundDegree = lowerBoundDegree + ingredient_segment;            
 
-            const ingredientNode = data.find(n => n.id === ingredientId);
+            const ingredientNode = this.nodes.find(n => n.id === ingredientId);
+
             if (ingredientNode) {
-                const position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle);
-                if (position) {
-                    this.board[position.y][position.x] = ingredientNode;
-                    this.drawGraph(ingredientNode, data, { upper: upperBoundDegree, lower: lowerBoundDegree });
-                } else {
-                    console.error("Could not find position for ingredient", ingredientNode);
+
+                let position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle);
+                // If no angle is found in boundaries, increase radius and try again
+                while (!position) {
+                    radius += 1;
+                    circle = this.getFullCircleCoordinates(radius, center);
+                    position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle);
                 }
+
+                this.board[position.y][position.x] = ingredientNode;
+                this.drawGraph(ingredientNode, position, {  lower: lowerBoundDegree, upper: upperBoundDegree });
+
             }
         }
     }
