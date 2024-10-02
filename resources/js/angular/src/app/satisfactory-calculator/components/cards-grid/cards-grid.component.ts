@@ -32,14 +32,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
 
-    private instance: any;
-    private redrawConnections(): void {
-        this.instance.repaintEverything();
-    }
-
-
-
-
     public ngOnInit(): void {
 
         // Place user camera to default position
@@ -192,43 +184,45 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     ngAfterViewChecked(): void {
         // Check if cards are initialized and perform jsPlumb logic
-        if (this.data.length > 0 && !this.cardsInitialized) {
+        if (this.nodes.length > 0 && !this.cardsInitialized) {
             this.cardsInitialized = true; // Prevent re-initialization
-            this.plumb();
+            this.drawLines();
         }
     }
 
-    plumb () {
-        
-        const box1 = document.getElementById("card-0");
-        const box2 = document.getElementById("card-1");
-        const box3 = document.getElementById("card-2");
-        console.log("box1", box1);
-        console.log("box2", box2);
-        
-        const line = new LeaderLine(box1, box2, {
-            startPLug: 'square', 
-            endPlug: 'arrow3',
-            color: 'blue',
-            size: 4
-        })
-        const line1 = new LeaderLine(box1, box3, {
-            startPLug: 'square', 
-            endPlug: 'arrow3',
-            color: 'blue',
-            size: 4
-        })
-        console.log("drew");
-        
-        
-        setTimeout(() => {  
-            line.position();
-            line1.position();
-            console.log("position");
-            
-        }, 200);
+    lines: any[] = [];
+
+    drawLines () {
+
+        this.nodes.forEach(card => {
+            const cardEl = document.getElementById(`card-${card.id}`);
+
+            if (!card.ingredients) return;
+
+            card.ingredients.forEach(ingredientId => {
+                const ingredientEl = document.getElementById(`card-${ingredientId}`);
+
+                let line = new LeaderLine(cardEl, ingredientEl, {
+                    startPLug: 'arrow3', 
+                    endPlug: 'square',
+                    color: 'blue',
+                    size: 2,
+                    path: 'straight',
+                    hide: true,
+                })
+
+                this.lines.push(line);
+            });
     
         });
+        
+        this.redrawLines();
+
+        // setTimeout(() => {
+            
+        //     this.showLines();
+        // }, 300);
+
     }
 
     drop(event: CdkDragDrop<{ x: number; y: number }>) {
@@ -254,6 +248,16 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         return !this.board[drop.data];  // Only allow drop into empty cells
     }
     
+
+    redrawLines() {
+        // Use requestAnimationFrame for smoother line positioning
+        this.lines.forEach(line => {
+            requestAnimationFrame(() => {
+                line.position(); // Reposition the line smoothly
+                line.show("draw");
+            });
+        });
+    }
 
 
 
