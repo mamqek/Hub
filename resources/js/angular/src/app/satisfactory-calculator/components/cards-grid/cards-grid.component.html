@@ -18,8 +18,9 @@
                 [cdkDropListEnterPredicate]="enterPredicate"
             >
                 <satisfactory-card
-                data-jtk-target="true"
-                data-jtk-source="true"
+                    data-jtk-target="true"
+                    data-jtk-source="true"
+                    (cdkDragStarted)="dragStarted($event)"
                     *ngIf="cell"
                     cdkDrag 
                     [cdkDragData]="cell"

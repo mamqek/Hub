@@ -223,6 +223,12 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     }
 
+    dragStarted(event: CdkDragStart) {
+        console.log("dragStarted",event);
+        
+        // this.hideLines();
+    }
+
     drop(event: CdkDragDrop<{ x: number; y: number }>) {
         // Swap positions on the board array
         // console.log("drop", event.item.data);
