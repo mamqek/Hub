@@ -200,11 +200,11 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             card.ingredients.forEach(ingredientId => {
                 const ingredientEl = document.getElementById(`card-${ingredientId}`);
 
-                let line = new LeaderLine(cardEl, ingredientEl, {
-                    startPLug: 'arrow3', 
-                    endPlug: 'square',
-                    color: 'blue',
-                    size: 2,
+                let line = new LeaderLine(ingredientEl, cardEl , {
+                    startPLug: 'square', 
+                    endPlug: 'arrow3',
+                    color: 'gray',
+                    size: 3,
                     path: 'straight',
                     hide: true,
                 })
