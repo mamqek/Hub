@@ -16,18 +16,16 @@ interface Position {
 })
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
-    size: number = 50;
+    size: number = 70;
 
     board: (RecipeNode | null)[][] = Array.from({ length: this.size }, () => Array(this.size).fill(null));
     boardMiddle: Position = { x: this.size / 2, y: this.size / 2 };
-    data: RecipeNode[] = [];
+    nodes: RecipeNode[] = [];
     cardsInitialized: boolean = false;
 
     public ingridientsArr$?: Observable<RecipeNode[]>;
     
-    constructor(private recipeService: RecipeService, private cdr: ChangeDetectorRef, private el: ElementRef) { 
-
-    }
+    constructor(private recipeService: RecipeService, private cdr: ChangeDetectorRef, private el: ElementRef) { }
 
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
@@ -288,8 +286,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
         console.log(this.scale);
         
-    //     this.scale = newScale;
-    //   });
     }
 
     @HostListener('window:keydown', ['$event'])
@@ -323,10 +319,14 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
 
 
+
+    private isDragging = false;
     private scrollLeft = 0;
     private scrollTop = 0;
     private startX = 0;
     private startY = 0;
+    mouseMoveSubscription: Subscription | null = null;
+    mouseUpSubscription: Subscription | null = null;
   
     onMouseDown(event: MouseEvent) {
         console.log("mousedown");
@@ -334,6 +334,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
       if (event.button === 2) { // Right-click
             event.preventDefault()
             this.isDragging = true;
+
             this.startX = event.clientX;
             this.startY = event.clientY;
 
