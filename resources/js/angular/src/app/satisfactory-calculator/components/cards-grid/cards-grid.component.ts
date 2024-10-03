@@ -5,7 +5,7 @@ import { DragScrollService } from '../../services/drag-scroll.service';
 import { DrawLinesService } from '../../services/draw-lines.service';
 
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
-import { CdkDragDrop, CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
@@ -140,6 +140,36 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
     }
 
+    private isDragging = false;
+
+    dragStarted(event: CdkDragStart) {
+        this.isDragging = true;
+        let node = event.source.data;
+    }
+
+    drop(event: CdkDragDrop<{ x: number; y: number }>) {
+        // Swap positions on the board array
+        // console.log("drop", event.item.data);
+        // console.log("from", event.previousContainer.data);
+        // console.log("to", event.container.data);
+        
+        
+        const previousIndex = event.previousContainer.data;
+        const currentIndex = event.container.data;
+      
+        if (previousIndex !== currentIndex) {
+          
+          this.board[previousIndex.y][previousIndex.x] = null;
+          this.board[currentIndex.y][currentIndex.x] = event.item.data;
+        }
+        this.isDragging = false;
+    }
+    
+    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {
+        // console.log("enterPredicate", drag.data, drop.data);
+        
+        return !this.board[drop.data];  // Only allow drop into empty cells
+    }
 
 
     getDegreeCoordinate(lowerBoundDegree: number, upperBoundDegree: number, circle: { [degree: number]: Position }): Position | null {
