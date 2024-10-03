@@ -1,5 +1,8 @@
 import { Component,  HostListener, OnInit, ElementRef, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
+
 import { RecipeService, RecipeNode } from '../../services/recipe.service';
+import { DrawLinesService } from '../../services/draw-lines.service';
+
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
@@ -25,7 +28,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     public ingridientsArr$?: Observable<RecipeNode[]>;
     
-    constructor(private recipeService: RecipeService, private cdr: ChangeDetectorRef, private el: ElementRef) { }
+    constructor(
+        private drawLinesService: DrawLinesService
+        ) {
+    }
 
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
@@ -184,86 +190,26 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         // Check if cards are initialized and perform jsPlumb logic
         if (this.nodes.length > 0 && !this.cardsInitialized) {
             this.cardsInitialized = true; // Prevent re-initialization
-            this.drawLines();
+            this.drawLinesService.drawLines(this.nodes
+                .map(node => ({
+                    id: node.id, 
+                    children: node.ingredients ?? [], 
+                    parentId: node.parentId ?? -1 
+                }))
+            );
         }
     }
 
-    lines: any[] = [];
-
-    drawLines () {
-
-        this.nodes.forEach(card => {
-            const cardEl = document.getElementById(`card-${card.id}`);
-
-            if (!card.ingredients) return;
-
-            card.ingredients.forEach(ingredientId => {
-                const ingredientEl = document.getElementById(`card-${ingredientId}`);
-
-                let line = new LeaderLine(ingredientEl, cardEl , {
-                    startPLug: 'square', 
-                    endPlug: 'arrow3',
-                    color: 'gray',
-                    size: 3,
-                    path: 'straight',
-                    hide: true,
-                })
-
-                this.lines.push(line);
-            });
-    
-        });
+    @HostListener('transitionend', ['$event'])
+    onZoomEnd(event: TransitionEvent) {
         
-        this.redrawLines();
-
-        // setTimeout(() => {
+        // Check if the transition is for the 'transform' property and the element has the 'board' class
+        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
+            console.log("transitionend in");
             
-        //     this.showLines();
-        // }, 300);
-
-    }
-
-    dragStarted(event: CdkDragStart) {
-        console.log("dragStarted",event);
-        
-        // this.hideLines();
-    }
-
-    drop(event: CdkDragDrop<{ x: number; y: number }>) {
-        // Swap positions on the board array
-        // console.log("drop", event.item.data);
-        // console.log("from", event.previousContainer.data);
-        // console.log("to", event.container.data);
-        
-        
-        const previousIndex = event.previousContainer.data;
-        const currentIndex = event.container.data;
-      
-        if (previousIndex !== currentIndex) {
-          
-          this.board[previousIndex.y][previousIndex.x] = null;
-          this.board[currentIndex.y][currentIndex.x] = event.item.data;
+            this.drawLinesService.redrawLines();
         }
     }
-    
-    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {
-        // console.log("enterPredicate", drag.data, drop.data);
-        
-        return !this.board[drop.data];  // Only allow drop into empty cells
-    }
-    
-
-    redrawLines() {
-        // Use requestAnimationFrame for smoother line positioning
-        this.lines.forEach(line => {
-            requestAnimationFrame(() => {
-                line.position(); // Reposition the line smoothly
-                line.show("draw");
-            });
-        });
-    }
-
-
 
 
     scale = 1; // Default scale
@@ -276,6 +222,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @HostListener('wheel', ['$event'])
     onWheel(event: WheelEvent) {
+        this.drawLinesService.hideLines();
         event.preventDefault(); // Prevent the default behavior of scrolling the page
         console.log("wheel");
     
@@ -291,52 +238,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             clearTimeout(this.zoomTimeout);
         }
         console.log(this.scale);
-        
-    
-
     }
 
-    private transitionStartTimeout: any = null;
-
-    @HostListener('transitionstart', ['$event'])
-    onTransitionStart(event: TransitionEvent) {
-        // Check if the event is for the transform property and the element is targeted
-        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
-    
-            // Clear any previous timeout to debounce
-            if (this.transitionStartTimeout) {
-                clearTimeout(this.transitionStartTimeout);
-            }
-    
-            // Set a new timeout to ensure the handler only fires once within a time period
-            this.transitionStartTimeout = setTimeout(() => {
-                console.log("transitionstart triggered once");
-                this.hideLines();
-            }, 100);  // Delay time in milliseconds
-        }
-    }
-
-    @HostListener('transitionend', ['$event'])
-    onTransitionEnd(event: TransitionEvent) {
-        console.log("transitionend");
-        
-        // Check if the transition is for the 'transform' property and the element has the 'space' class
-        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
-            console.log("transitionend in");
-            
-            this.redrawLines();
-        }
-    }
-
-    hideLines() {
-        console.log("hideLines");
-        
-        this.lines.forEach(line => line.hide("none"));
-    }
-
-    showLines() {
-        this.lines.forEach(line => line.show("draw"));
-    }
 
     @HostListener('window:keydown', ['$event'])
     onKeyDown(event: KeyboardEvent) {
