@@ -85,7 +85,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         // }
     }
 
-
+    // TODO: add some angle to min angle each indent level to make it more readable
+    // TODO: make an animation that nodes add on the board in slow motion one by one in whatever order they are processed, and when node is added it gets connected by following arrow with draw animation (and maybe movement paths).
     drawGraph (node: RecipeNode, center: Position, degrees: {lower: number, upper: number} = {lower: 0, upper: 360}) {
         // Exit if ingredients is undefined or not an array
         if (!node.ingredients || !Array.isArray(node.ingredients)) return;
@@ -229,7 +230,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             const coordExists = Object.values(circleCoords).some(pos => pos.x === x && pos.y === y);
             if (!coordExists) {
                 let angle = Math.atan2(y - center.y, x - center.x) * (180 / Math.PI);
-                // Ensure angle is positive
+
                 if (angle < 0) {
                     angle += 360;
                 }
