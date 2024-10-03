@@ -15,6 +15,7 @@ export interface RecipeNode extends ProducedItem {
     byproducts?: number[]; // Optional byproducts of the recipe
     isBaseMaterial?: boolean;    // True if this recipe is for a base material
     indentLevel: number, // Depth level in recipe
+    parentId?: number;    // Parent recipe id
 }
 
 
