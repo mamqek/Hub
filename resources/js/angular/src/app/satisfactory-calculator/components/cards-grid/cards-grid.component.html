@@ -1,14 +1,14 @@
-<div class="space">
-    <div class="board" 
-        #boardDiv           
-        [ngStyle]="{
-            'grid-template-columns': 'repeat(' + gridSize + ' , 50px)',
-            'transform': 'scale(' + scale + ')',
-        }"
+    <div 
+        class="board gegeg"
+        #boardDiv   
         cdkDropListGroup 
         (mousedown)="onMouseDown($event)"
+        [ngStyle]="{
+            'grid-template-columns': 'repeat(' + gridSize + ', ' + cellSize + 'px)',
+            'transform': 'scale(' + scale + ')'
+        }"
     >
-        <ng-container *ngFor="let row of board; let y = index">
+        <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
             <div
                 class="cell"
                 *ngFor="let cell of row; let x = index"
@@ -18,19 +18,17 @@
                 [cdkDropListEnterPredicate]="enterPredicate"
             >
                 <satisfactory-card
-                    data-jtk-target="true"
-                    data-jtk-source="true"
-                    (cdkDragStarted)="dragStarted($event)"
                     *ngIf="cell"
+                    [data]="cell"
                     cdkDrag 
                     [cdkDragData]="cell"
-                    [data]="cell"
-                    
+                    (cdkDragStarted)="dragStarted($event)"
+                    data-jtk-target="true"
+                    data-jtk-source="true"
                 ></satisfactory-card>
                 
             </div>
         </ng-container>
     </div>
-</div>
   
 

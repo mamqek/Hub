@@ -1,3 +1,9 @@
+:host {
+    display: block; /* Make sure the component acts as a block element */
+    width: 100%; /* Allow it to expand to the full width of its parent */
+    height: 100%; /* Allow it to expand to the full height of its parent */
+}
+
 .card {
     display: flex;
     flex-direction: column;
