@@ -7,6 +7,7 @@ import { CardsGridComponent } from './components/cards-grid/cards-grid.component
 import { RecipeService } from './services/recipe.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { SatisfactoryCardComponent } from './components/satisfactory-card/satisfactory-card.component';
+import { DragScrollService } from './services/drag-scroll.service';
 import { DrawLinesService } from './services/draw-lines.service';
 
 
@@ -26,6 +27,7 @@ import { DrawLinesService } from './services/draw-lines.service';
     providers: [
         RecipeService,
         DrawLinesService,
+        DragScrollService,
         provideHttpClient(withInterceptorsFromDi())
     ],
 })
