@@ -13,6 +13,7 @@ export class DragScrollService {
     private startY = 0;
     mouseMoveSubscription: Subscription | null = null;
     mouseUpSubscription: Subscription | null = null;
+    private animationFrameId: number | null = null;
   
     constructor() { }
   
@@ -26,6 +27,8 @@ export class DragScrollService {
 
             this.scrollLeft = window.scrollX;
             this.scrollTop = window.scrollY;
+            // this.scrollLeft = this.viewport.measureScrollOffset('start');
+            // this.scrollTop = this.viewport.measureScrollOffset('end');
       
             
             // Throttle mousemove event to limit frequency of position updates
@@ -56,6 +59,39 @@ export class DragScrollService {
               });
         });
 
+        // this.animationFrameId = requestAnimationFrame(() => {
+            
+        //     const x = event.clientX - this.startX;
+        //     const y = event.clientY - this.startY;
+
+        //     console.log("scrollLeft", this.scrollLeft);
+        //     console.log("scrollTop", this.scrollTop);
+        //     console.log("x", x);
+        //     console.log("y", y);
+
+            
+    
+        //     // Adjust the viewport scroll based on mouse movement
+        //     const dampingFactor = 0.5; // Adjust as needed
+        //     const newScrollLeft = this.scrollLeft - x * dampingFactor;
+        //     const newScrollTop = this.scrollTop - y * dampingFactor;
+
+        //     console.log("newScrollLeft", newScrollLeft);
+        //     console.log("newScrollTop", newScrollTop);
+            
+    
+        //     // Set the scroll position of the viewport
+        //     this.viewport.scrollTo({ top: newScrollTop, left: newScrollLeft, behavior: 'smooth' });
+    
+        //     // Update scrollLeft and scrollTop for the next iteration
+        //     this.scrollLeft = newScrollLeft;
+        //     this.scrollTop = newScrollTop;
+
+        //     this.startX = event.clientX;
+        //     this.startY = event.clientY;
+        //     console.log("startX after", event.clientX);
+        //     console.log("startY after", event.clientY);
+        // });
     }
   
     onMouseUp() {

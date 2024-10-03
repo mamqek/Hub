@@ -7,6 +7,8 @@ import { DrawLinesService } from '../../services/draw-lines.service';
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+
 
 interface Position {
     x: number;
@@ -34,7 +36,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         private dragScrollService: DragScrollService, 
         private drawLinesService: DrawLinesService
         ) {
+        // this.viewportHeight = window.innerHeight * 1.1; // Set to 80% of the viewport height
     }
+    // @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
+    // viewportHeight: number;
 
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
