@@ -60,17 +60,17 @@ export class DrawLinesService {
             this.lines.forEach(line => {
                 line.position(); // Reposition the line smoothly
             });
-            this.showLines();
+            this.showAllLines();
         });
     }
 
-    showLines() {
+    showAllLines() {
         if (!this.hidden) return;
         this.lines.forEach(line => line.show("draw"));  // or 'fade' or 'none'
         this.hidden = false;
     }
 
-    hideLines() {
+    hideAllLines() {
         if (this.hidden) return;
         this.lines.forEach(line => line.hide("none"));
         this.hidden = true;

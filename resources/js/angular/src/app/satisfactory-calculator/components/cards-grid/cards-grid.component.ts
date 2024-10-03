@@ -277,7 +277,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @HostListener('wheel', ['$event'])
     onWheel(event: WheelEvent) {
-        this.drawLinesService.hideLines();
+        this.drawLinesService.hideAllLines();
         event.preventDefault(); // Prevent the default behavior of scrolling the page
         console.log("wheel");
     
