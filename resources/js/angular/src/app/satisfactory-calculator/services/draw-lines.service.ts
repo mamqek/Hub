@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { RecipeNode } from './recipe.service';
 
-interface ParentChildren {
-    parentId: number;
+interface ParentOrChild {
+    parentId?: number;
     id: number;
-    children: number[];
+    children?: number[];
 };
 @Injectable({
   providedIn: null
@@ -16,36 +16,40 @@ export class DrawLinesService {
 
     private transitionStartTimeout: any = null;
     private lines: any[] = [];
+    private elementIdLineMap: any = {};
     private hidden = true;
 
-    drawLines (parentObj: ParentChildren[]) {
+    drawLines (elementArr: ParentOrChild[]) {
             
-        parentObj.forEach(card => {
-            const cardEl = document.getElementById(`card-${card.id}`);
+        elementArr.forEach(element => {
 
-            if (!card.children) return;
+            if (element.parentId === undefined) return;
 
-            card.children.forEach(childrenId => {
-                const childrenEl = document.getElementById(`card-${childrenId}`);
+            const childrenEl = document.getElementById(`card-${element.id}`);
+            const parentEl = document.getElementById(`card-${element.parentId}`);
 
-                let line = new LeaderLine(childrenEl, cardEl , {
-                    startPLug: 'square', 
-                    endPlug: 'arrow3',
-                    color: 'gray',
-                    size: 3,
-                    path: 'straight',
-                    hide: true,
-                    // dash: {animation: true}
-                })
-                // store lines by element index and then call remove line when grag by index and children with parent
+            let line = new LeaderLine(childrenEl, parentEl , {
+                startPLug: 'square', 
+                endPlug: 'arrow3',
+                color: 'gray',
+                size: 3,
+                path: 'straight',
+                hide: true,
+                // dash: {animation: true}
+            })
+                
+            // store lines by element index and then call remove line when grag by index and children with parent
+            console.log(childrenEl);
 
-                this.lines.push(line);
-            });
+            // TODO: have an array is value
+            this.elementIdLineMap[element.id] = line;
+            this.lines.push(line);
 
         });
+        console.log(this.lines);
         
         // allow pictures in cards to load
-            this.redrawLines();
+        this.redrawLines();
 
     }
         

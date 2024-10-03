@@ -248,8 +248,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             this.drawLinesService.drawLines(this.nodes
                 .map(node => ({
                     id: node.id, 
-                    children: node.ingredients ?? [], 
-                    parentId: node.parentId ?? -1 
+                    children: node.ingredients,
+                    parentId: node.parentId
                 }))
             );
         }
