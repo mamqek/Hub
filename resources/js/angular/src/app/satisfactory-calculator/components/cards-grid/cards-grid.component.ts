@@ -146,6 +146,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     dragStarted(event: CdkDragStart) {
         this.isDragging = true;
         let node = event.source.data;
+        this.drawLinesService.hideLinesByElementId([
+            ...(node.parentId ? [node.id] : []), 
+            ...node.ingredients
+        ]);    
     }
 
     drop(event: CdkDragDrop<{ x: number; y: number }>) {

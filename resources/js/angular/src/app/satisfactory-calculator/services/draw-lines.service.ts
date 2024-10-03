@@ -75,4 +75,12 @@ export class DrawLinesService {
         this.lines.forEach(line => line.hide("none"));
         this.hidden = true;
     }
+
+    hideLinesByElementId(elementIdArr: number[]) {
+        elementIdArr.forEach(id => {
+            //TODO: slow down this animation
+            this.elementIdLineMap[id].hide("draw");
+        });
+        
+    }
 }
