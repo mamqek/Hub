@@ -22,7 +22,8 @@ interface Position {
 })
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
-    gridSize: number = 40;
+    gridSize: number = 80;
+    cellSize: number = 50;
 
     board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
     boardMiddle: Position = { x: this.gridSize / 2, y: this.gridSize / 2 };
@@ -45,14 +46,29 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
 
     public ngOnInit(): void {
-
+        
         // Place user camera to default position
-        // setTimeout(() => {
-        //     window.scrollTo(0, 0); // Force scroll position to 0,0 after reload
-        //   }, 0);
+        setTimeout(() => {
+            // this.viewport.scrollToIndex(10); 
+            const cellPositionX = (this.gridSize / 2) * this.cellSize;
+            const cellPositionY = (this.gridSize / 2) * this.cellSize;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const centerXOffset = viewportWidth * 0.5; // Adjust as 50% of viewport width
+            const centerYOffset = viewportHeight * 0.35; // Adjust as 50% of viewport height
+            
+            // Scroll to center the cell
+            window.scrollTo({
+              left: cellPositionX - centerXOffset+ this.cellSize / 2,
+              top: cellPositionY - centerYOffset + this.cellSize / 2,
+            });
+
+        }, 0);
         console.log("initialized");
         
-        this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
+
+        
+        this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 20);
         
         this.ingridientsArr$.subscribe((data) => {
             console.log("data", data);
