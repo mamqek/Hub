@@ -314,11 +314,12 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     zoomIn() {    
         this.scale = Math.min(this.maxScale, this.scale + this.scaleStep);
-        
+        // document.body.style.transform = `scale(${Math.min(this.maxScale, this.scale + this.scaleStep)})`;
     }
 
     zoomOut() {    
         this.scale = Math.max(this.minScale, this.scale - this.scaleStep);
+        // document.body.style.transform = `scale(${Math.max(this.minScale, this.scale - this.scaleStep)})`;
     }
 
     resetZoom() {
