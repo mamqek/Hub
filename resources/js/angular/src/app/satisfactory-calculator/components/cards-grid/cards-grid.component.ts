@@ -145,15 +145,21 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
     }
 
-    private isDragging = false;
+
+
+
+    private isDragging: boolean = false;
+    private nodesWithArrowIdArr: number[] = [];
 
     dragStarted(event: CdkDragStart) {
         this.isDragging = true;
         let node = event.source.data;
-        this.drawLinesService.hideLinesByElementId([
+
+        this.nodesWithArrowIdArr = [
             ...(node.parentId ? [node.id] : []), 
-            ...node.ingredients
-        ]);    
+            ...node.ingredients ?? []
+        ];    
+        this.drawLinesService.hideLinesByElementId(this.nodesWithArrowIdArr);    
     }
 
     drop(event: CdkDragDrop<{ x: number; y: number }>) {
