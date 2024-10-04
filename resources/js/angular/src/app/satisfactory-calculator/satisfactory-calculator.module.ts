@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+    import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -12,6 +12,7 @@ import { SatisfactoryCardComponent } from './components/satisfactory-card/satisf
 import { RecipeService } from './services/recipe.service';
 import { DragScrollService } from './services/drag-scroll.service';
 import { DrawLinesService } from './services/draw-lines.service';
+import { ReadyDirective } from '../ready.directive';
 
 
 
@@ -19,6 +20,8 @@ import { DrawLinesService } from './services/draw-lines.service';
     declarations: [
         CardsGridComponent,
         SatisfactoryCardComponent,
+        
+        ReadyDirective
     ],
     exports: [
         CardsGridComponent,
