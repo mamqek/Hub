@@ -44,6 +44,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
+    trackById(index: number, item: any): number {        
+        return index;
+    }
+
 
     public ngOnInit(): void {
         
@@ -302,7 +306,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @HostListener('window:keydown', ['$event'])
     onKeyDown(event: KeyboardEvent) {
-        console.log("keydown");
+        // console.log("keydown");
         
         if (event.key === '+' || event.key === '=') {
             // "+" key -> Zoom in

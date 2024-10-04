@@ -19,8 +19,8 @@
     >
         <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
             <div
+                *ngFor="let cell of row; let x = index; trackBy: trackById"
                 class="cell"
-                *ngFor="let cell of row; let x = index"
                 cdkDropList
                 (cdkDropListDropped)="drop($event)"
                 [cdkDropListData]="{x: x, y: y}"
