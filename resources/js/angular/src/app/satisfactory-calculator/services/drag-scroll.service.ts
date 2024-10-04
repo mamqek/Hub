@@ -1,6 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, ElementRef } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
+interface Dimensions {
+    width: number;
+    height: number;
+}
 @Injectable({
   providedIn: null
 })
@@ -14,22 +19,50 @@ export class DragScrollService {
     mouseMoveSubscription: Subscription | null = null;
     mouseUpSubscription: Subscription | null = null;
     private animationFrameId: number | null = null;
-  
+    
+    private viewport!: CdkVirtualScrollViewport;
+    private viewportHeight: number = 0;
+    private contentDimensions!: Dimensions;
     constructor() { }
-  
+
+    setViewport(viewport: any) {
+        this.viewport = viewport;
+        this.viewportHeight = this.viewport.getViewportSize();
+    }
+
+    setContentDimensions(content: Dimensions) {
+        this.contentDimensions = content;        
+    }
+
+    newScrollLeft: number = 0;
+    newScrollTop: number = 0;
+
     onMouseDown(event: MouseEvent) {        
       if (event.button === 0) { // Right-click
             event.preventDefault()
             this.isScrolling = true;
 
+            console.log("scrollLeft vev", this.scrollLeft);
+            console.log("scrollTop vev", this.scrollTop);
+
             this.startX = event.clientX;
             this.startY = event.clientY;
 
-            this.scrollLeft = window.scrollX;
-            this.scrollTop = window.scrollY;
-            // this.scrollLeft = this.viewport.measureScrollOffset('start');
-            // this.scrollTop = this.viewport.measureScrollOffset('end');
-      
+            // to set it from the previous scroll
+            if (this.newScrollLeft !== 0 && this.newScrollTop !== 0) {
+                this.scrollLeft = Math.max(this.newScrollLeft % this.contentDimensions.width, 0);
+                this.scrollTop = Math.max(this.newScrollTop % this.contentDimensions.height, 0);
+            } else { // to set it onload afer moved to center
+                this.scrollLeft = this.viewport.measureScrollOffset('start');
+                this.scrollTop = this.viewport.measureScrollOffset('end');
+            }
+
+            // this.scrollLeft = window.scrollX;
+            // this.scrollTop = window.scrollY;
+
+        console.log("scrollLeft vev", this.scrollLeft);
+        console.log("scrollTop vev", this.scrollTop);
+        
             
             // Throttle mousemove event to limit frequency of position updates
             this.mouseMoveSubscription = fromEvent<MouseEvent>(document, 'mousemove')
@@ -39,7 +72,12 @@ export class DragScrollService {
         }
     }
 
+
+
     scheduleScroll(event: MouseEvent) {
+        console.log("startX", this.startX);
+        console.log("startY", this.startY);
+        
         if (!this.isScrolling) return;
         
         // Cancel any pending animation frame request
@@ -47,55 +85,58 @@ export class DragScrollService {
             cancelAnimationFrame(this.animationFrameId);
         }
     
-        // Schedule the next scroll update
-        this.animationFrameId = requestAnimationFrame(() => {
-            const x = event.clientX - this.startX;
-            const y = event.clientY - this.startY;
-        
-            window.scrollTo({
-                left: this.scrollLeft - x,
-                top: this.scrollTop - y,
-                behavior: 'smooth'
-              });
-        });
-
+        // // Schedule the next scroll update
         // this.animationFrameId = requestAnimationFrame(() => {
-            
         //     const x = event.clientX - this.startX;
         //     const y = event.clientY - this.startY;
-
-        //     console.log("scrollLeft", this.scrollLeft);
-        //     console.log("scrollTop", this.scrollTop);
-        //     console.log("x", x);
-        //     console.log("y", y);
-
-            
-    
-        //     // Adjust the viewport scroll based on mouse movement
-        //     const dampingFactor = 0.5; // Adjust as needed
-        //     const newScrollLeft = this.scrollLeft - x * dampingFactor;
-        //     const newScrollTop = this.scrollTop - y * dampingFactor;
-
-        //     console.log("newScrollLeft", newScrollLeft);
-        //     console.log("newScrollTop", newScrollTop);
-            
-    
-        //     // Set the scroll position of the viewport
-        //     this.viewport.scrollTo({ top: newScrollTop, left: newScrollLeft, behavior: 'smooth' });
-    
-        //     // Update scrollLeft and scrollTop for the next iteration
-        //     this.scrollLeft = newScrollLeft;
-        //     this.scrollTop = newScrollTop;
-
-        //     this.startX = event.clientX;
-        //     this.startY = event.clientY;
-        //     console.log("startX after", event.clientX);
-        //     console.log("startY after", event.clientY);
+        
+        //     window.scrollTo({
+        //         left: this.scrollLeft - x,
+        //         top: this.scrollTop - y,
+        //         behavior: 'smooth'
+        //       });
         // });
+
+        this.animationFrameId = requestAnimationFrame(() => {
+            
+            const x = event.clientX - this.startX;
+            const y = event.clientY - this.startY;
+
+            console.log("scrollLeft", this.scrollLeft);
+            console.log("scrollTop", this.scrollTop);
+            console.log("x", x);
+            console.log("y", y);
+
+            
+    
+            // Adjust the viewport scroll based on mouse movement
+            const dampingFactor = 0.9999; // Adjust as needed
+            this.newScrollLeft = this.scrollLeft - x * dampingFactor;
+            this.newScrollTop = this.scrollTop - y * dampingFactor;
+
+            console.log("newScrollLeft", this.newScrollLeft);
+            console.log("newScrollTop", this.newScrollTop);
+            
+    
+            // Set the scroll position of the viewport
+            this.viewport.scrollTo({ top: this.newScrollTop, left: this.newScrollLeft, behavior: 'smooth' });
+    
+            // Update scrollLeft and scrollTop for the next iteration
+
+
+            // this.startX = event.clientX;
+            // this.startY = event.clientY;
+            console.log("startX after", event.clientX);
+            console.log("startY after", event.clientY);
+        });
     }
   
     onMouseUp() {
+        console.log("mouse up");
+        
         this.isScrolling = false;
+
+
     
         // Unsubscribe from mousemove and mouseup events
         if (this.mouseMoveSubscription) {

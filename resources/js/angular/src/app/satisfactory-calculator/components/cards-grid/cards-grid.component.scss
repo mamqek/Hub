@@ -12,6 +12,13 @@
     background-color: grey;
 }
 
+.virtual-view {
+    // display: contents;
+    width: 100vw;
+    height: 100vh;
+
+}
+
 .board {
     position: relative;
     transition: transform 0.3s ease;  /* Smooth transition */
@@ -20,6 +27,7 @@
 
     display: grid;
     gap: 5px;
+    min-height: 100vh;
 }
 
 .cell {

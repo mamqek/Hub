@@ -1,23 +1,19 @@
-    <!-- <cdk-virtual-scroll-viewport 
-        [itemSize]='cellSize'
-        [style.height.px]="viewportHeight"
-        [style.width.px]="gridSize * cellSize" 
-        >    
-        
-        <ng-container *cdkVirtualFor="let row of board; let y = index">
-
-    > -->
+<cdk-virtual-scroll-viewport 
+    class="virtual-view "
+    [itemSize]='cellSize'
+    [style.height.px]="viewportHeight"
+>    
     <div 
         class="board gegeg"
         #boardDiv   
         cdkDropListGroup 
         (mousedown)="onMouseDown($event)"
         [ngStyle]="{
-            'grid-template-columns': 'repeat(' + gridSize + ', ' + cellSize + 'px)',
+            'grid-template-columns': 'repeat(' + gridSize + ', 50px)',
             'transform': 'scale(' + scale + ')'
         }"
     >
-        <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+        <ng-container *cdkVirtualFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
             <div
                 *ngFor="let cell of row; let x = index; trackBy: trackById"
                 class="cell"
@@ -45,6 +41,6 @@
             </div>
         </ng-container>
     </div>
-    <!-- </cdk-virtual-scroll-viewport> -->
+</cdk-virtual-scroll-viewport>
   
 

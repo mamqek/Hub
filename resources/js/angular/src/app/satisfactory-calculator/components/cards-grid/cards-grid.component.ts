@@ -22,7 +22,7 @@ interface Position {
 })
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
-    gridSize: number = 40;
+    gridSize: number = 100;
     cellSize: number = 50;
 
     board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
@@ -39,10 +39,12 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         private cdr: ChangeDetectorRef,
         private renderer: Renderer2
         ) {
-        // this.viewportHeight = window.innerHeight * 1.1; // Set to 80% of the viewport height
+        this.viewportHeight = window.innerHeight; // Set to 80% of the viewport height
+        this.viewportWidth = window.innerWidth; // Set to 80% of the viewport height
     }
-    // @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
-    // viewportHeight: number;
+    @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
+    viewportHeight: number;
+    viewportWidth: number;
 
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
@@ -55,21 +57,26 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         
         // Place user camera to default position
         setTimeout(() => {
+            const boardHeight = this.gridSize * (this.cellSize + 5) - 5; // 5's for gap
+
+            this.dragScrollService.setViewport(this.viewport);
+            this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
             // this.viewport.scrollToIndex(10); 
-            const cellPositionX = (this.gridSize / 2) * this.cellSize;
-            const cellPositionY = (this.gridSize / 2) * this.cellSize;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            const centerXOffset = viewportWidth * 0.5; // Adjust as 50% of viewport width
-            const centerYOffset = viewportHeight * 0.35; // Adjust as 50% of viewport height
+            const boardMiddlePositionX = boardHeight / 2;
+            const boardMiddlePositionY = boardHeight / 2;
+            
+            const centerXOffset = this.viewportWidth * 0.5; // Adjust as 50% of viewport width
+            const centerYOffset = this.viewportHeight * 0.55; // Adjust as 50% of viewport height
             
             // Scroll to center the cell
-            window.scrollTo({
-              left: cellPositionX - centerXOffset+ this.cellSize / 2,
-              top: cellPositionY - centerYOffset + this.cellSize / 2,
+            this.viewport.scrollTo({
+              left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
+              top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
             });
 
         }, 0);
+
+
         console.log("initialized");
         
 
@@ -345,11 +352,15 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     zoomIn() {    
         this.scale = Math.min(this.maxScale, this.scale + this.scaleStep);
+        this.cellSize = 50 * this.scale;
+        this.viewport.checkViewportSize();
         // document.body.style.transform = `scale(${Math.min(this.maxScale, this.scale + this.scaleStep)})`;
     }
 
     zoomOut() {    
         this.scale = Math.max(this.minScale, this.scale - this.scaleStep);
+        this.cellSize = 50 * this.scale;
+        this.viewport.checkViewportSize();
         // document.body.style.transform = `scale(${Math.max(this.minScale, this.scale - this.scaleStep)})`;
     }
 
