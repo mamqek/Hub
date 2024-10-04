@@ -77,6 +77,10 @@ export class DrawLinesService {
         this.hidden = true;
     }
 
+    removeAllLines() {
+        this.lines.forEach(line => line.remove());
+    }
+
     hideLinesByElementId(elementIdArr: number[]) {
         elementIdArr.forEach(id => {
             //TODO: slow down this animation
@@ -84,6 +88,13 @@ export class DrawLinesService {
         });
     }
 
+    removeLinesByElementId(elementIdArr: number[]) {
+        elementIdArr.forEach(id => {
+            this.elementIdLineMap[id].remove();
+            delete this.elementIdLineMap[id];
+        });
+        this.lines = Object.values(this.elementIdLineMap);  
+    }
 
     redrawLinesByElementId(elementIdArr: number[]) {        
         requestAnimationFrame(() => {        
