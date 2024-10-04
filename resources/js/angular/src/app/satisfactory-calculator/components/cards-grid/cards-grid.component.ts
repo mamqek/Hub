@@ -1,11 +1,11 @@
-import { Component,  HostListener, OnInit, ElementRef, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
+import { Component,  HostListener, OnInit, ElementRef, Renderer2, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
 
 import { RecipeService, RecipeNode } from '../../services/recipe.service';
 import { DragScrollService } from '../../services/drag-scroll.service';
 import { DrawLinesService } from '../../services/draw-lines.service';
 
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
-import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
@@ -22,7 +22,7 @@ interface Position {
 })
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
-    gridSize: number = 80;
+    gridSize: number = 40;
     cellSize: number = 50;
 
     board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
@@ -35,7 +35,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     constructor(
         private recipeService: RecipeService, 
         private dragScrollService: DragScrollService, 
-        private drawLinesService: DrawLinesService
+        private drawLinesService: DrawLinesService,
+        private cdr: ChangeDetectorRef,
+        private renderer: Renderer2
         ) {
         // this.viewportHeight = window.innerHeight * 1.1; // Set to 80% of the viewport height
     }
@@ -193,6 +195,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                 this.drawLinesService.drawLines(arr);
             }, 0);
         }
+
         this.isDragging = false;
     }
     
