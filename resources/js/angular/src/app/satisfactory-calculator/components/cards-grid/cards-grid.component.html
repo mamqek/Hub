@@ -27,14 +27,20 @@
                 [cdkDropListEnterPredicate]="enterPredicate"
             >
                 <satisfactory-card
-                    *ngIf="cell"
+                    *ngIf="cell else placeholder"
                     [data]="cell"
+                    appReady  
                     cdkDrag 
                     [cdkDragData]="cell"
                     (cdkDragStarted)="dragStarted($event)"
+                    (cdkDragMoved)="dragMoved($event)"
                     data-jtk-target="true"
                     data-jtk-source="true"
                 ></satisfactory-card>
+
+                <ng-template #placeholder>
+                    <!-- mb some styles in here  -->
+                </ng-template>
                 
             </div>
         </ng-container>
