@@ -162,20 +162,36 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         this.drawLinesService.hideLinesByElementId(this.nodesWithArrowIdArr);    
     }
 
-    drop(event: CdkDragDrop<{ x: number; y: number }>) {
-        // Swap positions on the board array
-        // console.log("drop", event.item.data);
-        // console.log("from", event.previousContainer.data);
-        // console.log("to", event.container.data);
-        
-        
+    dragMoved(event: CdkDragMove) {
+        // if (this.isDragging) {
+        //     console.log("dragMoved");
+            
+        //     let dict = this.drawLinesService.elementIdLineMap;
+
+        //     this.nodesWithAroowIdArr.forEach(id => {
+        //         dict[id].position();
+        //     });
+        // }
+    }
+
+    // Swap positions on the board array
+    drop(event: CdkDragDrop<{ x: number; y: number }>) {   
         const previousIndex = event.previousContainer.data;
         const currentIndex = event.container.data;
       
         if (previousIndex !== currentIndex) {
-          
-          this.board[previousIndex.y][previousIndex.x] = null;
-          this.board[currentIndex.y][currentIndex.x] = event.item.data;
+            this.cdr.detectChanges();
+            this.board[previousIndex.y][previousIndex.x] = null;
+            this.board[currentIndex.y][currentIndex.x] = event.item.data;
+            console.log("drop", event.item.data);
+            this.drawLinesService.removeLinesByElementId(this.nodesWithArrowIdArr);
+            let node: RecipeNode = event.item.data;
+            let arr = (node.parentId ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
+                    .concat(node.ingredients ? node.ingredients.map(id => ({ id, children: [], parentId: node.id })) : []);
+            
+            setTimeout(() => {
+                this.drawLinesService.drawLines(arr);
+            }, 0);
         }
         this.isDragging = false;
     }
@@ -293,8 +309,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     onWheel(event: WheelEvent) {
         this.drawLinesService.hideAllLines();
         event.preventDefault(); // Prevent the default behavior of scrolling the page
-        console.log("wheel");
-    
         if (event.deltaY < 0) {
             // Scroll up -> Zoom in
             this.zoomIn();
