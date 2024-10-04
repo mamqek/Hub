@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable  } from '@angular/core';
 import { RecipeNode } from './recipe.service';
 
 interface ParentOrChild {
@@ -43,11 +43,10 @@ export class DrawLinesService {
 
             // TODO: have an array is value
             this.elementIdLineMap[element.id] = line;
-            this.lines.push(line);
-
             processedIds.push(element.id);
         });
-        console.log(this.lines);
+
+        this.lines = Object.values(this.elementIdLineMap);
         
         // allow pictures in cards to load
         this.redrawLinesByElementId(processedIds);
