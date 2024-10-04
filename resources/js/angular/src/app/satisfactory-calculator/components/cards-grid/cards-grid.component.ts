@@ -270,7 +270,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
             console.log("transitionend in");
             
-            this.drawLinesService.redrawLines();
+            this.drawLinesService.redrawAllLines();
         }
     }
 

@@ -20,7 +20,9 @@ export class DrawLinesService {
     private hidden = true;
 
     drawLines (elementArr: ParentOrChild[]) {
-            
+        
+        let processedIds: number[] = [];
+        
         elementArr.forEach(element => {
 
             if (element.parentId === undefined) return;
@@ -38,22 +40,21 @@ export class DrawLinesService {
                 // dash: {animation: true}
             })
                 
-            // store lines by element index and then call remove line when grag by index and children with parent
-            console.log(childrenEl);
 
             // TODO: have an array is value
             this.elementIdLineMap[element.id] = line;
             this.lines.push(line);
 
+            processedIds.push(element.id);
         });
         console.log(this.lines);
         
         // allow pictures in cards to load
-        this.redrawLines();
+        this.redrawLinesByElementId(processedIds);
 
     }
         
-    redrawLines() {
+    redrawAllLines() {
         // Use requestAnimationFrame for smoother line positioning
         if (this.lines.length === 0) return;
         requestAnimationFrame(() => {
@@ -81,6 +82,16 @@ export class DrawLinesService {
             //TODO: slow down this animation
             this.elementIdLineMap[id].hide("draw");
         });
-        
+    }
+
+
+    redrawLinesByElementId(elementIdArr: number[]) {        
+        requestAnimationFrame(() => {        
+            elementIdArr.forEach(id => {
+                let line = this.elementIdLineMap[id];                
+                line.position();
+                line.show("draw");
+            });
+        });
     }
 }
