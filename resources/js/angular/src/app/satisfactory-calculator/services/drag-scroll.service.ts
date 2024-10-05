@@ -20,49 +20,44 @@ export class DragScrollService {
     mouseUpSubscription: Subscription | null = null;
     private animationFrameId: number | null = null;
     
-    private viewport!: CdkVirtualScrollViewport;
-    private viewportHeight: number = 0;
-    private contentDimensions!: Dimensions;
     constructor() { }
 
-    setViewport(viewport: any) {
-        this.viewport = viewport;
-        this.viewportHeight = this.viewport.getViewportSize();
-    }
+    // private viewport!: CdkVirtualScrollViewport;
+    // private viewportHeight: number = 0;
+    // private contentDimensions!: Dimensions;
 
-    setContentDimensions(content: Dimensions) {
-        this.contentDimensions = content;        
-    }
+    // setViewport(viewport: any) {
+    //     this.viewport = viewport;
+    //     this.viewportHeight = this.viewport.getViewportSize();
+    // }
+
+    // setContentDimensions(content: Dimensions) {
+    //     this.contentDimensions = content;        
+    // }
 
     newScrollLeft: number = 0;
     newScrollTop: number = 0;
 
     onMouseDown(event: MouseEvent) {        
-      if (event.button === 0) { // Right-click
+      if (event.button === 0) {
             event.preventDefault()
             this.isScrolling = true;
-
-            console.log("scrollLeft vev", this.scrollLeft);
-            console.log("scrollTop vev", this.scrollTop);
 
             this.startX = event.clientX;
             this.startY = event.clientY;
 
+            // For virtual scroll
             // to set it from the previous scroll
-            if (this.newScrollLeft !== 0 && this.newScrollTop !== 0) {
-                this.scrollLeft = Math.max(this.newScrollLeft % this.contentDimensions.width, 0);
-                this.scrollTop = Math.max(this.newScrollTop % this.contentDimensions.height, 0);
-            } else { // to set it onload afer moved to center
-                this.scrollLeft = this.viewport.measureScrollOffset('start');
-                this.scrollTop = this.viewport.measureScrollOffset('end');
-            }
+            // if (this.newScrollLeft !== 0 && this.newScrollTop !== 0) {
+            //     this.scrollLeft = Math.max(this.newScrollLeft % this.contentDimensions.width, 0);
+            //     this.scrollTop = Math.max(this.newScrollTop % this.contentDimensions.height, 0);
+            // } else { // to set it onload afer moved to center
+            //     this.scrollLeft = this.viewport.measureScrollOffset('start');
+            //     this.scrollTop = this.viewport.measureScrollOffset('end');
+            // }
 
-            // this.scrollLeft = window.scrollX;
-            // this.scrollTop = window.scrollY;
-
-        console.log("scrollLeft vev", this.scrollLeft);
-        console.log("scrollTop vev", this.scrollTop);
-        
+            this.scrollLeft = window.scrollX;
+            this.scrollTop = window.scrollY;   
             
             // Throttle mousemove event to limit frequency of position updates
             this.mouseMoveSubscription = fromEvent<MouseEvent>(document, 'mousemove')
@@ -75,8 +70,8 @@ export class DragScrollService {
 
 
     scheduleScroll(event: MouseEvent) {
-        console.log("startX", this.startX);
-        console.log("startY", this.startY);
+        // console.log("startX", this.startX);
+        // console.log("startY", this.startY);
         
         if (!this.isScrolling) return;
         
@@ -85,50 +80,49 @@ export class DragScrollService {
             cancelAnimationFrame(this.animationFrameId);
         }
     
-        // // Schedule the next scroll update
-        // this.animationFrameId = requestAnimationFrame(() => {
-        //     const x = event.clientX - this.startX;
-        //     const y = event.clientY - this.startY;
-        
-        //     window.scrollTo({
-        //         left: this.scrollLeft - x,
-        //         top: this.scrollTop - y,
-        //         behavior: 'smooth'
-        //       });
-        // });
-
+        // Schedule the next scroll update
         this.animationFrameId = requestAnimationFrame(() => {
-            
             const x = event.clientX - this.startX;
             const y = event.clientY - this.startY;
-
-            console.log("scrollLeft", this.scrollLeft);
-            console.log("scrollTop", this.scrollTop);
-            console.log("x", x);
-            console.log("y", y);
-
-            
-    
-            // Adjust the viewport scroll based on mouse movement
-            const dampingFactor = 0.9999; // Adjust as needed
-            this.newScrollLeft = this.scrollLeft - x * dampingFactor;
-            this.newScrollTop = this.scrollTop - y * dampingFactor;
-
-            console.log("newScrollLeft", this.newScrollLeft);
-            console.log("newScrollTop", this.newScrollTop);
-            
-    
-            // Set the scroll position of the viewport
-            this.viewport.scrollTo({ top: this.newScrollTop, left: this.newScrollLeft, behavior: 'smooth' });
-    
-            // Update scrollLeft and scrollTop for the next iteration
-
-
-            // this.startX = event.clientX;
-            // this.startY = event.clientY;
-            console.log("startX after", event.clientX);
-            console.log("startY after", event.clientY);
+        
+            window.scrollTo({
+                left: this.scrollLeft - x,
+                top: this.scrollTop - y,
+                behavior: 'smooth'
+              });
         });
+
+        //For virtual scroll
+        // this.animationFrameId = requestAnimationFrame(() => {
+            
+        //     const x = event.clientX - this.startX;
+        //     const y = event.clientY - this.startY;
+
+        //     // console.log("scrollLeft", this.scrollLeft);
+        //     // console.log("scrollTop", this.scrollTop);
+        //     // console.log("x", x);
+        //     // console.log("y", y);
+
+            
+    
+        //     // Adjust the viewport scroll based on mouse movement
+        //     const dampingFactor = 0.9999; // Adjust as needed
+        //     this.newScrollLeft = this.scrollLeft - x * dampingFactor;
+        //     this.newScrollTop = this.scrollTop - y * dampingFactor;
+
+        //     // console.log("newScrollLeft", this.newScrollLeft);
+        //     // console.log("newScrollTop", this.newScrollTop);
+            
+    
+        //     // Set the scroll position of the viewport
+        //     this.viewport.scrollTo({ top: this.newScrollTop, left: this.newScrollLeft, behavior: 'smooth' });
+    
+        //     // Update scrollLeft and scrollTop for the next iteration
+        //     // this.startX = event.clientX;
+        //     // this.startY = event.clientY;
+        //     // console.log("startX after", event.clientX);
+        //     // console.log("startY after", event.clientY);
+        // });
     }
   
     onMouseUp() {

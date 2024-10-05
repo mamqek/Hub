@@ -22,8 +22,12 @@ interface Position {
 })
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
-    gridSize: number = 100;
-    cellSize: number = 50;
+    gridSize: number = 50;
+    itemSize: number = 50;
+    gap: number = 5;
+    cellSize: number = this.itemSize + this.gap;
+    currentCellSize: number = this.cellSize;
+    scrollSubscription: Subscription | null = null;
 
     board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
     boardMiddle: Position = { x: this.gridSize / 2, y: this.gridSize / 2 };
@@ -39,12 +43,13 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         private cdr: ChangeDetectorRef,
         private renderer: Renderer2
         ) {
-        this.viewportHeight = window.innerHeight; // Set to 80% of the viewport height
+        this.viewportHeight = window.innerHeight; // Set to 80% of the viewport height        
         this.viewportWidth = window.innerWidth; // Set to 80% of the viewport height
     }
-    @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
+
     viewportHeight: number;
     viewportWidth: number;
+
 
     @ViewChild('boardDiv') boardDiv!: ElementRef;
 
@@ -57,10 +62,12 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         
         // Place user camera to default position
         setTimeout(() => {
+
             const boardHeight = this.gridSize * (this.cellSize + 5) - 5; // 5's for gap
 
-            this.dragScrollService.setViewport(this.viewport);
-            this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
+            // this.dragScrollService.setViewport(this.viewport);
+            // this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
+
             // this.viewport.scrollToIndex(10); 
             const boardMiddlePositionX = boardHeight / 2;
             const boardMiddlePositionY = boardHeight / 2;
@@ -69,10 +76,24 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             const centerYOffset = this.viewportHeight * 0.55; // Adjust as 50% of viewport height
             
             // Scroll to center the cell
-            this.viewport.scrollTo({
-              left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
-              top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
+            window.scrollTo({
+                left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
+                top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
             });
+
+
+            
+            // this.viewport.scrollTo({
+            //     left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
+            //     top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
+            // });
+            // this.scrollSubscription = this.viewport.scrolledIndexChange.subscribe(() => {
+            //     this.logRenderedRange();
+            //   });
+            // setTimeout(() => {
+            //     this.recenterScroll(this.cellSize);
+            // }, 3000);
+
 
         }, 0);
 
@@ -81,7 +102,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         
 
         
-        this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 20);
+        this.ingridientsArr$ = this.recipeService.getRecipe("reinforced iron plate", 10);
         
         this.ingridientsArr$.subscribe((data) => {
             console.log("data", data);
@@ -97,6 +118,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         //     this.board[pos.y][pos.x] = { id: parseInt(degree), itemName: degree, machineCount: "5.00", machineName: "Assembler", productionRate: "10.00", ingredients: [1, 9], indentLevel: 0 };
         // }
     }
+
+
 
     // TODO: add some angle to min angle each indent level to make it more readable
     // TODO: make an animation that nodes add on the board in slow motion one by one in whatever order they are processed, and when node is added it gets connected by following arrow with draw animation (and maybe movement paths).
@@ -225,6 +248,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
         // Calculate the middle degree
         const middleDegree = (lowerBoundDegree + upperBoundDegree) / 2;
+        // TODO: add some randomness to angle chosement
+        // if node has 3 or more ingridients, set its position on edge of circel withn r 5 and give it 360&degr , else go with given angle( for small straight lines)
 
         // Find the closest degree to the middle degree
         let closestDegree: number | null = null;
@@ -307,13 +332,13 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
+
     scale = 1; // Default scale
     scaleStep = 0.1; // Step for zooming in and out
 
     // Limit zooming between 0.5x and 3x
     minScale = 0.5;
-    maxScale = 3;
-    private zoomTimeout: any;
+    maxScale = 2;
 
     @HostListener('wheel', ['$event'])
     onWheel(event: WheelEvent) {
@@ -327,9 +352,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             this.zoomOut();
         }
 
-        if (this.zoomTimeout) {
-            clearTimeout(this.zoomTimeout);
-        }
+        // this.afterZoom();
+
+
         console.log(this.scale);
     }
 
@@ -348,20 +373,16 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             // Ctrl/Cmd + "0" -> Reset zoom
             this.resetZoom();
         }
+        // this.afterZoom();
+
     }
 
     zoomIn() {    
         this.scale = Math.min(this.maxScale, this.scale + this.scaleStep);
-        this.cellSize = 50 * this.scale;
-        this.viewport.checkViewportSize();
-        // document.body.style.transform = `scale(${Math.min(this.maxScale, this.scale + this.scaleStep)})`;
     }
 
     zoomOut() {    
         this.scale = Math.max(this.minScale, this.scale - this.scaleStep);
-        this.cellSize = 50 * this.scale;
-        this.viewport.checkViewportSize();
-        // document.body.style.transform = `scale(${Math.max(this.minScale, this.scale - this.scaleStep)})`;
     }
 
     resetZoom() {
@@ -369,7 +390,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
-    
 
     onMouseDown(event: MouseEvent) {
         if (event?.target instanceof HTMLElement) {
@@ -383,6 +403,73 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     disableContextMenu(event: MouseEvent) {
       this.dragScrollService.disableContextMenu(event);
     }
+
+
+
+
+    // FOR VIRTUAL SCROLL
+
+    @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
+
+
+    afterZoom() {
+        let previousSize = this.currentCellSize;
+        this.currentCellSize = this.cellSize * this.scale;
+        this.viewport.checkViewportSize();
+        console.log(this.currentCellSize);
+        this.recenterScroll(previousSize);
+    }
+
+    // when zooming out board size decreases by 10%, extra space appears on each side of content wrapper (5%), this affects corectness of virtual scroller rendering, so it behavves incorrectly. board postion and wrapper ize need to be adjusted on zoom
+    recenterScroll(previousItemSize: number) {
+        const currentScrollOffset = this.viewport.measureScrollOffset('top');
+        console.log(this.currentCellSize);
+        
+        const visibleItemsCount = this.viewport.getViewportSize() / this.currentCellSize;
+        console.log("viewportSize", this.viewport.getViewportSize());
+        
+        console.log("currentScrollOffset", currentScrollOffset);
+        
+        console.log("visibleItemsCount", visibleItemsCount);
+        
+
+        // Calculate the new scroll position to center the content
+        const newScrollOffset = (currentScrollOffset / this.currentCellSize) * this.currentCellSize;
+        const totalItems = this.viewport.getDataLength();
+        console.log("totalItems", totalItems);
+        
+        const start = this.viewport.getRenderedRange().start;
+        const end = this.viewport.getRenderedRange().end;
+        console.log(`Rendered range: ${start} - ${end}`);
+
+        const middleItemIndex = start + (end - start) / 2;
+        // const middleItemIndex = totalItems / 2;
+        console.log("middleItemIndex", middleItemIndex);
+        
+        // const scrollToPosition = middleItemIndex * this.currentCellSize - (visibleItemsCount * this.currentCellSize) / 2;
+        const viewportHeight = this.viewport.getViewportSize();
+        const middleItemOffset = middleItemIndex * this.itemSize;
+        const scrollToPosition = middleItemOffset - (viewportHeight / 2 - this.itemSize / 2);
+
+        // const scrollToPosition = (currentScrollOffset / previousItemSize) * this.currentCellSize;
+        console.log("scrollToPosition", scrollToPosition);
+        // this.viewport.scrollToIndex(middleItemIndex, 'smooth'); // Scroll to the new centered position
+        this.viewport.scrollToOffset(scrollToPosition); // Scroll to the new centered position
+        this.viewport.checkViewportSize(); // Recalculate the layout after scroll
+    }
+
+    private logRenderedRange() {
+        const height = this.boardDiv.nativeElement.getBoundingClientRect();
+        console.log("height", height);
+        // Get the rendered range of items
+        const renderedRange = this.viewport.getRenderedRange();
+        console.log('Rendered range:', renderedRange.start, '-', renderedRange.end);
+    }
+
+
+
+    
+
 
 
 }

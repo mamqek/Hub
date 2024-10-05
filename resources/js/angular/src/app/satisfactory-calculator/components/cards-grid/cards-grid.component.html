@@ -1,8 +1,11 @@
-<cdk-virtual-scroll-viewport 
+<!-- <cdk-virtual-scroll-viewport 
     class="virtual-view "
-    [itemSize]='cellSize'
+    [itemSize]='currentCellSize'
     [style.height.px]="viewportHeight"
->    
+
+        <ng-container *cdkVirtualFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+
+>     -->
     <div 
         class="board gegeg"
         #boardDiv   
@@ -13,7 +16,7 @@
             'transform': 'scale(' + scale + ')'
         }"
     >
-        <ng-container *cdkVirtualFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+        <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
             <div
                 *ngFor="let cell of row; let x = index; trackBy: trackById"
                 class="cell"
@@ -36,11 +39,12 @@
 
                 <ng-template #placeholder>
                     <!-- mb some styles in here  -->
+                     {{ y}}
                 </ng-template>
                 
             </div>
         </ng-container>
     </div>
-</cdk-virtual-scroll-viewport>
+<!-- </cdk-virtual-scroll-viewport> -->
   
 
