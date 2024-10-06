@@ -1,4 +1,4 @@
-import { Component,  HostListener, OnInit, ElementRef, Renderer2, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
+import { Component, inject,  HostListener, OnInit, ElementRef, Renderer2, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
 
 import { RecipeService, RecipeNode } from '../../services/recipe.service';
 import { DragScrollService } from '../../services/drag-scroll.service';
@@ -9,6 +9,9 @@ import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove } from '@a
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
+import {MatButtonModule} from '@angular/material/button';
+import {MatDialog, MatDialogModule} from '@angular/material/dialog';
+import { InputDialogComponent } from './includes/input-dialog/input-dialog.component';
 
 interface Position {
     x: number;
@@ -55,6 +58,16 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     trackById(index: number, item: any): number {        
         return index;
+    }
+
+    readonly dialog = inject(MatDialog);
+
+    openDialog() {
+      const dialogRef = this.dialog.open(InputDialogComponent);
+  
+      dialogRef.afterClosed().subscribe(result => {
+        console.log(`Dialog result: ${result}`);
+      });
     }
 
 
