@@ -6,10 +6,31 @@
     place-items: center; 
     min-height: 100vh; 
     height: 100%; 
-    width: min-content;
+    width: 100%;
 
     transition: transform 0.3s ease;  /* Smooth transition */
     background-color: grey;
+
+    .zoom {
+        position: fixed;
+        top: 0;
+        right: 0;
+        margin-right: 2rem;
+        margin-top: 1rem;
+
+        transform: scale(1.5);
+        width:  3%;
+        height: 3%;
+
+        background: transparent;
+        backdrop-filter: blur(10px);
+        border-radius: 6px;
+        font-weight: bold;
+
+        display: grid;
+        place-items: center;
+
+    }
 }
 
 .virtual-view {

@@ -507,11 +507,11 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
     zoomIn() {    
-        this.scale = Math.min(this.maxScale, this.scale + this.scaleStep);
+        this.scale = Number(Math.min(this.maxScale, this.scale + this.scaleStep).toFixed(2));
     }
 
     zoomOut() {    
-        this.scale = Math.max(this.minScale, this.scale - this.scaleStep);
+        this.scale = Number(Math.max(this.minScale, this.scale - this.scaleStep).toFixed(2));
     }
 
     resetZoom() {
