@@ -51,11 +51,11 @@ class RecipeController extends Controller
             $indentLevel = $this->getIndentLevel($line);
             $newNode = $this->parseRow($line, $count, $indentLevel);
 
-
+            Log::info(print_r($line, true));
             // Check if it's a byproduct or base material
             if (strpos($line, '<') !== false) {
                 $newNode['byproduct'] = true;
-            } elseif (strpos($line, '-') !== false) {
+            } elseif (strpos($line, '- ') !== false) {
                 $newNode['isBaseMaterial'] = true;
             }
 
@@ -92,7 +92,7 @@ class RecipeController extends Controller
             $arr[] = $newNode;
             $count +=1;
         }
-        Log::info(print_r($stack[0], true));
+        // Log::info(print_r($stack[0], true));
 
         return $arr;
         // return [
