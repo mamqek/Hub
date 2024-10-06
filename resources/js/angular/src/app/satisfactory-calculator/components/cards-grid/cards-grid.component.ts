@@ -82,7 +82,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             });
 
 
-            
+
             // this.viewport.scrollTo({
             //     left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
             //     top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
@@ -108,8 +108,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             console.log("data", data);
             this.nodes = data;
 
-            this.drawGraph(this.nodes[0], this.boardMiddle);
             this.board[this.boardMiddle.y][this.boardMiddle.x] = this.nodes[0];            
+            this.drawGraph(this.nodes[0], this.boardMiddle);
         })
 
         // let triangleCircle : { [degree: number]: Position } = this.getFullCircleCoordinates(4.5, this.boardMiddle);
