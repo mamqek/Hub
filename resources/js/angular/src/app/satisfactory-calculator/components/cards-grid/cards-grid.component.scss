@@ -5,8 +5,8 @@
     display: grid; 
     place-items: center; 
     min-height: 100vh; 
-    height: 100%; 
-    width: 100%;
+    height: min-content; 
+    width: min-content;
 
     transition: transform 0.3s ease;  /* Smooth transition */
     background-color: grey;
@@ -15,11 +15,11 @@
         position: fixed;
         top: 0;
         right: 0;
-        margin-right: 2rem;
+        margin-right: 1rem;
         margin-top: 1rem;
 
         transform: scale(1.5);
-        width:  3%;
+        width:  5%;
         height: 3%;
 
         background: transparent;

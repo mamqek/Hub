@@ -7,6 +7,7 @@ import { routes } from './app.routes';
 import { BrowserAnimationsModule, provideAnimations } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { SatisfactoryCalculatorModule } from './satisfactory-calculator/satisfactory-calculator.module';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,9 @@ import { SatisfactoryCalculatorModule } from './satisfactory-calculator/satisfac
     RouterModule.forRoot(routes),
     SatisfactoryCalculatorModule
   ],
-  providers: [],
+  providers: [
+    provideAnimationsAsync()
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { 
