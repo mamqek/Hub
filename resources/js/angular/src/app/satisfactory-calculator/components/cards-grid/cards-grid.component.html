@@ -6,20 +6,25 @@
         <ng-container *cdkVirtualFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 
 >     -->
-    <div 
-        class="board gegeg"
-        #boardDiv   
-        cdkDropListGroup 
-        (mousedown)="onMouseDown($event)"
-        [ngStyle]="{
-            'grid-template-columns': 'repeat(' + gridSize + ', 50px)',
-            'transform': 'scale(' + scale + ')'
-        }"
+
+<div 
+class="board"
+#boardDiv   
+cdkDropListGroup 
+(mousedown)="onMouseDown($event)"
+[ngStyle]="{
+    'grid-template-columns': 'repeat(' + gridSize + ', '+ itemSize + 'px)',
+    'transform': 'scale(' + scale + ')'
+}"
     >
         <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
             <div
                 *ngFor="let cell of row; let x = index; trackBy: trackById"
                 class="cell"
+                [ngStyle]="{
+                    'width': itemSize + 'px',
+                    'height': itemSize + 'px',
+                }"
                 cdkDropList
                 (cdkDropListDropped)="drop($event)"
                 [cdkDropListData]="{x: x, y: y}"
@@ -39,7 +44,6 @@
 
                 <ng-template #placeholder>
                     <!-- mb some styles in here  -->
-                     {{ y}}
                 </ng-template>
                 
             </div>

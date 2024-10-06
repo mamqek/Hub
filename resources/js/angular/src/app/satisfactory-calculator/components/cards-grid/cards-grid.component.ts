@@ -27,7 +27,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
     gridSize: number = 50;
     itemSize: number = 70;
-    gap: number = 5;
+    gap: number = 0;
     cellSize: number = this.itemSize + this.gap;
     currentCellSize: number = this.cellSize;
     scrollSubscription: Subscription | null = null;
@@ -82,8 +82,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             // this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
 
             // this.viewport.scrollToIndex(10); 
-            const boardMiddlePositionX = boardHeight / 4;
-            const boardMiddlePositionY = boardHeight / 4;
+            const boardMiddlePositionX = boardHeight / 2;
+            const boardMiddlePositionY = boardHeight / 2;
             console.log("boardMiddlePositionX", boardMiddlePositionX);
             
             
@@ -93,7 +93,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             // Scroll to center the cell
             window.scrollTo({
                 left: boardMiddlePositionX - centerXOffset + this.cellSize / 2,
-                top:  boardMiddlePositionY + this.cellSize / 2,
+                top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
                 behavior: 'smooth'
             });
 
