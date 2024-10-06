@@ -1,5 +1,5 @@
 <div class="card" id="card-{{data.id}}" appReady>
-    <img class="card-image" src="http://localhost:8000/images/Coal_Generator.webp"/>
+    <img class="card-image" [src]="imageUrl"/>
     <div class="card-hint">
         <h5 class="card-hint-title">{{data.itemName}}</h5>
         <p *ngIf="data.machineCount" class="card-hint-text">{{data.machineCount}} machines required</p>
