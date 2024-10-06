@@ -149,10 +149,13 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             circle_segment = totalRequiredAngle;
             radius +=1
         }
-        let circle = this.getFullCircleCoordinates(radius, center); 
 
         // Calculate the angle segment based on the number of ingredients that can fit
-        const ingredient_segment = circle_segment / num_of_ingredients;    
+        const ingredient_segment = circle_segment / num_of_ingredients; 
+        console.log("num_of_ingredients", num_of_ingredients);
+           
+        console.log("ingredient_segment", ingredient_segment);
+        
     
         for (const [index, ingredientId] of node.ingredients.entries()) {
             const lowerBoundDegree = degrees.lower + index * ingredient_segment;
@@ -162,12 +165,29 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
             if (ingredientNode) {
 
-                let position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle);
+                let random: boolean = false;
+
+                if (num_of_ingredients == 2 && ingredientNode.indentLevel == 1) {   // special settings for 2 ingridient recepy
+                    random = false;
+                    lowerBoundDegree = 150;
+                    upperBoundDegree = 210;
+                } else if (num_of_ingredients > 1) {            // Randomize angle if many ingredients, so they are not in a straight line
+                    random = true;
+                } else if (ingredientNode.indentLevel == 1) {   // Main ingridients usually have long process, so move them away 
+                    radius += num_of_ingredients - 2;
+                    random = false; 
+                }
+                console.log("radius", radius);
+                
+                let circle = this.getFullCircleCoordinates(radius, center);
+                let position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
+                
                 // If no angle is found in boundaries, increase radius and try again
                 while (!position) {
                     radius += 1;
                     circle = this.getFullCircleCoordinates(radius, center);
-                    position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle);
+                    position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
+                }
                 }
 
                 this.board[position.y][position.x] = ingredientNode;
@@ -207,6 +227,18 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
         let closestDegree: number | null = null;
 
+        if (random) {
+        
+            this.shuffleArray(degrees);
+        
+            for (const degree of degrees) {            
+                const degreeNum = parseInt(degree);
+                if (this.isEmptyArea(this.board, filteredDegrees[degreeNum].y, filteredDegrees[degreeNum].x)) {
+                    closestDegree = degreeNum; // Update closest degree
+                    break;
+                }
+            }
+        } else{
 
             // Calculate the middle degree
             const middleDegree = (lowerBoundDegree + upperBoundDegree) / 2;
@@ -221,9 +253,21 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                     closestDegree = degreeNum; // Update closest degree
                 }
             }
+        }
+        if (closestDegree !== null) {
+        console.log(filteredDegrees[closestDegree]);
+        }
         
         // Return the position of the closest degree or null if not found
         return closestDegree !== null ? filteredDegrees[closestDegree] : null;
+    }
+
+    shuffleArray(array: any[]) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1)); // Random index
+            // Swap elements
+            [array[i], array[j]] = [array[j], array[i]];
+        }
     }
 
     isEmptyArea(grid: any[][], row: number, col: number): boolean {
