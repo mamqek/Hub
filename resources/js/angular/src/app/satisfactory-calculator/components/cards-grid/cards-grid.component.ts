@@ -464,20 +464,27 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @HostListener('wheel', ['$event'])
     onWheel(event: WheelEvent) {
-        this.drawLinesService.hideAllLines();
+        console.log(event);
+        let perm_scale = this.scale;
+        
         event.preventDefault(); // Prevent the default behavior of scrolling the page
         if (event.deltaY < 0) {
             // Scroll up -> Zoom in
             this.zoomIn();
+
         } else {
             // Scroll down -> Zoom out
             this.zoomOut();
         }
 
+        if(perm_scale != this.scale) {
+            this.drawLinesService.hideAllLines();
+            console.log(this.scale);
+        }
+
         // this.afterZoom();
 
 
-        console.log(this.scale);
     }
 
 
