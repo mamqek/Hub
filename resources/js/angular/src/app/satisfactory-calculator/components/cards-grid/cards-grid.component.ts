@@ -177,6 +177,130 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
     }
 
+    getDegreeCoordinate(lowerBoundDegree: number, upperBoundDegree: number, circle: { [degree: number]: Position }, random: boolean): Position | null {
+
+        let filteredDegrees = Object.entries(circle).reduce<{ [degree: number]: Position }>((acc, [degree, pos]) => {
+            const degreeNum = parseInt(degree);
+            
+            if (lowerBoundDegree < 0) {
+                lowerBoundDegree += 360;
+            }
+
+            if (lowerBoundDegree >= upperBoundDegree) {
+                upperBoundDegree += 360;
+            }
+            // console.log("lowerBoundDegree", lowerBoundDegree);
+            // console.log("upperBoundDegree", upperBoundDegree);
+            
+            
+            if (degreeNum >= lowerBoundDegree && degreeNum <= upperBoundDegree) {
+                acc[degreeNum] = pos;                                                                                           
+            }
+            return acc;
+        }, {});
+
+
+        // TODO: add some randomness to angle chosement
+        // if node has 3 or more ingridients, set its position on edge of circel withn r 5 and give it 360&degr , else go with given angle( for small straight lines)        
+
+        let degrees = Object.keys(filteredDegrees);
+
+        let closestDegree: number | null = null;
+
+
+            // Calculate the middle degree
+            const middleDegree = (lowerBoundDegree + upperBoundDegree) / 2;
+            // Find the closest degree to the middle degree
+            let closestDistance = Infinity; // Start with a large distance
+            for (const degree of degrees) {
+                const degreeNum = parseInt(degree);
+                const distance = Math.abs(degreeNum - middleDegree); // Calculate the distance from the middle degree
+    
+                if (distance < closestDistance && this.isEmptyArea(this.board, filteredDegrees[degreeNum].y, filteredDegrees[degreeNum].x)) {
+                    closestDistance = distance;
+                    closestDegree = degreeNum; // Update closest degree
+                }
+            }
+        
+        // Return the position of the closest degree or null if not found
+        return closestDegree !== null ? filteredDegrees[closestDegree] : null;
+    }
+
+    isEmptyArea(grid: any[][], row: number, col: number): boolean {
+        // Define the directions (including diagonals)
+        const directions = [
+            { x: -1, y: -1 }, // top-left
+            { x: -1, y: 0 },  // top
+            { x: -1, y: 1 },  // top-right
+            { x: 0, y: -1 },  // left
+            { x: 0, y: 1 },   // right
+            { x: 1, y: -1 },  // bottom-left
+            { x: 1, y: 0 },   // bottom
+            { x: 1, y: 1 }    // bottom-right
+        ];
+    
+        // Check if the specified coordinate is within bounds
+        if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length) {
+            return false; // Out of bounds
+        }
+    
+        // Check if the specified coordinate is empty
+        if (grid[row][col] !== null && grid[row][col] !== 0) {
+            return false; // Not empty
+        }
+    
+        // Check all neighboring coordinates
+        for (const { x, y } of directions) {
+            const newRow = row + x;
+            const newCol = col + y;
+    
+            // Check bounds
+            if (newRow >= 0 && newRow < grid.length && newCol >= 0 && newCol < grid[0].length) {
+                if (grid[newRow][newCol] !== null && grid[newRow][newCol] !== 0) {
+                    return false; // Found non-empty neighbor
+                }
+            }
+        }
+    
+        return true; // All checked positions are empty
+    }
+
+
+    getFullCircleCoordinates(radius: number, center: Position): { [degree: number]: Position } {
+        const circle: { [degree: number]: Position } = {};
+    
+        const limit = Math.floor(radius * Math.sqrt(0.5)); // Limit for r
+    
+        for (let r = 0; r <= limit; r++) {
+            const d = Math.floor(Math.sqrt(radius * radius - r * r));
+    
+            // Draw 8 symmetric points
+            addCirclePoint(circle, center, center.x - d, center.y + r); // Left, Top
+            addCirclePoint(circle, center, center.x + d, center.y + r); // Right, Top
+            addCirclePoint(circle, center, center.x - d, center.y - r); // Left, Bottom
+            addCirclePoint(circle, center, center.x + d, center.y - r); // Right, Bottom
+            addCirclePoint(circle, center, center.x + r, center.y - d); // Top, Right
+            addCirclePoint(circle, center, center.x + r, center.y + d); // Bottom, Right
+            addCirclePoint(circle, center, center.x - r, center.y - d); // Top, Left
+            addCirclePoint(circle, center, center.x - r, center.y + d); // Bottom, Left
+        }
+
+        return circle;
+
+        function addCirclePoint(circleCoords: { [degree: number]: Position }, center: Position, x: number, y: number) {
+            const coordExists = Object.values(circleCoords).some(pos => pos.x === x && pos.y === y);
+            if (!coordExists) {
+                let angle = Math.atan2(y - center.y, x - center.x) * (180 / Math.PI);
+
+                if (angle < 0) {
+                    angle += 360;
+                }
+                circleCoords[Math.round(angle)] = { x, y };
+            }
+        }
+    
+    }
+
 
 
 
@@ -236,74 +360,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
-    getDegreeCoordinate(lowerBoundDegree: number, upperBoundDegree: number, circle: { [degree: number]: Position }): Position | null {
-
-        let filteredDegrees = Object.entries(circle).reduce<{ [degree: number]: Position }>((acc, [degree, pos]) => {
-            const degreeNum = parseInt(degree);
-            if (degreeNum >= lowerBoundDegree && degreeNum <= upperBoundDegree) {
-                acc[degreeNum] = pos;
-            }
-            return acc;
-        }, {});
-
-        // Calculate the middle degree
-        const middleDegree = (lowerBoundDegree + upperBoundDegree) / 2;
-        // TODO: add some randomness to angle chosement
-        // if node has 3 or more ingridients, set its position on edge of circel withn r 5 and give it 360&degr , else go with given angle( for small straight lines)
-
-        // Find the closest degree to the middle degree
-        let closestDegree: number | null = null;
-        let closestDistance = Infinity; // Start with a large distance
-
-        for (const degree in filteredDegrees) {
-            const degreeNum = parseInt(degree);
-            const distance = Math.abs(degreeNum - middleDegree); // Calculate the distance from the middle degree
-
-            if (distance < closestDistance && this.board[filteredDegrees[degree].y][filteredDegrees[degree].x] === null) {
-                closestDistance = distance;
-                closestDegree = degreeNum; // Update closest degree
-            }
-        }
-
-        // Return the position of the closest degree or null if not found
-        return closestDegree !== null ? filteredDegrees[closestDegree] : null;
-    }
-
-
-    getFullCircleCoordinates(radius: number, center: Position): { [degree: number]: Position } {
-        const circle: { [degree: number]: Position } = {};
     
-        const limit = Math.floor(radius * Math.sqrt(0.5)); // Limit for r
-    
-        for (let r = 0; r <= limit; r++) {
-            const d = Math.floor(Math.sqrt(radius * radius - r * r));
-    
-            // Draw 8 symmetric points
-            addCirclePoint(circle, center, center.x - d, center.y + r); // Left, Top
-            addCirclePoint(circle, center, center.x + d, center.y + r); // Right, Top
-            addCirclePoint(circle, center, center.x - d, center.y - r); // Left, Bottom
-            addCirclePoint(circle, center, center.x + d, center.y - r); // Right, Bottom
-            addCirclePoint(circle, center, center.x + r, center.y - d); // Top, Right
-            addCirclePoint(circle, center, center.x + r, center.y + d); // Bottom, Right
-            addCirclePoint(circle, center, center.x - r, center.y - d); // Top, Left
-            addCirclePoint(circle, center, center.x - r, center.y + d); // Bottom, Left
-        }
-
-        return circle;
-
-        function addCirclePoint(circleCoords: { [degree: number]: Position }, center: Position, x: number, y: number) {
-            const coordExists = Object.values(circleCoords).some(pos => pos.x === x && pos.y === y);
-            if (!coordExists) {
-                let angle = Math.atan2(y - center.y, x - center.x) * (180 / Math.PI);
-
-                if (angle < 0) {
-                    angle += 360;
-                }
-                circleCoords[Math.round(angle)] = { x, y };
-            }
-        }
-    
-    }
 
 
     ngAfterViewChecked(): void {
