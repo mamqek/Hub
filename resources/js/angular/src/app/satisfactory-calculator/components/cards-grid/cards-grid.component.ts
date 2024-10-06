@@ -63,22 +63,25 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         // Place user camera to default position
         setTimeout(() => {
 
-            const boardHeight = this.gridSize * (this.cellSize + 5) - 5; // 5's for gap
+            const boardHeight = this.gridSize * this.cellSize; // 5's for gap
 
             // this.dragScrollService.setViewport(this.viewport);
             // this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
 
             // this.viewport.scrollToIndex(10); 
-            const boardMiddlePositionX = boardHeight / 2;
-            const boardMiddlePositionY = boardHeight / 2;
+            const boardMiddlePositionX = boardHeight / 4;
+            const boardMiddlePositionY = boardHeight / 4;
+            console.log("boardMiddlePositionX", boardMiddlePositionX);
             
-            const centerXOffset = this.viewportWidth * 0.5; // Adjust as 50% of viewport width
-            const centerYOffset = this.viewportHeight * 0.55; // Adjust as 50% of viewport height
+            
+            const centerXOffset = this.viewportWidth *  0.5; // Adjust as 50% of viewport width
+            const centerYOffset = this.viewportHeight * 0.5; // Adjust as 50% of viewport height
             
             // Scroll to center the cell
             window.scrollTo({
-                left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
-                top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
+                left: boardMiddlePositionX - centerXOffset + this.cellSize / 2,
+                top:  boardMiddlePositionY + this.cellSize / 2,
+                behavior: 'smooth'
             });
 
 
