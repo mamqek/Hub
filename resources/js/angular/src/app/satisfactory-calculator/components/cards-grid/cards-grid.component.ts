@@ -23,7 +23,7 @@ interface Position {
 export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
     gridSize: number = 50;
-    itemSize: number = 50;
+    itemSize: number = 70;
     gap: number = 5;
     cellSize: number = this.itemSize + this.gap;
     currentCellSize: number = this.cellSize;
@@ -105,7 +105,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         
 
         
-        this.ingridientsArr$ = this.recipeService.getRecipe("reinforced iron plate", 10);
+        this.ingridientsArr$ = this.recipeService.getRecipe("rotor", 10);
         
         this.ingridientsArr$.subscribe((data) => {
             console.log("data", data);
@@ -155,21 +155,13 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
         // Calculate the angle segment based on the number of ingredients that can fit
         const ingredient_segment = circle_segment / num_of_ingredients; 
-        console.log("num_of_ingredients", num_of_ingredients);
-           
-        console.log("ingredient_segment", ingredient_segment);
         
-    
         for (const [index, ingredientId] of node.ingredients.entries()) {
             let radius = defaultRadius;
             let lowerBoundDegree = degrees.lower + index * ingredient_segment;
             let upperBoundDegree = lowerBoundDegree + ingredient_segment;    
 
-            
-
             const ingredientNode = this.nodes.find(n => n.id === ingredientId);
-            console.log("ingredientNode", ingredientNode);  
-            
             if (ingredientNode) {
 
                 let random: boolean = false;
@@ -184,13 +176,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                     radius += num_of_ingredients - 2;
                     random = false; 
                 }
-                console.log("radius", radius);
                 
                 let ingredientNodeIngridients: number[] | undefined = ingredientNode.ingredients;
                 if (ingredientNodeIngridients && ingredientNodeIngridients.length > 1) {
-                    radius += ingredientNodeIngridients.length -1 ;    
-                    console.log("radius", radius);
-                                    
+                    radius += ingredientNodeIngridients.length -1 ;                                        
                 }
                 
                 let circle = this.getFullCircleCoordinates(radius, center);
@@ -209,9 +198,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                 // To make each main ingridient take more space, as its on the distance from others
                 if (ingredientNode.indentLevel == 1) {
                     lowerBoundDegree -= ingredient_segment / 2;
-                    upperBoundDegree += ingredient_segment / 2;
-                    console.log("main ingridient", lowerBoundDegree, upperBoundDegree);
-                    
+                    upperBoundDegree += ingredient_segment / 2;                    
                 }
 
                 this.board[position.y][position.x] = ingredientNode;
@@ -232,10 +219,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
             if (lowerBoundDegree >= upperBoundDegree) {
                 upperBoundDegree += 360;
-            }
-            // console.log("lowerBoundDegree", lowerBoundDegree);
-            // console.log("upperBoundDegree", upperBoundDegree);
-            
+            }    
             
             if (degreeNum >= lowerBoundDegree && degreeNum <= upperBoundDegree) {
                 acc[degreeNum] = pos;                                                                                           
@@ -277,9 +261,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                     closestDegree = degreeNum; // Update closest degree
                 }
             }
-        }
-        if (closestDegree !== null) {
-        console.log(filteredDegrees[closestDegree]);
         }
         
         // Return the position of the closest degree or null if not found
@@ -407,7 +388,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             this.cdr.detectChanges();
             this.board[previousIndex.y][previousIndex.x] = null;
             this.board[currentIndex.y][currentIndex.x] = event.item.data;
-            console.log("drop", event.item.data);
+
             this.drawLinesService.removeLinesByElementId(this.nodesWithArrowIdArr);
             let node: RecipeNode = event.item.data;
             let arr = (node.parentId ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
@@ -421,9 +402,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         this.isDragging = false;
     }
     
-    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {
-        // console.log("enterPredicate", drag.data, drop.data);
-        
+    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {        
         return !this.board[drop.data];  // Only allow drop into empty cells
     }
 
@@ -447,11 +426,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @HostListener('transitionend', ['$event'])
     onZoomEnd(event: TransitionEvent) {
-        
         // Check if the transition is for the 'transform' property and the element has the 'board' class
-        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
-            console.log("transitionend in");
-            
+        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {            
             this.drawLinesService.redrawAllLines();
         }
     }
@@ -467,7 +443,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     @HostListener('wheel', ['$event'])
     onWheel(event: WheelEvent) {
-        console.log(event);
         let perm_scale = this.scale;
         
         event.preventDefault(); // Prevent the default behavior of scrolling the page
@@ -492,9 +467,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
 
     @HostListener('window:keydown', ['$event'])
-    onKeyDown(event: KeyboardEvent) {
-        // console.log("keydown");
-        
+    onKeyDown(event: KeyboardEvent) {        
         if (event.key === '+' || event.key === '=') {
             // "+" key -> Zoom in
             this.zoomIn();
@@ -506,7 +479,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             this.resetZoom();
         }
         // this.afterZoom();
-
     }
 
     zoomIn() {    
@@ -548,7 +520,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         let previousSize = this.currentCellSize;
         this.currentCellSize = this.cellSize * this.scale;
         this.viewport.checkViewportSize();
-        console.log(this.currentCellSize);
         this.recenterScroll(previousSize);
     }
 
@@ -605,3 +576,5 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
 
 }
+
+
