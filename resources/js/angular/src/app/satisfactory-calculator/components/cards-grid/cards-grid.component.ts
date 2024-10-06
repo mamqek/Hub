@@ -126,11 +126,11 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     drawGraph (node: RecipeNode, center: Position, degrees: {lower: number, upper: number} = {lower: 0, upper: 360}) {
         // Exit if ingredients is undefined or not an array
         if (!node.ingredients || !Array.isArray(node.ingredients)) return;
-
-        let radius = 2.5;       
-
+        
         let num_of_ingredients = node.ingredients.length;
-
+        
+        let defaultRadius = 2.5;   
+        
         // Minimum angle for each ingredient
         const minAngle = 30; 
     
@@ -147,7 +147,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             
             // Increase radius to get more space for ingredients
             circle_segment = totalRequiredAngle;
-            radius +=1
+            defaultRadius +=1
         }
 
         // Calculate the angle segment based on the number of ingredients that can fit
@@ -158,11 +158,15 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         
     
         for (const [index, ingredientId] of node.ingredients.entries()) {
-            const lowerBoundDegree = degrees.lower + index * ingredient_segment;
-            const upperBoundDegree = lowerBoundDegree + ingredient_segment;            
+            let radius = defaultRadius;
+            let lowerBoundDegree = degrees.lower + index * ingredient_segment;
+            let upperBoundDegree = lowerBoundDegree + ingredient_segment;    
+
+            
 
             const ingredientNode = this.nodes.find(n => n.id === ingredientId);
-
+            console.log("ingredientNode", ingredientNode);  
+            
             if (ingredientNode) {
 
                 let random: boolean = false;
@@ -179,15 +183,32 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                 }
                 console.log("radius", radius);
                 
+                let ingredientNodeIngridients: number[] | undefined = ingredientNode.ingredients;
+                if (ingredientNodeIngridients && ingredientNodeIngridients.length > 1) {
+                    radius += ingredientNodeIngridients.length -1 ;    
+                    console.log("radius", radius);
+                                    
+                }
+                
                 let circle = this.getFullCircleCoordinates(radius, center);
                 let position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
                 
                 // If no angle is found in boundaries, increase radius and try again
                 while (!position) {
-                    radius += 1;
+                    console.warn("No position found, increasing radius...");
+                    
+                    lowerBoundDegree -= ingredient_segment / 2;
+                    upperBoundDegree += ingredient_segment / 2;
                     circle = this.getFullCircleCoordinates(radius, center);
                     position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
                 }
+
+                // To make each main ingridient take more space, as its on the distance from others
+                if (ingredientNode.indentLevel == 1) {
+                    lowerBoundDegree -= ingredient_segment / 2;
+                    upperBoundDegree += ingredient_segment / 2;
+                    console.log("main ingridient", lowerBoundDegree, upperBoundDegree);
+                    
                 }
 
                 this.board[position.y][position.x] = ingredientNode;
