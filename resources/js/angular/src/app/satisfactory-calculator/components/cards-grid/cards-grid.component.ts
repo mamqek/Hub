@@ -75,51 +75,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
-    public ngOnInit(): void {
-        
+    public ngOnInit(): void {        
         // Place user camera to default position
-        setTimeout(() => {
-
-            const boardHeight = this.gridSize * this.cellSize; // 5's for gap
-
-            // this.dragScrollService.setViewport(this.viewport);
-            // this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
-
-            // this.viewport.scrollToIndex(10); 
-            const boardMiddlePositionX = boardHeight / 2;
-            const boardMiddlePositionY = boardHeight / 2;
-            console.log("boardMiddlePositionX", boardMiddlePositionX);
-            
-            
-            const centerXOffset = this.viewportWidth *  0.5; // Adjust as 50% of viewport width
-            const centerYOffset = this.viewportHeight * 0.5; // Adjust as 50% of viewport height
-            
-            // Scroll to center the cell
-            window.scrollTo({
-                left: boardMiddlePositionX - centerXOffset + this.cellSize / 2,
-                top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
-                behavior: 'smooth'
-            });
-
-
-
-            // this.viewport.scrollTo({
-            //     left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
-            //     top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
-            // });
-            // this.scrollSubscription = this.viewport.scrolledIndexChange.subscribe(() => {
-            //     this.logRenderedRange();
-            //   });
-            // setTimeout(() => {
-            //     this.recenterScroll(this.cellSize);
-            // }, 3000);
-
-
-        }, 0);
-
-
-        console.log("initialized");
-        
+        setTimeout(() => {this.centerClientView()}, 0);
 
         // Assembly Director System
         this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
@@ -237,15 +195,42 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
       this.dragScrollService.disableContextMenu(event);
     }
 
+    centerClientView() {
+        const boardHeight = this.gridSize * this.cellSize; // 5's for gap
 
+        // this.dragScrollService.setViewport(this.viewport);
+        // this.dragScrollService.setContentDimensions({ width: boardHeight, height: boardHeight });
 
+        // this.viewport.scrollToIndex(10); 
+        const boardMiddlePositionX = boardHeight / 2;
+        const boardMiddlePositionY = boardHeight / 2;
+        console.log("boardMiddlePositionX", boardMiddlePositionX);
         
         
+        const centerXOffset = this.viewportWidth *  0.5; // Adjust as 50% of viewport width
+        const centerYOffset = this.viewportHeight * 0.5; // Adjust as 50% of viewport height
         
+        // Scroll to center the cell
+        window.scrollTo({
+            left: boardMiddlePositionX - centerXOffset + this.cellSize / 2,
+            top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
+            behavior: 'smooth'
+        });
 
 
 
+        // this.viewport.scrollTo({
+        //     left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
+        //     top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
+        // });
+        // this.scrollSubscription = this.viewport.scrolledIndexChange.subscribe(() => {
+        //     this.logRenderedRange();
+        //   });
+        // setTimeout(() => {
+        //     this.recenterScroll(this.cellSize);
+        // }, 3000);
 
+    }
 
 }
 
