@@ -194,10 +194,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
     // Other 
 
-    @HostListener('contextmenu', ['$event'])
-    disableContextMenu(event: MouseEvent) {
-      this.dragScrollService.disableContextMenu(event);
-    }
+    // @HostListener('contextmenu', ['$event'])
+    // disableContextMenu(event: MouseEvent) {
+    //   this.dragScrollService.disableContextMenu(event);
+    // }
 
     centerClientView() {
         const boardHeight = this.gridSize * this.cellSize; // 5's for gap
