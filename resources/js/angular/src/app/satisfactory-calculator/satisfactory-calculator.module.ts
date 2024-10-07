@@ -16,6 +16,7 @@ import { RecipeService } from './services/recipe.service';
 import { DragScrollService } from './services/drag-scroll.service';
 import { DrawLinesService } from './services/draw-lines.service';
 import { ReadyDirective } from '../ready.directive';
+import { ZoomService } from './services/zoom.service';
 
 
 
@@ -41,6 +42,7 @@ import { ReadyDirective } from '../ready.directive';
         RecipeService,
         DrawLinesService,
         DragScrollService,
+        ZoomService,
         provideHttpClient(withInterceptorsFromDi())
     ],
 })

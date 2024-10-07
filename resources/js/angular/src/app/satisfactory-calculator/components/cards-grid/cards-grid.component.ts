@@ -3,6 +3,8 @@ import { Component, inject,  HostListener, OnInit, ElementRef, Renderer2, ViewCh
 import { RecipeService, RecipeNode } from '../../services/recipe.service';
 import { DragScrollService } from '../../services/drag-scroll.service';
 import { DrawLinesService } from '../../services/draw-lines.service';
+import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
+
 
 import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove } from '@angular/cdk/drag-drop';
@@ -37,12 +39,15 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     nodes: RecipeNode[] = [];
     cardsInitialized: boolean = false;
 
+    boardZoomLevel: number = 1;
+
     public ingridientsArr$?: Observable<RecipeNode[]>;
     
     constructor(
         private recipeService: RecipeService, 
         private dragScrollService: DragScrollService, 
         private drawLinesService: DrawLinesService,
+        private zoomService: ZoomService,
         private cdr: ChangeDetectorRef,
         private renderer: Renderer2
         ) {
@@ -437,75 +442,26 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
     }
 
-    @HostListener('transitionend', ['$event'])
+    // Zooming logic
+    
+    @HostListener('window:keydown', ['$event'])
+    zoomBoard(event: WheelEvent | KeyboardEvent, element: HTMLElement = this.boardDiv.nativeElement) {
+        event.preventDefault(); // Prevent default scrolling behavior
+
+        this.zoomService.handleZoom(event, element, (output: number | null) => {
+            if (output !== null) {
+                this.boardZoomLevel = output; // Update the board zoom level
+                this.drawLinesService.hideAllLines(); // Call to hide lines
+            }
+        });
+    }
+
     onZoomEnd(event: TransitionEvent) {
         // Check if the transition is for the 'transform' property and the element has the 'board' class
         if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {            
             this.drawLinesService.redrawAllLines();
         }
     }
-
-
-
-    scale = 1; // Default scale
-    scaleStep = 0.1; // Step for zooming in and out
-
-    // Limit zooming between 0.5x and 3x
-    minScale = 0.5;
-    maxScale = 2;
-
-    @HostListener('wheel', ['$event'])
-    onWheel(event: WheelEvent) {
-        let perm_scale = this.scale;
-        
-        event.preventDefault(); // Prevent the default behavior of scrolling the page
-        if (event.deltaY < 0) {
-            // Scroll up -> Zoom in
-            this.zoomIn();
-
-        } else {
-            // Scroll down -> Zoom out
-            this.zoomOut();
-        }
-
-        if(perm_scale != this.scale) {
-            this.drawLinesService.hideAllLines();
-            console.log(this.scale);
-        }
-
-        // this.afterZoom();
-
-
-    }
-
-
-    @HostListener('window:keydown', ['$event'])
-    onKeyDown(event: KeyboardEvent) {        
-        if (event.key === '+' || event.key === '=') {
-            // "+" key -> Zoom in
-            this.zoomIn();
-        } else if (event.key === '-') {
-            // "-" key -> Zoom out
-            this.zoomOut();
-        } else if ((event.ctrlKey || event.metaKey) && event.key === '0') {
-            // Ctrl/Cmd + "0" -> Reset zoom
-            this.resetZoom();
-        }
-        // this.afterZoom();
-    }
-
-    zoomIn() {    
-        this.scale = Number(Math.min(this.maxScale, this.scale + this.scaleStep).toFixed(2));
-    }
-
-    zoomOut() {    
-        this.scale = Number(Math.max(this.minScale, this.scale - this.scaleStep).toFixed(2));
-    }
-
-    resetZoom() {
-        this.scale = 1; // Reset scale to default
-    }
-
 
 
     onMouseDown(event: MouseEvent) {
@@ -523,68 +479,11 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
 
 
-
-    // FOR VIRTUAL SCROLL
-
-    @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
-
-
-    afterZoom() {
-        let previousSize = this.currentCellSize;
-        this.currentCellSize = this.cellSize * this.scale;
-        this.viewport.checkViewportSize();
-        this.recenterScroll(previousSize);
-    }
-
-    // when zooming out board size decreases by 10%, extra space appears on each side of content wrapper (5%), this affects corectness of virtual scroller rendering, so it behavves incorrectly. board postion and wrapper ize need to be adjusted on zoom
-    recenterScroll(previousItemSize: number) {
-        const currentScrollOffset = this.viewport.measureScrollOffset('top');
-        console.log(this.currentCellSize);
         
-        const visibleItemsCount = this.viewport.getViewportSize() / this.currentCellSize;
-        console.log("viewportSize", this.viewport.getViewportSize());
         
-        console.log("currentScrollOffset", currentScrollOffset);
-        
-        console.log("visibleItemsCount", visibleItemsCount);
         
 
-        // Calculate the new scroll position to center the content
-        const newScrollOffset = (currentScrollOffset / this.currentCellSize) * this.currentCellSize;
-        const totalItems = this.viewport.getDataLength();
-        console.log("totalItems", totalItems);
-        
-        const start = this.viewport.getRenderedRange().start;
-        const end = this.viewport.getRenderedRange().end;
-        console.log(`Rendered range: ${start} - ${end}`);
 
-        const middleItemIndex = start + (end - start) / 2;
-        // const middleItemIndex = totalItems / 2;
-        console.log("middleItemIndex", middleItemIndex);
-        
-        // const scrollToPosition = middleItemIndex * this.currentCellSize - (visibleItemsCount * this.currentCellSize) / 2;
-        const viewportHeight = this.viewport.getViewportSize();
-        const middleItemOffset = middleItemIndex * this.itemSize;
-        const scrollToPosition = middleItemOffset - (viewportHeight / 2 - this.itemSize / 2);
-
-        // const scrollToPosition = (currentScrollOffset / previousItemSize) * this.currentCellSize;
-        console.log("scrollToPosition", scrollToPosition);
-        // this.viewport.scrollToIndex(middleItemIndex, 'smooth'); // Scroll to the new centered position
-        this.viewport.scrollToOffset(scrollToPosition); // Scroll to the new centered position
-        this.viewport.checkViewportSize(); // Recalculate the layout after scroll
-    }
-
-    private logRenderedRange() {
-        const height = this.boardDiv.nativeElement.getBoundingClientRect();
-        console.log("height", height);
-        // Get the rendered range of items
-        const renderedRange = this.viewport.getRenderedRange();
-        console.log('Rendered range:', renderedRange.start, '-', renderedRange.end);
-    }
-
-
-
-    
 
 
 

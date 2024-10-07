@@ -8,53 +8,54 @@
 >     -->
 
 <div 
-class="board"
-#boardDiv   
-cdkDropListGroup 
-(mousedown)="onMouseDown($event)"
-[ngStyle]="{
-    'grid-template-columns': 'repeat(' + gridSize + ', '+ itemSize + 'px)',
-    'transform': 'scale(' + scale + ')'
-}"
-    >
-        <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-            <div
-                *ngFor="let cell of row; let x = index; trackBy: trackById"
-                class="cell"
+    class="board"
+    #boardDiv   
+    cdkDropListGroup 
+    (mousedown)="onMouseDown($event)"
+    (wheel)="zoomBoard($event, boardDiv)"
+    (transitionend)="onZoomEnd($event)"
+    [ngStyle]="{
+        'grid-template-columns': 'repeat(' + gridSize + ', '+ itemSize + 'px)',
+    }"
+>
+    <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+        <div
+            *ngFor="let cell of row; let x = index; trackBy: trackById"
+            class="cell"
+            [ngStyle]="{
+                'width': itemSize + 'px',
+                'height': itemSize + 'px',
+            }"
+            cdkDropList
+            (cdkDropListDropped)="drop($event)"
+            [cdkDropListData]="{x: x, y: y}"
+            [cdkDropListEnterPredicate]="enterPredicate"
+        >
+            <satisfactory-card
+                *ngIf="cell else placeholder"
+                [data]="cell"
+                appReady  
+                cdkDrag 
+                [cdkDragData]="cell"
+                (cdkDragStarted)="dragStarted($event)"
+                (cdkDragMoved)="dragMoved($event)"
+                data-jtk-target="true"
+                data-jtk-source="true"
+            ></satisfactory-card>
+
+            <ng-template #placeholder>
+                <div 
+                class="placeholder h-full w-full rounded-md"
                 [ngStyle]="{
-                    'width': itemSize + 'px',
-                    'height': itemSize + 'px',
+                    'background-color': (x + y) % 2 === 0 ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.15)',
                 }"
-                cdkDropList
-                (cdkDropListDropped)="drop($event)"
-                [cdkDropListData]="{x: x, y: y}"
-                [cdkDropListEnterPredicate]="enterPredicate"
-            >
-                <satisfactory-card
-                    *ngIf="cell else placeholder"
-                    [data]="cell"
-                    appReady  
-                    cdkDrag 
-                    [cdkDragData]="cell"
-                    (cdkDragStarted)="dragStarted($event)"
-                    (cdkDragMoved)="dragMoved($event)"
-                    data-jtk-target="true"
-                    data-jtk-source="true"
-                ></satisfactory-card>
+                ></div>
+            </ng-template>
+            
+        </div>
+    </ng-container>
 
-                <ng-template #placeholder>
-                    <div 
-                    class="placeholder h-full w-full rounded-md"
-                    [ngStyle]="{
-                        'background-color': (x + y) % 2 === 0 ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.15)',
-                    }"
-                    ></div>
-                </ng-template>
-                
-            </div>
-        </ng-container>
-
-    </div>
+</div>
 
     
 <!-- </cdk-virtual-scroll-viewport> -->
@@ -62,5 +63,5 @@ cdkDropListGroup
 <button class="input" mat-button (click)="openDialog()">New Recipe</button>
 
 
-<span class="zoom">X{{scale}}</span>
+<span class="zoom">X{{boardZoomLevel}}</span>
 
