@@ -43,7 +43,12 @@ cdkDropListGroup
                 ></satisfactory-card>
 
                 <ng-template #placeholder>
-                    <!-- mb some styles in here  -->
+                    <div 
+                    class="placeholder h-full w-full rounded-md"
+                    [ngStyle]="{
+                        'background-color': (x + y) % 2 === 0 ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.15)',
+                    }"
+                    ></div>
                 </ng-template>
                 
             </div>

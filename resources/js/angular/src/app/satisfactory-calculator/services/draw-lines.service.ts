@@ -33,11 +33,11 @@ export class DrawLinesService {
             let line = new LeaderLine(childrenEl, parentEl , {
                 startPLug: 'square', 
                 endPlug: 'arrow3',
-                color: 'gray',
+                color: '#f2f200',
                 size: 3,
                 path: 'straight',
                 hide: true,
-                // dash: {animation: true}
+                dash: {animation: false}
             })
                 
 
