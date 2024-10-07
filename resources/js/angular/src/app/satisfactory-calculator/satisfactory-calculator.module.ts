@@ -16,6 +16,7 @@ import { RecipeService } from './services/recipe.service';
 import { DragScrollService } from './services/drag-scroll.service';
 import { DrawLinesService } from './services/draw-lines.service';
 import { ReadyDirective } from '../ready.directive';
+import { DrawCircularGraphService } from './services/draw-circular-graph.service';
 import { ZoomService } from './services/zoom.service';
 
 
@@ -42,6 +43,7 @@ import { ZoomService } from './services/zoom.service';
         RecipeService,
         DrawLinesService,
         DragScrollService,
+        DrawCircularGraphService,
         ZoomService,
         provideHttpClient(withInterceptorsFromDi())
     ],
