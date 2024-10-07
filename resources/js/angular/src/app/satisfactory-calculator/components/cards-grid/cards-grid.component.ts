@@ -162,8 +162,11 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     
     @HostListener('window:keydown', ['$event'])
     zoomBoard(event: WheelEvent | KeyboardEvent, element: HTMLElement = this.boardDiv.nativeElement) {
-        event.preventDefault(); // Prevent default scrolling behavior
-
+        // so Ctrl+"+" doesnt zoom the page, wheel doesnt scroll the page, but Ctrl+"C" still works
+        if (!(event instanceof KeyboardEvent && (event.ctrlKey || event.metaKey) && event.key === 'C')) {
+            event.preventDefault(); // Prevent default scrolling behavior
+        }
+                
         this.zoomService.handleZoom(event, element, (output: number | null) => {
             if (output !== null) {
                 this.boardZoomLevel = output; // Update the board zoom level
