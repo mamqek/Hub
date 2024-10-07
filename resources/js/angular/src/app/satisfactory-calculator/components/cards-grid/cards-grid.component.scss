@@ -73,6 +73,7 @@
     transition: transform 0.3s ease;  /* Smooth transition */
     transform-origin: center;
     background-color: #76caab;
+    will-change: transform; // zoom optimization
 
     display: grid;
     // gap: 5px;
