@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { DrawLinesSperviceTsService } from './draw-lines.service';
+import { DrawLinesService } from './draw-lines.service';
 
 describe('DrawLinesSperviceTsService', () => {
-  let service: DrawLinesSperviceTsService;
+  let service: DrawLinesService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(DrawLinesSperviceTsService);
+    service = TestBed.inject(DrawLinesService);
   });
 
   it('should be created', () => {

@@ -117,8 +117,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         console.log("initialized");
         
 
-        
-        this.ingridientsArr$ = this.recipeService.getRecipe("rotor", 10);
+        // Assembly Director System
+        this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
         
         this.ingridientsArr$.subscribe((data) => {
             console.log("data", data);
@@ -374,9 +374,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         let node = event.source.data;
 
         this.nodesWithArrowIdArr = [
-            ...(node.parentId ? [node.id] : []), 
+            ...(node.parentId !== null ? [node.id] : []), 
             ...node.ingredients ?? []
-        ];    
+        ];      
         this.drawLinesService.hideLinesByElementId(this.nodesWithArrowIdArr);    
     }
 
@@ -404,9 +404,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
             this.drawLinesService.removeLinesByElementId(this.nodesWithArrowIdArr);
             let node: RecipeNode = event.item.data;
-            let arr = (node.parentId ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
+            let arr = (node.parentId !== null ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
                     .concat(node.ingredients ? node.ingredients.map(id => ({ id, children: [], parentId: node.id })) : []);
-            
+
             setTimeout(() => {
                 this.drawLinesService.drawLines(arr);
             }, 0);
