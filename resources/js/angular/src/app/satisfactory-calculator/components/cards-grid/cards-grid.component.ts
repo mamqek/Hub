@@ -89,11 +89,10 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         })
     }
 
-    private isDragging: boolean = false;
+    // Drag and drop logic
     private nodesWithArrowIdArr: number[] = [];
 
     dragStarted(event: CdkDragStart) {
-        this.isDragging = true;
         let node = event.source.data;
 
         this.nodesWithArrowIdArr = [
@@ -134,8 +133,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
                 this.drawLinesService.drawLines(arr);
             }, 0);
         }
-
-        this.isDragging = false;
     }
     
     enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {        
@@ -143,8 +140,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
-    
+    // Draw lines initialization
 
+    cardsInitialized: boolean = false;
 
     ngAfterViewChecked(): void {
         // Check if cards are initialized and perform jsPlumb logic
@@ -181,6 +179,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         }
     }
 
+    // Drag scrolling logic
 
     onMouseDown(event: MouseEvent) {
         if (event?.target instanceof HTMLElement) {
@@ -189,7 +188,9 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
             }
         }
     }
-  
+    
+    // Other 
+
     @HostListener('contextmenu', ['$event'])
     disableContextMenu(event: MouseEvent) {
       this.dragScrollService.disableContextMenu(event);
