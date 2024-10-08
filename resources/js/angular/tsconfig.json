@@ -4,6 +4,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "src",
+    "types": ["node"],
     "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,
