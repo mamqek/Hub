@@ -152,6 +152,7 @@ export class CardsGridComponent implements OnInit {
     }
 
     // Drag and drop logic
+    
     private nodesWithArrowIdArr: number[] = [];
 
     dragStarted(event: CdkDragStart) {
@@ -194,6 +195,8 @@ export class CardsGridComponent implements OnInit {
             setTimeout(() => {
                 this.drawLinesService.drawLines(arr);
             }, 0);
+        } else {
+            this.drawLinesService.redrawLinesByElementId(this.nodesWithArrowIdArr);
         }
     }
     
