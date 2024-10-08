@@ -45,10 +45,10 @@
 
             <ng-template #placeholder>
                 <div 
-                class="placeholder h-full w-full rounded-md"
-                [ngStyle]="{
-                    'background-color': (x + y) % 2 === 0 ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.15)',
-                }"
+                    class="placeholder h-full w-full rounded-md"
+                    [ngStyle]="{
+                        'background-color': (x + y) % 2 === 0 ? 'rgba(0, 62, 31, 0.1)' : 'rgba(0, 62, 31, 0.25)',
+                    }"
                 ></div>
             </ng-template>
             
@@ -56,12 +56,14 @@
     </ng-container>
 
 </div>
+<!-- TODO : figure out how to disable drag preview, so it doesnt animate onm frag every passed cell, reduces lag  -->
+<ng-template cdkDragPreview></ng-template>
 
     
 <!-- </cdk-virtual-scroll-viewport> -->
 
-<button class="input" mat-button (click)="openDialog()">New Recipe</button>
+<button class="input overlay-element" mat-button (click)="openDialog()">New Recipe</button>
 
 
-<span class="zoom">X{{boardZoomLevel}}</span>
+<span class="zoom overlay-element rounded-md">x{{boardZoomLevel}}</span>
 
