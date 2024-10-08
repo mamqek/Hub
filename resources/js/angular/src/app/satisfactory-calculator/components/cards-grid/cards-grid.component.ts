@@ -28,7 +28,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     itemSize: number = 70;
     gap: number = 0;
     cellSize: number = this.itemSize + this.gap;
-
     currentCellSize: number = this.cellSize;
 
     private inputSubject = new BehaviorSubject<{ item: string; amount: number } | null>(null);
@@ -49,7 +48,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         private zoomService: ZoomService,
         private cdr: ChangeDetectorRef,
         private renderer: Renderer2
-        ) {
+    ) {
         this.viewportHeight = window.innerHeight; // Set to 80% of the viewport height        
         this.viewportWidth = window.innerWidth; // Set to 80% of the viewport height
     }
@@ -66,11 +65,23 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     readonly dialog = inject(MatDialog);
 
     openDialog() {
-      const dialogRef = this.dialog.open(InputDialogComponent);
-  
-      dialogRef.afterClosed().subscribe(result => {
-        console.log(`Dialog result: ${result}`);
-      });
+        const dialogRef = this.dialog.open(InputDialogComponent);
+    
+        dialogRef.afterClosed().subscribe(result => {
+            console.log(`Dialog result: ${result}`);
+            if (result) {
+                // Assuming the dialog returns the item and amount
+                const { item, amount } = result; // Adjust based on your dialog's return value
+
+                // Emit new input values
+                this.inputSubject.next({ item, amount });
+            }
+        });
+    }
+
+
+    isDialogOpen(): boolean {
+        return this.dialog.openDialogs.length > 0;
     }
 
 
@@ -214,12 +225,14 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     @HostListener('window:keydown', ['$event'])
     zoomBoard(event: WheelEvent | KeyboardEvent, element: HTMLElement = this.boardDiv.nativeElement) {
         // so Ctrl+"+" doesnt zoom the page, wheel doesnt scroll the page, but Ctrl+"C" still works
-        if (!(event instanceof KeyboardEvent && (event.ctrlKey || event.metaKey) && event.key === 'C')) {
-            event.preventDefault(); // Prevent default scrolling behavior
+        if (event instanceof KeyboardEvent && (event.ctrlKey || event.metaKey) && event.key === 'C'
+                || this.isDialogOpen()) {
+            return;
         }
-                
+        
+        event.preventDefault(); // Prevent default scrolling behavior
         this.zoomService.handleZoom(event, element, (output: number | null) => {
-            if (output !== null) {
+            if (output !== null) {                
                 this.boardZoomLevel = output; // Update the board zoom level
                 this.drawLinesService.hideAllLines(); // Call to hide lines
             }
@@ -273,7 +286,8 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         });
 
 
-
+        
+        // scrollSubscription: Subscription | null = null;
         // this.viewport.scrollTo({
         //     left: boardMiddlePositionX - centerXOffset+ this.cellSize / 2,
         //     top:  boardMiddlePositionY - centerYOffset + this.cellSize / 2,
