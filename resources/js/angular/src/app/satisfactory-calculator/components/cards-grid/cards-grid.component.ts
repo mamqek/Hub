@@ -22,7 +22,7 @@ import { InputDialogComponent } from './includes/input-dialog/input-dialog.compo
   templateUrl: './cards-grid.component.html',
   styleUrl: './cards-grid.component.scss'
 })
-export class CardsGridComponent implements OnInit, AfterViewChecked  {
+export class CardsGridComponent implements OnInit {
     
     gridSize: number = 50;
     itemSize: number = 70;
@@ -202,23 +202,7 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     }
 
 
-    // Draw lines initialization
 
-    cardsInitialized: boolean = false;
-
-    ngAfterViewChecked(): void {
-        // Check if cards are initialized and perform jsPlumb logic
-        if (this.nodes.length > 0 && !this.cardsInitialized) {
-            this.cardsInitialized = true; // Prevent re-initialization
-            this.drawLinesService.drawLines(this.nodes
-                .map(node => ({
-                    id: node.id, 
-                    children: node.ingredients,
-                    parentId: node.parentId
-                }))
-            );
-        }
-    }
 
     // Zooming logic
     
