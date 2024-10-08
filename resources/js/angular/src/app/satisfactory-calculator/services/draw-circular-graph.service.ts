@@ -98,9 +98,7 @@ export class DrawCircularGraphService {
                 
                 let ingredientNodeIngridients: number[] | undefined = ingredientNode.ingredients;
                 if (ingredientNodeIngridients && ingredientNodeIngridients.length > 1) {
-                    radius += ingredientNodeIngridients.length -1 ;     
-                    console.log("ormovjmropjmvor");
-                                                       
+                    radius += ingredientNodeIngridients.length -1 ;                                                            
                 }
 
                 if (ingredientNode.indentLevel == 1) {   // Main ingridients usually have long process, so move them away 
@@ -112,10 +110,17 @@ export class DrawCircularGraphService {
                     
                 }
 
+                if (radius < 0) {
+                    console.warn("Radius is negative, increasing...");
+                    radius = 2.5;
+                }
+
                 
                 let circle = this.getFullCircleCoordinates(radius, center);
                 let position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
                 
+                // TODO: check this on computer recipe, keeps lagging. set a limiter at least and give error, so it doesnt crash tab in infinite loop 
+
                 // If no angle is found in boundaries, increase radius and try again
                 while (!position) {
                     console.warn("No position found, increasing radius...");
@@ -259,11 +264,14 @@ export class DrawCircularGraphService {
     
         // Check if the specified coordinate is within bounds
         if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length) {
+            console.error("Out of bounds");
+            throw new Error("Not empty");
             return false; // Out of bounds
         }
     
         // Check if the specified coordinate is empty
         if (grid[row][col] !== null && grid[row][col] !== 0) {
+            console.error("Not empty");
             return false; // Not empty
         }
     
