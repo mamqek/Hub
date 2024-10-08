@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-
+@import "./variables";
 
 .leader-line {
     will-change: transform;
@@ -11,3 +11,13 @@
 }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+
+.mat-mdc-dialog-surface {
+    background-color: rgba(1, 17, 10, 0.9) !important;
+
+    .mat-mdc-dialog-title {
+        color: white !important;
+    }
+}
