@@ -1,0 +1,43 @@
+.custom-number-input {
+
+    width: 100%;
+    input[type='number'] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+      border: none;
+      color: var(--dark-color);
+      font-size: 16px;
+      margin: 0 10px;
+      text-align: center;
+      border-radius: var(--border-radius-sm);
+      width: 50px;
+    }
+  
+    input[type='number']::-webkit-outer-spin-button,
+    input[type='number']::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  
+    button {
+      aspect-ratio: 1 / 1;
+      filter: brightness(90%);
+      border-radius: var(--border-radius-sm);
+      border: none;
+      color: var(--primary-color);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 800;
+      height: 100%;
+    }
+  
+    button:focus {
+      outline: none;
+    }
+  
+    button:disabled {
+        filter: brightness(50%);
+
+    }
+  }
+  
