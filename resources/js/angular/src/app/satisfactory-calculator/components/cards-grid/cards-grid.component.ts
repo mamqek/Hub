@@ -6,9 +6,8 @@ import { DrawLinesService } from '../../services/draw-lines.service';
 import { DrawCircularGraphService } from 'app/satisfactory-calculator/services/draw-circular-graph.service';
 import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
 
-
-import { Observable, Subject, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
-import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove } from '@angular/cdk/drag-drop';
+import { BehaviorSubject, tap, Observable, Subject, switchMap, takeUntil, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
+import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove, CdkDragPreview } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
@@ -32,14 +31,15 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
 
     currentCellSize: number = this.cellSize;
 
-    scrollSubscription: Subscription | null = null;
-
+    private inputSubject = new BehaviorSubject<{ item: string; amount: number } | null>(null);
+    public ingridientsArr$?: Observable<RecipeNode[]>;
+    private unsubscribe$ = new Subject<void>();
+    
+    @ViewChild('boardDiv') boardDiv!: ElementRef;
     board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
     nodes: RecipeNode[] = [];
-
     boardZoomLevel: number = 1;
-
-    public ingridientsArr$?: Observable<RecipeNode[]>;
+    
     
     constructor(
         private recipeService: RecipeService, 
@@ -58,7 +58,6 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
     viewportWidth: number;
 
 
-    @ViewChild('boardDiv') boardDiv!: ElementRef;
 
     trackById(index: number, item: any): number {        
         return index;
@@ -79,14 +78,66 @@ export class CardsGridComponent implements OnInit, AfterViewChecked  {
         // Place user camera to default position
         setTimeout(() => {this.centerClientView()}, 0);
 
-        // Assembly Director System
-        this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
+        // // Assembly Director System
+        // this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
         
-        this.ingridientsArr$.subscribe((data) => {
-            console.log("data", data);
-            this.nodes = data;
-            this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
-        })
+        this.inputSubject.next({ item: "supercomputer", amount: 10 });
+        console.log("here");
+        
+        this.ingridientsArr$ = this.inputSubject.pipe(
+            takeUntil(this.unsubscribe$),
+            switchMap(input => {
+                console.log("input", input);
+                
+                if (input) {
+                    return this.recipeService.getRecipe(input.item, input.amount);
+                } else {
+                    // Return an empty observable or initial value if no input
+                    return this.recipeService.getRecipe("supercomputer", 10);
+                }
+            }),
+            tap(data => {     
+                console.log("data", data);
+                this.nodes = data;
+
+                this.drawCircularGraphService.clearBoard(this.board);   
+                // without setTinmeout first node gets instantly repoulated, so ngInit of card doesnt react and doesnt change the picture
+                setTimeout(() => {
+                    this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
+                }, 0);
+
+                this.drawLinesService.resetLines();
+                setTimeout(() => {
+                    this.drawLinesService.drawLines(this.nodes
+                        .map(node => ({
+                            id: node.id, 
+                            children: node.ingredients,
+                            parentId: node.parentId
+                        }))
+                    );
+                }, 0);
+            })
+        );
+
+        // Subscribe to the ingredients observable to trigger the API call
+        this.ingridientsArr$.subscribe({
+            next: (data) => {
+                // This block will be executed when data is fetched successfully
+                console.log("Fetched data:", data);
+            },
+            error: (err) => {
+                console.error("Error fetching data:", err);
+            }
+        });
+
+
+    }
+
+
+    ngOnDestroy(): void {
+        // Emit a value to signal that the component is being destroyed
+        this.unsubscribe$.next();
+        this.unsubscribe$.complete();
     }
 
     // Drag and drop logic

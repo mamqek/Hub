@@ -33,7 +33,7 @@ export class DrawLinesService {
             let line = new LeaderLine(childrenEl, parentEl , {
                 startPLug: 'square', 
                 endPlug: 'arrow3',
-                color: '#f2f200',
+                color: '#f2f200', //3F0D12
                 size: 3,
                 path: 'straight',
                 hide: true,
@@ -103,5 +103,10 @@ export class DrawLinesService {
                 line.show("draw");
             });
         });
+    }
+
+    resetLines() {
+        this.removeAllLines();
+        this.elementIdLineMap = {};
     }
 }

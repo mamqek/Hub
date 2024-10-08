@@ -34,6 +34,14 @@ export class DrawCircularGraphService {
         // }
     }
 
+    clearBoard(board: (RecipeNode | null)[][]) {
+        for (let row = 0; row < board.length; row++) {
+            for (let col = 0; col < board[0].length; col++) {
+                board[row][col] = null;
+            }
+        }
+    }
+
 
     // TODO: add some angle to min angle each indent level to make it more readable
     // TODO: make an animation that nodes add on the board in slow motion one by one in whatever order they are processed, and when node is added it gets connected by following arrow with draw animation (and maybe movement paths).
