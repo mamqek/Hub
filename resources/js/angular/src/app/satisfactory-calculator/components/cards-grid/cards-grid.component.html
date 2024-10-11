@@ -56,14 +56,42 @@
     </ng-container>
 
 </div>
-<!-- TODO : figure out how to disable drag preview, so it doesnt animate onm frag every passed cell, reduces lag  -->
-<ng-template cdkDragPreview></ng-template>
+
+<div class="overlay">
+    <button class="input overlay-element" mat-button (click)="openDialog()">New Recipe</button>
+    <div class="overlay-panel right">
+        <span class="overlay-element zoom rounded-md">x{{boardZoomLevel}}</span>
+        <button class="overlay-element direction" mat-button (click)="showDirection()">Hold for lines direction</button>
+        <div *ngIf="ingredientsData" class="overlay-element rounded-lg summary">
+            <mat-accordion multi class="example-headers-align"  >
+                <mat-expansion-panel *ngFor="let section of ingredientsData | keyvalue">
+                    <mat-expansion-panel-header>
+                        <mat-panel-title> {{section.key | titlecase}} </mat-panel-title>
+                        <mat-panel-description>
+                            Ingridients: {{section.value.length}}
+                        </mat-panel-description>
+                    </mat-expansion-panel-header>
+                    <mat-list>
+                    @for (ingredient of section.value; track ingredient) {
+                        <mat-list-item>
+                            <img matListItemAvatar basePath [path]="getItemImageUrl(ingredient.itemName)" alt="...">
+                            <p matListItemTitle>{{ingredient.itemName}}</p>
+                            <p  matListItemLine>
+                                <span>{{ingredient.amount}}</span>
+                            </p>
+                        </mat-list-item>
+                    }
+                    </mat-list> 
+                </mat-expansion-panel>
+            </mat-accordion>
+        </div>
+    </div>
+</div>
+
 
     
 <!-- </cdk-virtual-scroll-viewport> -->
 
-<button class="input overlay-element" mat-button (click)="openDialog()">New Recipe</button>
 
 
-<span class="zoom overlay-element rounded-md">x{{boardZoomLevel}}</span>
 
