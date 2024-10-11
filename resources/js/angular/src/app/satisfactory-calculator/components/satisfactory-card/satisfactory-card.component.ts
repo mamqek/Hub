@@ -1,6 +1,8 @@
 import { Component, Input, OnInit, AfterContentInit, OnDestroy } from '@angular/core';
 import { RecipeNode } from '../../services/recipe.service';
 
+
+import {MatBadgeModule} from '@angular/material/badge';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 
 @Component({
@@ -11,22 +13,22 @@ import { IngredientsService } from 'app/satisfactory-calculator/services/ingredi
 export class SatisfactoryCardComponent implements OnInit {
 
     @Input() data!: RecipeNode;
-    imageUrl: string = 'http://localhost:8000/images/';
 
-    ngOnInit(): void {
+    machineImageUrl: string = 'images/';
+
+    constructor(private ingredientsService: IngredientsService) { }
+
+    ngOnInit(): void {        
         if (this.data.isBaseMaterial) {
-            if (this.data.itemName.includes('Ore')) {
-                this.imageUrl += 'Miner_Mk1.webp';
+            if (this.data.itemName.includes('Ore') || this.data.itemName.includes('Coal') || this.data.itemName.includes('Lime')) {
+                this.machineImageUrl += 'Miner_Mk1.webp';
             } else if (this.data.itemName.includes('Oil')) {
-                this.imageUrl += 'Oil_Extractor.webp';
+                this.machineImageUrl += 'Oil_Extractor.webp';
             }
-        } else if (this.data.byproducts) {
-
         } else {
-            this.imageUrl += this.data.machineName + '.webp';
+            this.machineImageUrl += this.data.machineName + '.webp';
         }
-        // console.log('Card initialized:', this.data);
-        // Here you can emit an event or call a service to notify the parent component if needed
+    }
 
     getItemImageUrl(name: string): string {
         return this.ingredientsService.getItemImageUrl(name);

@@ -1,9 +1,19 @@
-<div class="card rounded-md" id="card-{{data.id}}" appReady>
-    <img class="card-image" [src]="imageUrl"/>
-    <div class="card-hint">
+<div matBadge="{{data.indentLevel}}" matBadgeSize="large" class="card rounded-md" id="card-{{data.id}}" appReady>
+    <img class="card-image" basePath [path]="machineImageUrl"/>
+
+    <div class="card-hint rounded-lg">
         <h5 class="card-hint-title">{{data.itemName}}</h5>
-        <p *ngIf="data.machineCount" class="card-hint-text">{{data.machineCount}} machines required</p>
-        <p class="card-hint-text">{{data.productionRate}} p/m</p>
+        <p class="card-hint-text">
+            Produced in: <span>{{data.machineName}}</span>
+        </p>
+        <p class="card-hint-text">
+            <span>{{data.machineCount}}</span> machines required
+        </p>
+        <p *ngIf="data.machineCount % 1 !== 0">
+            {{ data.machineCount | number:'1.0-0' }} full-power machines and 
+            1 underclocked to {{ (data.machineCount % 1 * 100) | number:'1.0-0' }}%.
+        </p>
+        <p class="card-hint-text">Produces <span>{{data.productionRate}} p/m </span></p>
     </div>
 
 

@@ -19,6 +19,7 @@ import { ReadyDirective } from '../ready.directive';
 import { DrawCircularGraphService } from './services/draw-circular-graph.service';
 import { ZoomService } from './services/zoom.service';
 
+import { MatBadgeModule } from '@angular/material/badge';
 import { IngredientsService } from './services/ingredients.service';
 
 
@@ -38,6 +39,7 @@ import { IngredientsService } from './services/ingredients.service';
         ScrollingModule,
         MatDialogModule,
         MatButtonModule,
+        MatBadgeModule,
         InputDialogComponent,
     ],
     providers: [
