@@ -40,6 +40,7 @@ export class DrawCircularGraphService {
                 board[row][col] = null;
             }
         }
+        console.log("Board cleared", board);        
     }
 
 
@@ -89,8 +90,9 @@ export class DrawCircularGraphService {
                     random = false;
                     lowerBoundDegree = 150;
                     upperBoundDegree = 210;
+                    console.log("Special settings for 2 ingridient recepy", ingredientNode.itemName);
                 } else if (ingredientNode.indentLevel == 1) {   // Main ingridients usually have long process, so move them away 
-                    radius += num_of_ingredients - 4;
+                    // radius += 2;
                     random = false; 
                 } else if (num_of_ingredients > 1) {            // Randomize angle if many ingredients, so they are not in a straight line
                     random = true;
@@ -110,8 +112,11 @@ export class DrawCircularGraphService {
                     
                 }
 
-                if (radius < 0) {
+                if (radius <= 1.5) {
                     console.warn("Radius is negative, increasing...");
+                    radius = 2.5;
+                } else if (radius > 10) {
+                    console.warn("Radius is too large, decreasing...");
                     radius = 2.5;
                 }
 
@@ -120,15 +125,23 @@ export class DrawCircularGraphService {
                 let position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
                 
                 // TODO: check this on computer recipe, keeps lagging. set a limiter at least and give error, so it doesnt crash tab in infinite loop 
-
+                let attempts = 0;
                 // If no angle is found in boundaries, increase radius and try again
-                while (!position) {
+                while (!position && attempts < 10) {
                     console.warn("No position found, increasing radius...");
                     
                     lowerBoundDegree -= ingredient_segment / 2;
                     upperBoundDegree += ingredient_segment / 2;
                     circle = this.getFullCircleCoordinates(radius, center);
+                    console.log(lowerBoundDegree);
+                    console.log(upperBoundDegree);
                     position = this.getDegreeCoordinate(lowerBoundDegree, upperBoundDegree, circle, random);
+                    attempts++;
+                }
+
+                if (position === null) {
+                    console.error("Failed to find position for", ingredientNode.itemName, "after 10 attempts.");
+                    return;
                 }
 
 
@@ -201,10 +214,6 @@ export class DrawCircularGraphService {
             return acc;
         }, {});
 
-
-        // TODO: add some randomness to angle chosement
-        // if node has 3 or more ingridients, set its position on edge of circel withn r 5 and give it 360&degr , else go with given angle( for small straight lines)        
-
         let degrees = Object.keys(filteredDegrees);
 
         let closestDegree: number | null = null;
@@ -236,6 +245,7 @@ export class DrawCircularGraphService {
                 }
             }
         }
+        console.log("closestDegree", closestDegree);
         
         // Return the position of the closest degree or null if not found
         return closestDegree !== null ? filteredDegrees[closestDegree] : null;
@@ -265,13 +275,11 @@ export class DrawCircularGraphService {
         // Check if the specified coordinate is within bounds
         if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length) {
             console.error("Out of bounds");
-            throw new Error("Not empty");
             return false; // Out of bounds
         }
     
         // Check if the specified coordinate is empty
         if (grid[row][col] !== null && grid[row][col] !== 0) {
-            console.error("Not empty");
             return false; // Not empty
         }
     
