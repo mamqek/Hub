@@ -5,20 +5,17 @@ import { Directive, ElementRef, Input, isDevMode, Renderer2 } from '@angular/cor
 })
 export class BasePathDirective {
 
-    @Input() path!: string;  // Only the image name is passed
+    @Input() path!: string;
 
-    private basePath: string;
+    private basePath: string = window.location.origin;
 
+    // On Dev mode app is on a differernt port from backend, in prod on local or server it is the same as current location.origin
     constructor(private el: ElementRef, private renderer: Renderer2) {
-      // Set the base path based on the environment
-      this.basePath = isDevMode() ? 'http://localhost:8000/' : 'https://production-cdn.com/images/';
+        this.basePath = isDevMode() ? 'http://localhost:8000' : this.basePath;
     }
   
     ngOnInit() {
-      // Construct the full image path
-      const fullPath = `${this.basePath}${this.path}`;
-  
-      // Set the src attribute on the img element
+      const fullPath = `${this.basePath}/${this.path}`;
       this.renderer.setAttribute(this.el.nativeElement, 'src', fullPath);
     }
 
