@@ -7,7 +7,7 @@
         "angular": "cd resources/js/angular && npm start",
         "all": "vite && cd resources/js/angular && npm start",
         "build": "vite build",
-        "prod": "NODE_ENV=production vite build && cd resources/js/angular && npm build:prod"
+        "prod": "NODE_ENV=production cd resources/js/angular && ls && npm build:prod && cd - && vite build"
     },
     "devDependencies": {
         "axios": "^1.6.4",
