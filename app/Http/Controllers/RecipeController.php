@@ -124,12 +124,12 @@ class RecipeController extends Controller
 
         $index+=2;
 
-        $intermidietIngredients = [];
+        $intermidieteIngredients = [];
         while ($output[$index] !== "") {
-            $intermidietIngredients[] = $this->ingredientToObj($output[$index]);
+            $intermidieteIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
-        $ingredients['intermidiet'] = $intermidietIngredients;
+        $ingredients['intermidiete'] = $intermidieteIngredients;
         
         $index+=2;
         
