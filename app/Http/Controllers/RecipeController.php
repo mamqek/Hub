@@ -107,7 +107,6 @@ class RecipeController extends Controller
 
     function parseIngredients($output) {
 
-        $ingredients = [];
         $index = 0;
         do {
             $index++;
@@ -120,7 +119,6 @@ class RecipeController extends Controller
             $inputIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
-        $ingredients['input'] = $inputIngredients;
 
         $index+=2;
 
@@ -129,7 +127,6 @@ class RecipeController extends Controller
             $intermidieteIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
-        $ingredients['intermidiete'] = $intermidieteIngredients;
         
         $index+=2;
         
@@ -138,7 +135,6 @@ class RecipeController extends Controller
             $outputIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
-        $ingredients['output'] = $outputIngredients;
 
         $index+=2;
         
@@ -147,9 +143,13 @@ class RecipeController extends Controller
             $byproductIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
-        $ingredients['byproduct'] = $byproductIngredients;
 
-        return $ingredients;
+        return [
+            "input" => $inputIngredients,
+            "intermidiete" => $intermidieteIngredients,
+            "output" => $outputIngredients,
+            "byproduct" => $byproductIngredients,
+        ];
     }
 
     function getIndentLevel($line) {

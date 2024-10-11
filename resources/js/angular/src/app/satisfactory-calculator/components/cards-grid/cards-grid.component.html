@@ -62,7 +62,25 @@
     <button class="input overlay-element" mat-button (click)="openDialog()">New Recipe</button>
     <div class="overlay-panel right">
         <span class="overlay-element zoom rounded-md">x{{boardZoomLevel}}</span>
+
         <button class="overlay-element direction" mat-button (click)="showDirection()">Hold for lines direction</button>
+
+        <!-- WHy does it get sorted after coming to frontend?
+        {input: Array(3), intermidiete: Array(11), output: Array(1), byproduct: Array(1)}
+byproduct
+: 
+[{…}]
+input
+: 
+(3) [{…}, {…}, {…}]
+intermidiete
+: 
+(11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+output
+: 
+[{…}] -->
+
+
         <div *ngIf="ingredientsData" class="overlay-element rounded-lg summary">
             <mat-accordion multi class="example-headers-align"  >
                 <mat-expansion-panel *ngFor="let section of ingredientsData | keyvalue">
@@ -78,7 +96,7 @@
                             <img matListItemAvatar basePath [path]="getItemImageUrl(ingredient.itemName)" alt="...">
                             <p matListItemTitle>{{ingredient.itemName}}</p>
                             <p  matListItemLine>
-                                <span>{{ingredient.amount}}</span>
+                                <span>{{ingredient.amount}} p/m</span>
                             </p>
                         </mat-list-item>
                     }
@@ -86,6 +104,7 @@
                 </mat-expansion-panel>
             </mat-accordion>
         </div>
+
     </div>
 </div>
 

@@ -15,6 +15,12 @@
     background-color: #01110A;
     // background-color: rgba(5, 39, 8, 0.815);
 
+    --mat-expansion-container-background-color: rgba($overlay-background, 0.9);
+    --mat-expansion-container-text-color: white;
+    --mat-expansion-header-text-color: white;
+    --mdc-list-list-item-label-text-color: white;
+    
+
 }
 
 .virtual-view {
@@ -125,6 +131,8 @@
         }
 
         &.summary {
+            background-color: rgba($overlay-backgrond, 0.9);
+
             overflow-y: scroll;
 
             display: flex;

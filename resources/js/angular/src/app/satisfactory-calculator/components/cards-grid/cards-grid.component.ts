@@ -119,6 +119,7 @@ export class CardsGridComponent implements OnInit {
                 // TODO: make board an observalbe as well to connect it to ngfor by this, before that ask chatgpt if that is a good idea
                 this.nodes = data.recipeNodeArr;
                 this.ingredientsData = data.ingredientsData;
+                
                 this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
                 
                 // call change detection, so html notices update in this.board and creates cards, otherwise lines wont be able to find elements

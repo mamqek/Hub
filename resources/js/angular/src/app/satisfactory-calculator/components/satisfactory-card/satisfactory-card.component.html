@@ -9,6 +9,7 @@
         <p class="card-hint-text">
             <span>{{data.machineCount}}</span> machines required
         </p>
+        <!-- TODO: make this string in ts and take into extractor cases. set min 1 on pure - max 4 on unpure nodes -->
         <p *ngIf="data.machineCount % 1 !== 0">
             {{ data.machineCount | number:'1.0-0' }} full-power machines and 
             1 underclocked to {{ (data.machineCount % 1 * 100) | number:'1.0-0' }}%.

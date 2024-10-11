@@ -25,8 +25,8 @@ export interface Ingredient {
 
 export interface IngredientsData {
     input: Ingredient[];
-    output: Ingredient[];
     intermediate: Ingredient[];
+    output: Ingredient[];
     byproduct: Ingredient[];
 }
 
