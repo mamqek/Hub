@@ -11,7 +11,7 @@ export default defineConfig({
         vue(),
         laravel({
             // for files which are loaded on every page (css), other page specific are in welcome.blade (but if removed from blade are not recognized, ask someone)
-            input: [],
+            input: ["resources/js/vue/app.js"],
             refresh: true,
         }),
     ],
