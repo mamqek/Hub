@@ -7,34 +7,36 @@ use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
 {
+
     public function getRecipe(Request $request) {
         $item = $request->query('item');
         $amount = $request->query('amount');
         
-        $output = [];
         $returnVar = 0;
 
         $directoryPath = public_path('recepiesRust/');
         chdir($directoryPath);
 
         exec('satisfactory_factory_planner.exe "'.$item.': '.$amount.'"', $output, $returnVar);
-
-        $recipeData = $this->parseOutput($output);
+        
+        $recipeNodes = $this->parseTree($output);
+        $ingredientsData = $this->parseIngredients($output);
 
         if ($returnVar !== 0) {
             return response()->json(['error' => implode("\n", $output)], 500);
         }
 
-        return response()->json($recipeData , 200);
+        return response()->json([
+            "recipeNodeArr" => $recipeNodes,
+            "ingredientsData" => $ingredientsData
+        ] , 200);
         // return response()->json(['output' =>  $output], 200);
     }
-    
 
-
-    protected function parseOutput($output) {
+    protected function parseTree($output) {
 
         $stack = [];
-        $arr = [];
+        $recipesArr = [];
         $count = 0;
         
         foreach ($output as $index => $line) {
@@ -51,7 +53,6 @@ class RecipeController extends Controller
             $indentLevel = $this->getIndentLevel($line);
             $newNode = $this->parseRow($line, $count, $indentLevel);
 
-            Log::info(print_r($line, true));
             // Check if it's a byproduct or base material
             if (strpos($line, '<') !== false) {
                 $newNode['byproduct'] = true;
@@ -70,11 +71,18 @@ class RecipeController extends Controller
                 if (isset($newNode['byproduct'])) {
                     unset($newNode['byproduct']);
                     unset($newNode['machine']);
+
+                    // save the byproduct node to the parent node in stack
                     $stack[$indentLevel]['byproducts'] = [];
                     $stack[$indentLevel]['byproducts'][] = $newNode;
 
-                    $arr[$stack[$indentLevel]['id']]['byproduct'] = [];
-                    $arr[$stack[$indentLevel]['id']]['byproduct'][] = $newNode['id'];
+                    // add node's id to parent in array
+                    $recipesArr[$stack[$indentLevel]['id']]['byproducts'] = [];
+                    $recipesArr[$stack[$indentLevel]['id']]['byproducts'][] = [
+                        'id' => $newNode['id'],
+                        'productionRate' => $newNode['productionRate'],
+                        'itemName' => $newNode['itemName'],
+                    ];
                 } else {
 
                     $stack[$indentLevel - 1]['ingredients'][] = $newNode;
@@ -82,23 +90,66 @@ class RecipeController extends Controller
                     $stack[] = &$stack[$indentLevel - 1]['ingredients'][$ingredientsArrLength - 1];
 
                     // add node's id to parent 
-                    $arr[$stack[$indentLevel - 1]['id']]['ingredients'][] = $newNode['id'];
+                    $recipesArr[$stack[$indentLevel - 1]['id']]['ingredients'][] = $newNode['id'];
                     $newNode['parentId'] = $stack[$indentLevel - 1]['id'];
                 }
             } else {
                 $stack[] = $newNode;
             }
             
-            $arr[] = $newNode;
+            $recipesArr[] = $newNode;
             $count +=1;
         }
         // Log::info(print_r($stack[0], true));
 
-        return $arr;
-        // return [
-        //     "recipeJson" => $stack[0],
-        //     "recipeComponentsArr" => $arr
-        // ];
+        return $recipesArr;
+    }
+
+    function parseIngredients($output) {
+
+        $ingredients = [];
+        $index = 0;
+        do {
+            $index++;
+        } while ($output[$index] !== "Input Ingredients:");
+
+        $index++;
+
+        $inputIngredients = [];
+        while ($output[$index] !== "") {
+            $inputIngredients[] = $this->ingredientToObj($output[$index]);
+            $index++;
+        }
+        $ingredients['input'] = $inputIngredients;
+
+        $index+=2;
+
+        $intermidietIngredients = [];
+        while ($output[$index] !== "") {
+            $intermidietIngredients[] = $this->ingredientToObj($output[$index]);
+            $index++;
+        }
+        $ingredients['intermidiet'] = $intermidietIngredients;
+        
+        $index+=2;
+        
+        $outputIngredients = [];
+        while ($output[$index] !== "") {
+            $outputIngredients[] = $this->ingredientToObj($output[$index]);
+            $index++;
+        }
+        $ingredients['output'] = $outputIngredients;
+
+        $index+=2;
+        
+        $byproductIngredients = [];
+        while ($output[$index] !== "") {
+            $byproductIngredients[] = $this->ingredientToObj($output[$index]);
+            $index++;
+        }
+        $ingredients['byproduct'] = $byproductIngredients;
+
+        return $ingredients;
     }
 
     function getIndentLevel($line) {
@@ -134,6 +185,18 @@ class RecipeController extends Controller
             ];
         }
 
+    }
+
+    protected function ingredientToObj($row) {
+        preg_match('/([\d.]+)\s+(.*?)$/', $row, $matches); // For lines without producer (basic resources)
+
+        if ($matches) {
+            return [
+                'amount' => $matches[1],         // First number (rate)
+                'itemName' => trim($matches[2]),   // Item name (trim spaces)
+            ];
+        }
+        
     }
     
     

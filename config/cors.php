@@ -2,7 +2,7 @@
 
 return [
 
-    'paths' => ['api/*', 'satisfactory/getRecipe'], // specify your endpoints
+    'paths' => ['api/*', 'satisfactory/*'], // specify your endpoints
 
     'allowed_methods' => ['*'],
 
