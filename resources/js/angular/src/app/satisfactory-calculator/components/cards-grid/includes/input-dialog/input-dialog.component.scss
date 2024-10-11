@@ -1,35 +1,9 @@
 
 .recipe-form {
-    width: clamp(300px, 50%, 600px);
+    min-width: 100px;
+    width: 300px;
 
     > * {
         width: 100%;
     }
 }
-
-.custom-number-input {
-    display: flex;
-    align-items: center;
-  }
-  
-  .custom-number-input button {
-    background-color: #f0f0f0;
-    border: none;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-size: 1.2rem;
-    display: inline-block;
-    text-align: center;
-    user-select: none;
-  }
-  
-  .custom-number-input input {
-    text-align: center;
-    width: 60px;
-    margin: 0 5px;
-  }
-  
-  .custom-number-input button:active {
-    background-color: #ccc;
-  }
-  
