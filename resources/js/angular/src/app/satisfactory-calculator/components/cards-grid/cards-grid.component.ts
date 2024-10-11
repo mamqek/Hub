@@ -1,6 +1,6 @@
 import { Component, inject,  HostListener, OnInit, ElementRef, Renderer2, ViewChild, ChangeDetectorRef, AfterViewChecked  } from '@angular/core';
 
-import { RecipeService, RecipeNode } from '../../services/recipe.service';
+import { RecipeService, RecipeNode, RecipeResponse, IngredientsData } from '../../services/recipe.service';
 import { DragScrollService } from '../../services/drag-scroll.service';
 import { DrawLinesService } from '../../services/draw-lines.service';
 import { DrawCircularGraphService } from 'app/satisfactory-calculator/services/draw-circular-graph.service';
@@ -39,6 +39,7 @@ export class CardsGridComponent implements OnInit {
     nodes: RecipeNode[] = [];
     boardZoomLevel: number = 1;
     
+    ingredientsData!: IngredientsData;
     
     constructor(
         private recipeService: RecipeService, 
@@ -74,7 +75,7 @@ export class CardsGridComponent implements OnInit {
                 const { item, amount } = result; // Adjust based on your dialog's return value
 
                 // Emit new input values
-                this.inputSubject.next({ item, amount });
+                this.recipeService.updateInput(item, amount);
             }
         });
     }
@@ -89,52 +90,33 @@ export class CardsGridComponent implements OnInit {
         // Place user camera to default position
         setTimeout(() => {this.centerClientView()}, 0);
 
-        // // Assembly Director System
-        // this.ingridientsArr$ = this.recipeService.getRecipe("supercomputer", 10);
-        
-        this.inputSubject.next({ item: "supercomputer", amount: 10 });
-        console.log("here");
-        
-        this.ingridientsArr$ = this.inputSubject.pipe(
-            takeUntil(this.unsubscribe$),
-            switchMap(input => {
-                console.log("input", input);
-                
-                if (input) {
-                    return this.recipeService.getRecipe(input.item, input.amount);
-                } else {
-                    // Return an empty observable or initial value if no input
-                    return this.recipeService.getRecipe("supercomputer", 10);
-                }
-            }),
-            tap(data => {     
-                console.log("data", data);
-                this.nodes = data;
-
-                this.drawCircularGraphService.clearBoard(this.board);   
-                // without setTinmeout first node gets instantly repoulated, so ngInit of card doesnt react and doesnt change the picture
-                setTimeout(() => {
-                    this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
-                }, 0);
-
+        // Set up the recipe fetching process
+        this.recipeService.setupRecipeFetching().subscribe({
+            next: (data: RecipeResponse) => {
+                // Clear the board and reset the lines before updating the board
+                this.drawCircularGraphService.clearBoard(this.board); 
                 this.drawLinesService.resetLines();
-                setTimeout(() => {
-                    this.drawLinesService.drawLines(this.nodes
-                        .map(node => ({
-                            id: node.id, 
-                            children: node.ingredients,
-                            parentId: node.parentId
-                        }))
-                    );
-                }, 0);
-            })
-        );
+                
+                // call change detection, so html board deletes existing cards
+                this.cdr.detectChanges();
 
-        // Subscribe to the ingredients observable to trigger the API call
-        this.ingridientsArr$.subscribe({
-            next: (data) => {
-                // This block will be executed when data is fetched successfully
                 console.log("Fetched data:", data);
+
+                // TODO: make board an observalbe as well to connect it to ngfor by this, before that ask chatgpt if that is a good idea
+                this.nodes = data.recipeNodeArr;
+                this.ingredientsData = data.ingredientsData;
+                this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
+                
+                // call change detection, so html notices update in this.board and creates cards, otherwise lines wont be able to find elements
+                this.cdr.detectChanges();
+
+                this.drawLinesService.drawLines(this.nodes
+                    .map(node => ({
+                        id: node.id, 
+                        children: node.ingredients,
+                        parentId: node.parentId
+                    }))
+                );
             },
             error: (err) => {
                 console.error("Error fetching data:", err);
@@ -146,9 +128,7 @@ export class CardsGridComponent implements OnInit {
 
 
     ngOnDestroy(): void {
-        // Emit a value to signal that the component is being destroyed
-        this.unsubscribe$.next();
-        this.unsubscribe$.complete();
+        this.recipeService.unsubscribe(); // Clean up on destroy
     }
 
     // Drag and drop logic
