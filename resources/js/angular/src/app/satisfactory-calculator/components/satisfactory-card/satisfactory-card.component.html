@@ -5,4 +5,18 @@
         <p *ngIf="data.machineCount" class="card-hint-text">{{data.machineCount}} machines required</p>
         <p class="card-hint-text">{{data.productionRate}} p/m</p>
     </div>
+
+
+    <div class="circle produced-item">
+        <img basePath [path]="getItemImageUrl(data.itemName)"/>
+    </div>
+    <div *ngIf="data.byproducts" class="byproduct-items">
+        <ng-container *ngFor="let byproduct of data.byproducts; let i = index">
+            <div class="circle byproduct-item" [ngStyle]="{
+                'right': 'calc(-15% + ' + i * 15 + 'px)',
+            }" >
+                <img basePath [path]="getItemImageUrl(byproduct.itemName)"/>
+            </div>
+        </ng-container>
+    </div>  
 </div>

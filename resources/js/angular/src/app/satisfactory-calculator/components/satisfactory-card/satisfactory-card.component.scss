@@ -62,4 +62,22 @@
             display: flex;
         }
     }
+
+    .circle {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: white;
+        border: 1px solid black;
+        bottom: -15%;
+
+        &.produced-item {
+            left: -15%;
+        }
+
+        &.byproduct-item {
+
+        }
+    }
 }

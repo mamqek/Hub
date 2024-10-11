@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, AfterContentInit, OnDestroy } from '@angular/core';
 import { RecipeNode } from '../../services/recipe.service';
 
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
