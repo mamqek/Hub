@@ -37,6 +37,7 @@ export class DrawLinesService {
                 size: 3,
                 path: 'straight',
                 hide: true,
+                endPlugSize: 1.5,
                 dash: {animation: false}
             })
                 
