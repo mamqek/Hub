@@ -1,7 +1,7 @@
 import { Directive, ElementRef, AfterViewInit } from '@angular/core';
 
 @Directive({
-  selector: '[appReady]'  // You can use this selector in your HTML
+  selector: '[appReady]',  // You can use this selector in your HTML,
 })
 export class ReadyDirective implements AfterViewInit {
   
