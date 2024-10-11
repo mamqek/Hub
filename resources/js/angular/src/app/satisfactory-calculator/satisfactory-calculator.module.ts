@@ -15,20 +15,25 @@ import { InputDialogComponent } from './components/cards-grid/includes/input-dia
 import { RecipeService } from './services/recipe.service';
 import { DragScrollService } from './services/drag-scroll.service';
 import { DrawLinesService } from './services/draw-lines.service';
-import { ReadyDirective } from '../ready.directive';
 import { DrawCircularGraphService } from './services/draw-circular-graph.service';
 import { ZoomService } from './services/zoom.service';
-
 import { MatBadgeModule } from '@angular/material/badge';
+import { ReadyDirective } from 'app/directives/ready.directive';
+import { CapitalizedSnakePipe } from 'app/pipes/capitalized-snake.pipe';
+import { BasePathDirective } from 'app/directives/base-path.directive';
+import { MatListModule } from '@angular/material/list';
 import { IngredientsService } from './services/ingredients.service';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 
 @NgModule({
     declarations: [
         CardsGridComponent,
         SatisfactoryCardComponent,
-        
+
+        BasePathDirective,
         ReadyDirective,
+        CapitalizedSnakePipe,
     ],
     exports: [
         CardsGridComponent,
@@ -40,6 +45,8 @@ import { IngredientsService } from './services/ingredients.service';
         MatDialogModule,
         MatButtonModule,
         MatBadgeModule,
+        MatListModule,
+        MatExpansionModule,
         InputDialogComponent,
     ],
     providers: [
