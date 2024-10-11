@@ -7,7 +7,6 @@ import { DrawCircularGraphService } from 'app/satisfactory-calculator/services/d
 import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 
-import { BehaviorSubject, tap, Observable, Subject, switchMap, takeUntil, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove, CdkDragPreview } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -83,6 +82,23 @@ export class CardsGridComponent implements OnInit {
         return this.dialog.openDialogs.length > 0;
     }
 
+    showDirection() {
+        let el = document.querySelector('.board');
+        if (el) {
+
+            do {
+                var styles = window.getComputedStyle(el);
+                console.log(styles.zIndex, el);
+            } while(el.parentElement && (el = el.parentElement));
+        }
+
+        // if (line) {
+        //     console.log(getComputedStyle(line).zIndex);
+            
+        // }
+
+    }
+
 
     public ngOnInit(): void {        
         // Place user camera to default position
@@ -121,9 +137,7 @@ export class CardsGridComponent implements OnInit {
             }
         });
 
-
     }
-
 
     ngOnDestroy(): void {
         this.recipeService.unsubscribe(); // Clean up on destroy
@@ -137,9 +151,13 @@ export class CardsGridComponent implements OnInit {
         let node = event.source.data;
 
         this.nodesWithArrowIdArr = [
-            ...(node.parentId !== null ? [node.id] : []), 
+            ...('parentId' in node ? [node.id] : []), 
             ...node.ingredients ?? []
         ];      
+        console.log(node);
+        
+        console.log("dragStarted", this.nodesWithArrowIdArr);
+        
         this.drawLinesService.hideLinesByElementId(this.nodesWithArrowIdArr);    
     }
 
@@ -167,7 +185,7 @@ export class CardsGridComponent implements OnInit {
 
             this.drawLinesService.removeLinesByElementId(this.nodesWithArrowIdArr);
             let node: RecipeNode = event.item.data;
-            let arr = (node.parentId !== null ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
+            let arr = ('parentId' in node ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
                     .concat(node.ingredients ? node.ingredients.map(id => ({ id, children: [], parentId: node.id })) : []);
 
             setTimeout(() => {
@@ -185,8 +203,11 @@ export class CardsGridComponent implements OnInit {
     }
 
 
-
-
+    //TODO: make an overlay with all the ungridients reuired starting from base resources. maybe in the foldable menu. 
+    // add type of machine and byproducts in hint 
+    // fix hints z-index
+    // add a button to turn on animation for lines 
+    // maybe indent level in the top left corner?
     // Zooming logic
     
     @HostListener('window:keydown', ['$event'])
