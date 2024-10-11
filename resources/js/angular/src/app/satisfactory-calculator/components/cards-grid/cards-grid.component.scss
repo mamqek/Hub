@@ -139,6 +139,7 @@
 
 
 .cdk-drag-preview {
+    overflow: visible;
     box-sizing: border-box;
     border-radius: 4px;
     box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
@@ -147,19 +148,26 @@
 }
 
 .cdk-drag-placeholder {
-    opacity: 0;
+    position: absolute;
+    order: 1;
+    opacity: 1;
     will-change: auto;
+    // min-width: none;
+    // width: 0;
+}
 
+.placeholder {
+    box-shadow: inset 0 0 5px #032208;
+    order: 2;
 }
 
 .cdk-drag-animating {
-    // transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    transition: transform 250ms ease-in-out;
     will-change: auto;
-
 }
 
-.cell.cdk-drop-list-dragging .item-cell:not(.cdk-drag-placeholder) {
-    // transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+.cdk-drop-list-dragging .placeholder:not(.cdk-drag-placeholder) {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
     will-change: auto;
 
 }
