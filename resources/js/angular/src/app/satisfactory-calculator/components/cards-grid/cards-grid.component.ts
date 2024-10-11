@@ -180,8 +180,10 @@ export class CardsGridComponent implements OnInit {
         }
     }
     
-    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {        
-        return !this.board[drop.data];  // Only allow drop into empty cells
+    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {   
+        console.log("enterPredicate", drag.data, drop.data);
+             
+        return !this.board[drop.data.y][drop.data.x];  // Only allow drop into empty cells
     }
 
 
