@@ -19,6 +19,7 @@ import { ReadyDirective } from '../ready.directive';
 import { DrawCircularGraphService } from './services/draw-circular-graph.service';
 import { ZoomService } from './services/zoom.service';
 
+import { IngredientsService } from './services/ingredients.service';
 
 
 @NgModule({
@@ -45,6 +46,7 @@ import { ZoomService } from './services/zoom.service';
         DragScrollService,
         DrawCircularGraphService,
         ZoomService,
+        IngredientsService,
         provideHttpClient(withInterceptorsFromDi())
     ],
 })

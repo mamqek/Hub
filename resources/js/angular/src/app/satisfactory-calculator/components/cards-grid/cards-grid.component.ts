@@ -5,13 +5,14 @@ import { DragScrollService } from '../../services/drag-scroll.service';
 import { DrawLinesService } from '../../services/draw-lines.service';
 import { DrawCircularGraphService } from 'app/satisfactory-calculator/services/draw-circular-graph.service';
 import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
+import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 
 import { BehaviorSubject, tap, Observable, Subject, switchMap, takeUntil, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove, CdkDragPreview } from '@angular/cdk/drag-drop';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
-import {MatButtonModule} from '@angular/material/button';
+
 import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 import { InputDialogComponent } from './includes/input-dialog/input-dialog.component';
 
@@ -30,10 +31,6 @@ export class CardsGridComponent implements OnInit {
     cellSize: number = this.itemSize + this.gap;
     currentCellSize: number = this.cellSize;
 
-    private inputSubject = new BehaviorSubject<{ item: string; amount: number } | null>(null);
-    public ingridientsArr$?: Observable<RecipeNode[]>;
-    private unsubscribe$ = new Subject<void>();
-    
     @ViewChild('boardDiv') boardDiv!: ElementRef;
     board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
     nodes: RecipeNode[] = [];
@@ -47,6 +44,7 @@ export class CardsGridComponent implements OnInit {
         private drawLinesService: DrawLinesService,
         private drawCircularGraphService: DrawCircularGraphService,
         private zoomService: ZoomService,
+        private ingredientsService: IngredientsService,
         private cdr: ChangeDetectorRef,
         private renderer: Renderer2
     ) {
@@ -268,6 +266,10 @@ export class CardsGridComponent implements OnInit {
         //     this.recenterScroll(this.cellSize);
         // }, 3000);
 
+    }
+
+    getItemImageUrl(name: string): string {
+        return this.ingredientsService.getItemImageUrl(name);
     }
 
 }
