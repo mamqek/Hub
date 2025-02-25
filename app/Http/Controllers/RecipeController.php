@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
@@ -11,20 +12,24 @@ class RecipeController extends Controller
     public function getRecipe(Request $request) {
         $item = $request->query('item');
         $amount = $request->query('amount');
-        Log::info('Current directory: ' . getcwd());
-        
-        $returnVar = 0;
+        Log::info('Calling calculation service for: ' . $item . ' with amount ' . $amount);
 
-        $directoryPath = public_path('recepiesRust/');
-        chdir($directoryPath);
-        exec('satisfactory_factory_planner.exe "'.$item.': '.$amount.'"', $output, $returnVar);
-        dd($output);
+        // Use an environment variable for the service URL
+        $calcServiceUrl = env('CALC_SERVICE_URL');
+        
+        $response = Http::get($calcServiceUrl . 'run-calc', [
+            'item' => $item,
+            'amount' => $amount,
+        ]);
+        
+        if ($response->failed()) {
+            return response()->json(['error' => $response->body()], 500);
+        }
+
+        $output = $response->json()['output'] ?? [];
+        
         $recipeNodes = $this->parseTree($output);
         $ingredientsData = $this->parseIngredients($output);
-
-        if ($returnVar !== 0) {
-            return response()->json(['error' => implode("\n", $output)], 500);
-        }
 
         return response()->json([
             "recipeNodeArr" => $recipeNodes,
