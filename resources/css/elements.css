@@ -307,7 +307,7 @@ p.info::before {
 /* NOTOFICATION */
 
 .vue-notification-group {
-    width: min(80%, 500px) !important;
+    width: min(80%, 400px) !important;
     left: calc(50% - calc(min(80%, 500px) / 2)) !important;
 }
 

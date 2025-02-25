@@ -75,7 +75,7 @@ class BagAPIController extends Controller
                 'status' => __('response.error'),
                 'message' => $e->getMessage()
             ], 500);
-        }
+        }   
 
         try {
 

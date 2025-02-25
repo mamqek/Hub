@@ -11,12 +11,12 @@ class RecipeController extends Controller
     public function getRecipe(Request $request) {
         $item = $request->query('item');
         $amount = $request->query('amount');
+        Log::info('Current directory: ' . getcwd());
         
         $returnVar = 0;
 
         $directoryPath = public_path('recepiesRust/');
         chdir($directoryPath);
-
         exec('satisfactory_factory_planner.exe "'.$item.': '.$amount.'"', $output, $returnVar);
         
         $recipeNodes = $this->parseTree($output);
@@ -127,6 +127,7 @@ class RecipeController extends Controller
             $intermidieteIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
+        $ingredients['intermidiete'] = $intermidieteIngredients;
         
         $index+=2;
         
@@ -136,8 +137,13 @@ class RecipeController extends Controller
             $index++;
         }
 
-        $index+=2;
+        $index+=1;
         
+        if ($output[$index] !== "Byproducts:") {
+            return $ingredients;
+        }
+
+        $index+=1;
         $byproductIngredients = [];
         while ($output[$index] !== "") {
             $byproductIngredients[] = $this->ingredientToObj($output[$index]);

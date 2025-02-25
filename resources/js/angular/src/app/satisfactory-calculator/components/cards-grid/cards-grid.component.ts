@@ -70,7 +70,8 @@ export class CardsGridComponent implements OnInit {
             if (result) {
                 // Assuming the dialog returns the item and amount
                 const { item, amount } = result; // Adjust based on your dialog's return value
-
+                console.log(item);
+                
                 // Emit new input values
                 this.recipeService.updateInput(item, amount);
             }

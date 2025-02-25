@@ -26,13 +26,13 @@ class UserController extends Controller
 
         // Retrieve the user by username or email
         $user = User::where('username', $request->identifier)
-        ->orWhere('email', $request->identifier)
-        ->first();
+            ->orWhere('email', $request->identifier)
+            ->first();
 
         if (!$user) {
             return response()->json([
-            'status' => __('response.error'),
-            'message' => __('auth.failed'), // User not found
+                'status' => __('response.error'),
+                'message' => __('auth.failed'), // User not found
             ], 401);
         }
         Log::info(session()->all());
@@ -40,8 +40,8 @@ class UserController extends Controller
         // Check if the password is correct
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
-            'status' => __('response.error'),
-            'message' => __('auth.password'), // Incorrect password
+                'status' => __('response.error'),
+                'message' => __('auth.password'), // Incorrect password
             ], 401);
         }
         
@@ -53,7 +53,7 @@ class UserController extends Controller
             'message' => __('response.*_successful', ['action' => __('login')]),
             'user' => $user 
         ], 200);
-
+        
     }
 
     /**

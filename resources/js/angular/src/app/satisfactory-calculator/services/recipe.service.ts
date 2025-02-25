@@ -52,7 +52,7 @@ export class RecipeService {
     public getRecipe(item: string, amount: number): Observable<RecipeResponse> {
         let params = new HttpParams()
             .set('item', item)
-            .set('amount', amount.toString());
+            .set('amount', amount.toString());            
         return this._httpClient.get<RecipeResponse>('http://localhost:8000/satisfactory/getRecipe', { params });
     }
 
@@ -70,7 +70,7 @@ export class RecipeService {
             })
         );
     }
-
+    // TODO: Somehow sort items in intermidiete ingridients so final item is on top, then his children and so on
     public updateInput(item: string, amount: number) {
         this.inputSubject.next({ item, amount });
     }
