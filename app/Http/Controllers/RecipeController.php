@@ -18,7 +18,7 @@ class RecipeController extends Controller
         $directoryPath = public_path('recepiesRust/');
         chdir($directoryPath);
         exec('satisfactory_factory_planner.exe "'.$item.': '.$amount.'"', $output, $returnVar);
-        
+        dd($output);
         $recipeNodes = $this->parseTree($output);
         $ingredientsData = $this->parseIngredients($output);
 
@@ -122,12 +122,12 @@ class RecipeController extends Controller
 
         $index+=2;
 
-        $intermidieteIngredients = [];
+        $intermediateIngredients = [];
         while ($output[$index] !== "") {
-            $intermidieteIngredients[] = $this->ingredientToObj($output[$index]);
+            $intermediateIngredients[] = $this->ingredientToObj($output[$index]);
             $index++;
         }
-        $ingredients['intermidiete'] = $intermidieteIngredients;
+        $ingredients['intermediate'] = $intermediateIngredients;
         
         $index+=2;
         
@@ -152,7 +152,7 @@ class RecipeController extends Controller
 
         return [
             "input" => $inputIngredients,
-            "intermidiete" => $intermidieteIngredients,
+            "intermediate" => $intermediateIngredients,
             "output" => $outputIngredients,
             "byproduct" => $byproductIngredients,
         ];
