@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('group_name');
             $table->integer('number');
-            $table->string('text');
+            $table->string('text', 500);
             $table->timestamps();
         });
     }
