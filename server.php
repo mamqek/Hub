@@ -11,7 +11,7 @@ $uri = urldecode(
 
 if ($uri !== '/' && file_exists($file = __DIR__.'/public'.$uri)) {
     header('Content-type: '.get_mime_type($file).'; charset: UTF-8;');
-    echo require $file;
+    readfile($file);
 } else {
     require_once __DIR__.'/public/index.php';
 }
