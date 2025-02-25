@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, tap, Observable, Subject, switchMap, takeUntil, Subscription, fromEvent, throttleTime, map, connect } from 'rxjs';
+import { environment } from '../../../../src/environments/environment';
 
 export interface ProducedItem {
-    id: number;             // Unique identifier for the item
+    id: number;             // Unique identifier for the item   
     itemName: string;      // Name of the item produced
     productionRate: string; // Rate at which the item is produced
 }
@@ -52,8 +53,8 @@ export class RecipeService {
     public getRecipe(item: string, amount: number): Observable<RecipeResponse> {
         let params = new HttpParams()
             .set('item', item)
-            .set('amount', amount.toString());            
-        return this._httpClient.get<RecipeResponse>('http://localhost:8000/satisfactory/getRecipe', { params });
+            .set('amount', amount.toString());         
+        return this._httpClient.get<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipe`, { params });
     }
 
     public setupRecipeFetching(): Observable<RecipeResponse> {
