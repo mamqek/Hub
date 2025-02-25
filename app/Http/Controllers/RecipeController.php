@@ -45,12 +45,13 @@ class RecipeController extends Controller
         $count = 0;
         
         foreach ($output as $index => $line) {
-            if ( $index == 0 || $index == 1) {
+            if ( $index == 0 ) {
                 $count = 0;
                 continue;
             }
 
-            if ($line === "") {
+            // Stop parsing when we reach the input ingredients
+            if (strpos($line, 'Input') !== false) {
                 break;
             }
 
@@ -111,56 +112,28 @@ class RecipeController extends Controller
     }
 
     function parseIngredients($output) {
-
         $index = 0;
+        $ingredientTypes = ['input', 'intermediate', 'output', 'byproduct'];
+        $ingredients = [];
+
         do {
             $index++;
         } while ($output[$index] !== "Input Ingredients:");
 
-        $index++;
+        foreach ($ingredientTypes as $ingredientType) {
 
-        $inputIngredients = [];
-        while ($output[$index] !== "") {
-            $inputIngredients[] = $this->ingredientToObj($output[$index]);
-            $index++;
+            if (!str_starts_with(strtolower($output[$index]), $ingredientType)) {
+                continue;
+            }
+
+            $ingredients[$ingredientType] = [];
+            while (str_starts_with(ltrim($output[$index]), '*')) {
+                $ingredients[$ingredientType][] = $this->ingredientToObj($output[$index]);
+                $index++;
+            }
         }
 
-        $index+=2;
-
-        $intermediateIngredients = [];
-        while ($output[$index] !== "") {
-            $intermediateIngredients[] = $this->ingredientToObj($output[$index]);
-            $index++;
-        }
-        $ingredients['intermediate'] = $intermediateIngredients;
-        
-        $index+=2;
-        
-        $outputIngredients = [];
-        while ($output[$index] !== "") {
-            $outputIngredients[] = $this->ingredientToObj($output[$index]);
-            $index++;
-        }
-
-        $index+=1;
-        
-        if ($output[$index] !== "Byproducts:") {
-            return $ingredients;
-        }
-
-        $index+=1;
-        $byproductIngredients = [];
-        while ($output[$index] !== "") {
-            $byproductIngredients[] = $this->ingredientToObj($output[$index]);
-            $index++;
-        }
-
-        return [
-            "input" => $inputIngredients,
-            "intermediate" => $intermediateIngredients,
-            "output" => $outputIngredients,
-            "byproduct" => $byproductIngredients,
-        ];
+        return $ingredients;
     }
 
     function getIndentLevel($line) {
