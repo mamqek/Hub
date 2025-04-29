@@ -10,7 +10,6 @@ const axiosInstance  = axios.create({
     timeout: 15000,
     withCredentials: true,
     headers: {
-        'Content-Type': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     }
 })

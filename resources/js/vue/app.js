@@ -14,6 +14,7 @@ import { useUserStore } from './stores/userStore.js'
 
 import Notifications from '@kyvg/vue3-notification'
 
+import "@aio-chat/client"
 
 const app = createApp(App);
 
