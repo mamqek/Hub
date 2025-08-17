@@ -29,8 +29,8 @@
         <div id="app"></div>
 
         <chat-widget 
-            service_url="http://localhost:5555" 
-            user_id="{{ Auth::user()?->id ?? request('userId', '3') }}"
+            service_url="{{ config('services.chat.url') }}" 
+            user_id="{{ Auth::user()?->id ?? request('userId', '5') }}"
         ></chat-widget>
     </body>
 </html>
