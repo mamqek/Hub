@@ -1,4 +1,5 @@
-import { Directive, ElementRef, Input, isDevMode, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, Input, Renderer2 } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 @Directive({
   selector: '[basePath]',
@@ -7,12 +8,9 @@ export class BasePathDirective {
 
     @Input() path!: string;
 
-    private basePath: string = window.location.origin;
+    private basePath: string = environment.apiBaseUrl;
 
-    // On Dev mode app is on a differernt port from backend, in prod on local or server it is the same as current location.origin
-    constructor(private el: ElementRef, private renderer: Renderer2) {
-        this.basePath = isDevMode() ? 'http://localhost:8000' : this.basePath;
-    }
+    constructor(private el: ElementRef, private renderer: Renderer2) {}
   
     ngOnInit() {
       const fullPath = `${this.basePath}/${this.path}`;

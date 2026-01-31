@@ -21,7 +21,6 @@ export const useUserStore = defineStore('user', {
 
     actions: {
         setup() {
-
             this.authenticate();
         },
         setUser(userData) {

@@ -24,6 +24,7 @@ import { BasePathDirective } from 'app/directives/base-path.directive';
 import { MatListModule } from '@angular/material/list';
 import { IngredientsService } from './services/ingredients.service';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { OverlayModule } from '@angular/cdk/overlay';
 
 
 @NgModule({
@@ -47,6 +48,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
         MatBadgeModule,
         MatListModule,
         MatExpansionModule,
+        OverlayModule,
         InputDialogComponent,
     ],
     providers: [

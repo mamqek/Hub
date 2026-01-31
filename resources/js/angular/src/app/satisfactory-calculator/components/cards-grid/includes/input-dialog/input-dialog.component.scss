@@ -7,3 +7,55 @@
         width: 100%;
     }
 }
+
+.selected-ingredients {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.selected-ingredient-row {
+    display: grid;
+    grid-template-columns: 1fr 120px auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.ingredient-name {
+    font-size: 0.9rem;
+    color: inherit;
+}
+
+.ingredient-amount {
+    width: 120px;
+}
+
+.remove-ingredient {
+    min-width: 72px;
+}
+
+.recipe-field {
+    opacity: 1;
+}
+
+.recipe-field .mdc-text-field {
+    opacity: 1;
+}
+
+.ingredient-field {
+    opacity: 1;
+}
+
+.ingredient-field.is-inactive {
+    opacity: 0.6;
+}
+
+.amount-field {
+    opacity: 1;
+}
+
+.amount-field.is-inactive {
+    opacity: 0.5;
+    pointer-events: none;
+}

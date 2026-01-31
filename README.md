@@ -1,3 +1,16 @@
+# Vercel 
+
+## Preview 
+You will get it on URL which changes as it includes deployment hash like https://hub-czmv3nzt8-mamqek.vercel.app/
+vercel .
+
+## Production 
+You will get it on static url like  https://mamqek-hub.vercel.app/
+vercel . --prod 
+
+if try promoting via vercel dashboard u will get a php error 
+
+
 # Start
 
 Run [setup script](#setup-script) or go through installation manually in [Manual process](#manual-process)

@@ -81,29 +81,38 @@ output
 [{…}] -->
 
 
-        <div *ngIf="ingredientsData" class="overlay-element rounded-lg summary">
-            <mat-accordion multi class="example-headers-align"  >
-                <mat-expansion-panel *ngFor="let section of ingredientsData | keyvalue">
-                    <mat-expansion-panel-header>
-                        <mat-panel-title> {{section.key | titlecase}} </mat-panel-title>
-                        <mat-panel-description>
-                            Ingridients: {{section.value.length}}
-                        </mat-panel-description>
-                    </mat-expansion-panel-header>
-                    <mat-list>
-                    @for (ingredient of section.value; track ingredient) {
-                        <mat-list-item>
-                            <img matListItemAvatar basePath [path]="getItemImageUrl(ingredient.itemName)" alt="...">
-                            <p matListItemTitle>{{ingredient.itemName}}</p>
-                            <p  matListItemLine>
-                                <span>{{ingredient.amount}} p/m</span>
-                            </p>
-                        </mat-list-item>
-                    }
-                    </mat-list> 
-                </mat-expansion-panel>
-            </mat-accordion>
-        </div>
+        <div class="summary-origin" cdkOverlayOrigin #summaryOrigin="cdkOverlayOrigin"></div>
+        <ng-template
+            cdkConnectedOverlay
+            [cdkConnectedOverlayOrigin]="summaryOrigin"
+            [cdkConnectedOverlayOpen]="true"
+            [cdkConnectedOverlayHasBackdrop]="false"
+            [cdkConnectedOverlayPositions]="summaryPositions"
+        >
+            <div class="overlay-element rounded-lg summary overlay-summary">
+                <mat-accordion multi class="example-headers-align">
+                    <mat-expansion-panel *ngFor="let section of ingredientsData | keyvalue">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title> {{section.key | titlecase}} </mat-panel-title>
+                            <mat-panel-description>
+                                Ingridients: {{section.value.length}}
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <mat-list>
+                        @for (ingredient of section.value; track ingredient) {
+                            <mat-list-item>
+                                <img matListItemAvatar basePath [path]="getItemImageUrl(ingredient.itemName)" alt="...">
+                                <p matListItemTitle>{{ingredient.itemName}}</p>
+                                <p  matListItemLine>
+                                    <span>{{ingredient.amount}} p/m</span>
+                                </p>
+                            </mat-list-item>
+                        }
+                        </mat-list> 
+                    </mat-expansion-panel>
+                </mat-accordion>
+            </div>
+        </ng-template>
 
     </div>
 </div>
@@ -111,7 +120,6 @@ output
 
     
 <!-- </cdk-virtual-scroll-viewport> -->
-
 
 
 

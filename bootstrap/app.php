@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', [
             CheckLocale::class
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'satisfactory/getRecipeWithLimits',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

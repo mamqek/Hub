@@ -38,8 +38,18 @@ export class DrawLinesService {
                 path: 'straight',
                 hide: true,
                 endPlugSize: 1.5,
-                dash: {animation: false}
+                dash: {animation: false},
+                zIndex: 1
             })
+
+            // Ensure lines stay below overlays/dialogs.
+            if (line && typeof (line as any).setOptions === 'function') {
+                (line as any).setOptions({ zIndex: 1 });
+            }
+            if (line && (line as any).svg && (line as any).svg.style) {
+                (line as any).svg.style.zIndex = '1';
+                (line as any).svg.style.pointerEvents = 'none';
+            }
                 
 
             // TODO: have an array is value

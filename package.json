@@ -8,7 +8,9 @@
         "all": "vite && cd resources/js/angular && npm start",
         "build": "vite build",
         "prod": "cd resources/js/angular && npm run build:prod && cd ../../.. && npm run build",
-        "start:service": "node resources/js/chat/service.js"
+        "start:service": "node resources/js/chat/service.js",
+        "start:calculator": "node public/recepiesRust/server/index.js",
+        "vercel:prod": "npm run build && vercel . --prod --force"
     },
     "devDependencies": {
         "axios": "^1.6.4",
@@ -18,13 +20,14 @@
         "vite": "^5.0"
     },
     "dependencies": {
-        "@aio-chat/all": "^1.0.1-10",
+        "@aio-chat/all": "^1.0.1-16",
         "@fortawesome/fontawesome-free": "^6.5.2",
         "@kyvg/vue3-notification": "^3.3.0",
         "@vitejs/plugin-vue": "^5.0.4",
         "pinia": "^2.2.2",
         "pinia-plugin-persistedstate": "^3.2.1",
         "vue": "^3.4.27",
+        "vue-bits": "^1.1.1",
         "vue-i18n": "^9.14.0",
         "vue-router": "^4.3.2"
     }

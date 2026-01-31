@@ -31,6 +31,11 @@ export interface IngredientsData {
     byproduct: Ingredient[];
 }
 
+export interface BaseIngredientsResponse {
+    item: string;
+    baseIngredients: Ingredient[];
+}
+
 export interface RecipeResponse {
     ingredientsData: IngredientsData;
     recipeNodeArr: RecipeNode[];
@@ -55,6 +60,20 @@ export class RecipeService {
             .set('item', item)
             .set('amount', amount.toString());         
         return this._httpClient.get<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipe`, { params });
+    }
+
+    public getBaseIngredients(item: string, amount?: number): Observable<BaseIngredientsResponse> {
+        let params = new HttpParams().set('item', item);
+        if (amount !== undefined) {
+            params = params.set('amount', amount.toString());
+        }
+
+        return this._httpClient.get<BaseIngredientsResponse>(`${environment.apiBaseUrl}/satisfactory/getBaseIngredients`, { params });
+    }
+
+    public getRecipeWithLimits(item: string, ingredients: Ingredient[]): Observable<RecipeResponse> {
+        const body = { item, ingredients };
+        return this._httpClient.post<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipeWithLimits`, body);
     }
 
     public setupRecipeFetching(): Observable<RecipeResponse> {
@@ -88,6 +107,7 @@ export class RecipeService {
     public unsubscribe() {
         this.unsubscribe$.next();
         this.unsubscribe$.complete();
+        this.unsubscribe$ = new Subject<void>();
     }
 }
 

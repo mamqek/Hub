@@ -66,7 +66,7 @@
 }
 
 .overlay {
-    z-index: 100;
+    z-index: 2000;
     position: fixed;
     top: 0;
     right: 0;
@@ -99,10 +99,16 @@
 
     }
 
+    .summary-origin {
+        width: 0;
+        height: 0;
+        align-self: flex-end;
+    }
+
     &-element {
         
         pointer-events: all;
-        background-color: $overlay-backgrond;
+        background-color: $overlay-background;
         // background-color: rgba(8, 8, 8, 0.596);
     
         color: white !important;
@@ -131,7 +137,11 @@
         }
 
         &.summary {
-            background-color: rgba($overlay-backgrond, 0.9);
+            background-color: $overlay-background;
+            --mat-expansion-container-background-color: #01110A;
+            --mat-expansion-container-text-color: white;
+            --mat-expansion-header-text-color: white;
+            --mdc-list-list-item-label-text-color: white;
 
             overflow-y: scroll;
 

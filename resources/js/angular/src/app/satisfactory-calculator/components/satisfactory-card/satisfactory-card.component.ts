@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, AfterContentInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { ConnectedPosition } from '@angular/cdk/overlay';
 import { RecipeNode } from '../../services/recipe.service';
 
 
@@ -15,6 +16,13 @@ export class SatisfactoryCardComponent implements OnInit {
     @Input() data!: RecipeNode;
 
     machineImageUrl: string = 'images/';
+    isHintOpen = false;
+    hintPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 12 },
+        { originX: 'end', originY: 'bottom', overlayX: 'start', overlayY: 'bottom', offsetX: 12 },
+        { originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top', offsetX: -12 },
+        { originX: 'start', originY: 'bottom', overlayX: 'end', overlayY: 'bottom', offsetX: -12 },
+    ];
 
     constructor(private ingredientsService: IngredientsService) { }
 
@@ -32,5 +40,13 @@ export class SatisfactoryCardComponent implements OnInit {
 
     getItemImageUrl(name: string): string {
         return this.ingredientsService.getItemImageUrl(name);
+    }
+
+    showHint() {
+        this.isHintOpen = true;
+    }
+
+    hideHint() {
+        this.isHintOpen = false;
     }
 }

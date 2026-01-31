@@ -8,6 +8,7 @@ import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 
 import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove, CdkDragPreview } from '@angular/cdk/drag-drop';
+import { ConnectedPosition } from '@angular/cdk/overlay';
 import { SatisfactoryCardComponent } from '../satisfactory-card/satisfactory-card.component';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
@@ -35,7 +36,17 @@ export class CardsGridComponent implements OnInit {
     nodes: RecipeNode[] = [];
     boardZoomLevel: number = 1;
     
-    ingredientsData!: IngredientsData;
+    ingredientsData: IngredientsData = {
+        input: [],
+        intermediate: [],
+        output: [],
+        byproduct: []
+    };
+
+    summaryPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 12 },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -12 },
+    ];
     
     constructor(
         private recipeService: RecipeService, 
@@ -68,10 +79,17 @@ export class CardsGridComponent implements OnInit {
         dialogRef.afterClosed().subscribe(result => {
             console.log(`Dialog result: ${result}`);
             if (result) {
-                // Assuming the dialog returns the item and amount
-                const { item, amount } = result; // Adjust based on your dialog's return value
+                const { item, amount, ingredients } = result;
                 console.log(item);
-                
+
+                if (Array.isArray(ingredients) && ingredients.length > 0) {
+                    this.recipeService.getRecipeWithLimits(item, ingredients).subscribe({
+                        next: (data: RecipeResponse) => this.applyRecipeData(data),
+                        error: (err) => console.error("Error fetching limited recipe:", err),
+                    });
+                    return;
+                }
+
                 // Emit new input values
                 this.recipeService.updateInput(item, amount);
             }
@@ -105,35 +123,11 @@ export class CardsGridComponent implements OnInit {
         // Place user camera to default position
         setTimeout(() => {this.centerClientView()}, 0);
 
+        console.log("CardsGridComponent initialized");
+
         // Set up the recipe fetching process
         this.recipeService.setupRecipeFetching().subscribe({
-            next: (data: RecipeResponse) => {
-                // Clear the board and reset the lines before updating the board
-                this.drawCircularGraphService.clearBoard(this.board); 
-                this.drawLinesService.resetLines();
-                
-                // call change detection, so html board deletes existing cards
-                this.cdr.detectChanges();
-
-                console.log("Fetched data:", data);
-
-                // TODO: make board an observalbe as well to connect it to ngfor by this, before that ask chatgpt if that is a good idea
-                this.nodes = data.recipeNodeArr;
-                this.ingredientsData = data.ingredientsData;
-                
-                this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
-                
-                // call change detection, so html notices update in this.board and creates cards, otherwise lines wont be able to find elements
-                this.cdr.detectChanges();
-
-                this.drawLinesService.drawLines(this.nodes
-                    .map(node => ({
-                        id: node.id, 
-                        children: node.ingredients,
-                        parentId: node.parentId
-                    }))
-                );
-            },
+            next: (data: RecipeResponse) => this.applyRecipeData(data),
             error: (err) => {
                 console.error("Error fetching data:", err);
             }
@@ -295,6 +289,34 @@ export class CardsGridComponent implements OnInit {
         return this.ingredientsService.getItemImageUrl(name);
     }
 
+    private applyRecipeData(data: RecipeResponse) {
+        // Clear the board and reset the lines before updating the board
+        this.drawCircularGraphService.clearBoard(this.board); 
+        this.drawLinesService.resetLines();
+        
+        // call change detection, so html board deletes existing cards
+        this.cdr.detectChanges();
+
+        console.log("Fetched data:", data);
+
+        // TODO: make board an observalbe as well to connect it to ngfor by this, before that ask chatgpt if that is a good idea
+        this.nodes = data.recipeNodeArr;
+        console.log("C:", data.ingredientsData);
+
+        this.ingredientsData = data.ingredientsData;
+        
+        this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
+        
+        // call change detection, so html notices update in this.board and creates cards, otherwise lines wont be able to find elements
+        this.cdr.detectChanges();
+
+        this.drawLinesService.drawLines(this.nodes
+            .map(node => ({
+                id: node.id, 
+                children: node.ingredients,
+                parentId: node.parentId
+            }))
+        );
+    }
+
 }
-
-

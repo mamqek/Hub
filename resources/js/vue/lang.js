@@ -8,6 +8,8 @@ import { notify } from "@kyvg/vue3-notification";
 const htmlLang = document.documentElement.lang || 'en';
 
 const i18n = createI18n({
+  legacy: false, // enable Composition API mode
+  globalInjection: true,
   locale: htmlLang,
   fallbackLocale: 'en',
   messages: {},

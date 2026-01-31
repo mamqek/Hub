@@ -1,1 +1,4 @@
 /vendor
+
+/public/hot
+.env

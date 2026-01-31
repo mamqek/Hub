@@ -2,12 +2,64 @@
 <mat-dialog-content class="mat-typography w-fit justify-center">
 
     <form class="recipe-form ">
-        <mat-form-field>
+        <mat-form-field class="recipe-field">
           <mat-label>Which item to you want to make?</mat-label>
-          <input type="text" matInput placeholder="computer" [(ngModel)]="item" name="item">
+          <input type="text" matInput placeholder="computer" [(ngModel)]="item" name="item" [matAutocomplete]="recipeAuto" (ngModelChange)="filterRecipeItems($event)" (focus)="openRecipePanel()" #recipeTrigger="matAutocompleteTrigger">
+          <mat-autocomplete #recipeAuto="matAutocomplete" (optionSelected)="onRecipeSelected($event.option.value)">
+            <mat-option *ngFor="let option of filteredRecipeItems" [value]="option">
+              {{ option }}
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
-        <input-number label="How many?" [(modelValue)]="amount" suffix="p/m" [min]="1" [max]="1000"></input-number>
+        <div class="amount-field" [class.is-inactive]="useIngredientLimits" [attr.aria-disabled]="useIngredientLimits">
+          <input-number label="How many?" [(modelValue)]="amount" (modelValueChange)="persistState()" suffix="p/m" [min]="1" [max]="1000"></input-number>
+        </div>
+
+        <mat-form-field class="ingredient-field" [class.is-inactive]="!availableIngredients.length">
+          <mat-label>Limit ingredients</mat-label>
+          <input
+            type="text"
+            matInput
+            [placeholder]="availableIngredients.length ? 'Start typing ingredient' : 'Select a recipe first'"
+            [(ngModel)]="ingredientQuery"
+            name="ingredientQuery"
+            [matAutocomplete]="ingredientAuto"
+            (ngModelChange)="filterIngredientOptions($event)"
+            (focus)="openIngredientPanel()"
+            [disabled]="!availableIngredients.length"
+            #ingredientTrigger="matAutocompleteTrigger"
+          >
+          <mat-autocomplete #ingredientAuto="matAutocomplete" (optionSelected)="onIngredientSelected($event.option.value)">
+            <mat-option *ngIf="availableIngredients.length === 0" disabled>
+              Select a recipe first
+            </mat-option>
+            <mat-option *ngIf="availableIngredients.length > 0 && filteredIngredientOptions.length === 0" disabled>
+              No matching ingredients
+            </mat-option>
+            <mat-option *ngFor="let option of filteredIngredientOptions" [value]="option">
+              {{ option }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <div class="selected-ingredients" *ngIf="selectedIngredients.length">
+          <div class="selected-ingredient-row" *ngFor="let ingredient of selectedIngredients; trackBy: trackIngredient; let i = index">
+            <span class="ingredient-name">{{ ingredient.itemName }}</span>
+            <mat-form-field class="ingredient-amount">
+              <mat-label>Amount</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                [(ngModel)]="ingredient.amount"
+                name="ingredientAmount-{{ i }}"
+                (ngModelChange)="persistState()"
+              >
+            </mat-form-field>
+            <button type="button" mat-button class="remove-ingredient" (click)="removeIngredient(ingredient.itemName)">Remove</button>
+          </div>
+        </div>
 
         <!-- <mat-form-field>
           <mat-label>How many p/m?</mat-label>

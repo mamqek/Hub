@@ -24,15 +24,21 @@ body {
 
     .leader-line {
         will-change: transform;
-        z-index: 0;
+        z-index: 1 !important;
+        pointer-events: none !important;
     }
 }
 
 
 .mat-mdc-dialog-surface {
-    background-color: rgba(1, 17, 10, 0.9) !important;
+    background-color: rgba(239, 69, 18, 0.055) !important;
 
     .mat-mdc-dialog-title {
         color: white !important;
     }
+}
+
+.cdk-overlay-container,
+.cdk-global-overlay-wrapper {
+    z-index: 5000;
 }

@@ -26,6 +26,8 @@ Route::group(['prefix' => 'soulmap'], function () {
 
 Route::group(['prefix' => 'satisfactory'], function () {
     Route::get('/getRecipe', 'App\Http\Controllers\RecipeController@getRecipe');
+    Route::get('/getBaseIngredients', 'App\Http\Controllers\RecipeController@getBaseIngredients');
+    Route::match(['get', 'post'], '/getRecipeWithLimits', 'App\Http\Controllers\RecipeController@getRecipeWithLimits');
     Route::get('/parse', 'App\Http\Controllers\RecipeController@parse');
 
 });
