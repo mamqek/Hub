@@ -11,22 +11,31 @@ class RecipeController extends Controller
 
     public function getRecipe(Request $request) {
         $item = $request->query('item');
-        $amount = $request->query('amount');
+        if (!$item) {
+            return response()->json(['error' => 'Missing item parameter.'], 400);
+        }
+        $amount = (float) ($request->query('amount') ?? 1);
         Log::info('Calling calculation service for: ' . $item . ' with amount ' . $amount);
 
-        $result = $this->fetchCalcOutput($item, (float) $amount);
+        $selectedRecipes = $this->parseSelectedRecipes($request->query('selectedRecipes'));
+        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes);
         if (isset($result['error'])) {
             return response()->json(['error' => $result['error']], $result['status'] ?? 500);
         }
+        Log::info('Received calculation result for: ' . print_r($result, true));
 
-        $output = $result['output'] ?? [];
-        
-        $recipeNodes = $this->parseTree($output);
-        $ingredientsData = $this->parseIngredients($output);
+        $recipeNodes = $result['recipeNodeArr'] ?? [];
+        $ingredientsData = $result['ingredientsData'] ?? [
+            'input' => [],
+            'intermediate' => [],
+            'output' => [],
+            'byproduct' => [],
+        ];
 
         return response()->json([
             "recipeNodeArr" => $recipeNodes,
-            "ingredientsData" => $ingredientsData
+            "ingredientsData" => $ingredientsData,
+            "recipeOptions" => $result['recipeOptions'] ?? []
         ] , 200);
         // return response()->json(['output' =>  $output], 200);
     }
@@ -38,18 +47,24 @@ class RecipeController extends Controller
         }
 
         $amount = (float) ($request->query('amount') ?? 1);
-        $result = $this->fetchCalcOutput($item, $amount);
+        $selectedRecipes = $this->parseSelectedRecipes($request->query('selectedRecipes'));
+        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes);
         if (isset($result['error'])) {
             return response()->json(['error' => $result['error']], $result['status'] ?? 500);
         }
 
-        $output = $result['output'] ?? [];
-        $ingredientsData = $this->parseIngredients($output);
+        $ingredientsData = $result['ingredientsData'] ?? [
+            'input' => [],
+            'intermediate' => [],
+            'output' => [],
+            'byproduct' => [],
+        ];
         $baseIngredients = $ingredientsData['input'] ?? [];
 
         return response()->json([
             'item' => $item,
             'baseIngredients' => $baseIngredients,
+            'recipeOptions' => $result['recipeOptions'] ?? [],
         ], 200);
     }
 
@@ -58,6 +73,14 @@ class RecipeController extends Controller
         if (!$item) {
             return response()->json(['error' => 'Missing item parameter.'], 400);
         }
+
+        $requestedAmount = $request->input('amount') ?? $request->query('amount');
+        $useIngredientsToMax = $request->input('useIngredientsToMax');
+        $useIngredientsToMax = filter_var($useIngredientsToMax, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($useIngredientsToMax === null) {
+            $useIngredientsToMax = false;
+        }
+        $selectedRecipes = $this->parseSelectedRecipes($request->input('selectedRecipes', $request->query('selectedRecipes')));
 
         $rawIngredients = $request->input('ingredients', $request->query('ingredients'));
         if (is_string($rawIngredients)) {
@@ -68,63 +91,35 @@ class RecipeController extends Controller
             return response()->json(['error' => 'Missing or invalid ingredients array.'], 400);
         }
 
-        $limitMap = $this->buildIngredientMap($rawIngredients);
-        if (count($limitMap) === 0) {
-            return response()->json(['error' => 'No valid ingredient limits provided.'], 400);
-        }
-
-        $perUnitResult = $this->fetchCalcOutput($item, 1.0);
-        if (isset($perUnitResult['error'])) {
-            return response()->json(['error' => $perUnitResult['error']], $perUnitResult['status'] ?? 500);
-        }
-
-        $perUnitIngredients = $this->parseIngredients($perUnitResult['output'] ?? []);
-        $perUnitInputMap = $this->buildIngredientMap($perUnitIngredients['input'] ?? []);
-
-        if (count($perUnitInputMap) === 0) {
-            return response()->json(['error' => 'Unable to determine base ingredients for this recipe.'], 500);
-        }
-
-        $maxAmount = null;
-        $limitingIngredient = null;
-
-        foreach ($limitMap as $key => $limitAmount) {
-            if (!isset($perUnitInputMap[$key])) {
-                return response()->json(['error' => 'Ingredient not used in recipe: ' . $this->restoreIngredientName($key, $rawIngredients)], 400);
-            }
-
-            $requiredPerUnit = $perUnitInputMap[$key];
-            if ($requiredPerUnit <= 0) {
-                continue;
-            }
-
-            $candidate = $limitAmount / $requiredPerUnit;
-            if ($maxAmount === null || $candidate < $maxAmount) {
-                $maxAmount = $candidate;
-                $limitingIngredient = $this->restoreIngredientName($key, $rawIngredients);
-            }
-        }
-
-        if ($maxAmount === null || $maxAmount <= 0) {
-            return response()->json(['error' => 'Unable to compute recipe amount from provided limits.'], 400);
-        }
-
-        $boundedResult = $this->fetchCalcOutput($item, $maxAmount);
+        $amount = $requestedAmount !== null ? (float) $requestedAmount : 1.0;
+        $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes);
         if (isset($boundedResult['error'])) {
             return response()->json(['error' => $boundedResult['error']], $boundedResult['status'] ?? 500);
         }
 
-        $output = $boundedResult['output'] ?? [];
-        $recipeNodes = $this->parseTree($output);
-        $ingredientsData = $this->parseIngredients($output);
+        $recipeNodes = $boundedResult['recipeNodeArr'] ?? [];
+        $ingredientsData = $boundedResult['ingredientsData'] ?? [
+            'input' => [],
+            'intermediate' => [],
+            'output' => [],
+            'byproduct' => [],
+        ];
+
+        $resolvedAmount = $boundedResult['amount'] ?? null;
+        if ($resolvedAmount === null) {
+            $resolvedAmount = $this->findOutputAmount($ingredientsData['output'] ?? [], $item);
+        }
+
+        $limitingIngredient = $this->findLimitingIngredient($rawIngredients, $ingredientsData['input'] ?? []);
 
         return response()->json([
             'item' => $item,
-            'amount' => $maxAmount,
+            'amount' => $resolvedAmount,
             'limits' => $this->normalizeIngredientList($rawIngredients),
             'limitedBy' => $limitingIngredient,
             'recipeNodeArr' => $recipeNodes,
             'ingredientsData' => $ingredientsData,
+            'recipeOptions' => $boundedResult['recipeOptions'] ?? [],
         ], 200);
     }
 
@@ -222,11 +217,11 @@ class RecipeController extends Controller
                 $currentType = 'intermediate';
                 continue;
             }
-            if (str_starts_with($lower, 'output ingredients')) {
+            if (str_starts_with($lower, 'output ingredients') || str_starts_with($lower, 'output products')) {
                 $currentType = 'output';
                 continue;
             }
-            if (str_starts_with($lower, 'byproduct ingredients')) {
+            if (str_starts_with($lower, 'byproduct ingredients') || str_starts_with($lower, 'byproducts')) {
                 $currentType = 'byproduct';
                 continue;
             }
@@ -289,24 +284,51 @@ class RecipeController extends Controller
         
     }
 
-    protected function fetchCalcOutput(string $item, float $amount): array {
+    protected function fetchCalcOutput(
+        string $item,
+        float $amount,
+        array $ingredients = [],
+        bool $useIngredientsToMax = false,
+        array $selectedRecipes = []
+    ): array {
         $calcServiceUrl = env('CALC_SERVICE_URL');
         if (!$calcServiceUrl) {
             return ['error' => 'CALC_SERVICE_URL is not configured.', 'status' => 500];
         }
 
-        $response = Http::get($calcServiceUrl . 'run-calc', [
+        $payload = [
             'item' => $item,
             'amount' => $amount,
-        ]);
+        ];
+
+        if ($ingredients) {
+            $payload['ingredients'] = $ingredients;
+            $payload['useIngredientsToMax'] = $useIngredientsToMax;
+        }
+        if ($selectedRecipes) {
+            $payload['selectedRecipes'] = $selectedRecipes;
+        }
+
+        $response = Http::post($calcServiceUrl . 'run-calc', $payload);
 
         if ($response->failed()) {
             return ['error' => $response->body(), 'status' => 500];
         }
 
-        return [
-            'output' => $response->json()['output'] ?? [],
-        ];
+        return $response->json();
+    }
+
+    protected function parseSelectedRecipes($value): array {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value) && trim($value) !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        return [];
     }
 
     protected function buildIngredientMap(array $ingredients): array {
@@ -377,5 +399,65 @@ class RecipeController extends Controller
         }
 
         return $key;
+    }
+
+    protected function findOutputAmount(array $outputItems, string $item): ?float {
+        foreach ($outputItems as $output) {
+            if (!is_array($output)) {
+                continue;
+            }
+            $name = $output['itemName'] ?? null;
+            if (!$name) {
+                continue;
+            }
+            if (strtolower($name) === strtolower($item)) {
+                return (float) ($output['amount'] ?? 0);
+            }
+        }
+
+        return null;
+    }
+
+    protected function findLimitingIngredient(array $limits, array $inputs): ?string {
+        if (!count($limits) || !count($inputs)) {
+            return null;
+        }
+
+        $inputMap = [];
+        foreach ($inputs as $input) {
+            if (!is_array($input)) {
+                continue;
+            }
+            $name = $input['itemName'] ?? null;
+            $amount = $input['amount'] ?? null;
+            if (!$name || $amount === null) {
+                continue;
+            }
+            $inputMap[$this->normalizeIngredientName($name)] = (float) $amount;
+        }
+
+        $limitingIngredient = null;
+        $bestRatio = null;
+        foreach ($limits as $limit) {
+            if (!is_array($limit)) {
+                continue;
+            }
+            $name = $limit['itemName'] ?? $limit['name'] ?? null;
+            $limitAmount = $limit['amount'] ?? $limit['qty'] ?? null;
+            if (!$name || $limitAmount === null) {
+                continue;
+            }
+            $key = $this->normalizeIngredientName($name);
+            if (!isset($inputMap[$key]) || $limitAmount <= 0) {
+                continue;
+            }
+            $ratio = $inputMap[$key] / (float) $limitAmount;
+            if ($bestRatio === null || $ratio > $bestRatio) {
+                $bestRatio = $ratio;
+                $limitingIngredient = $name;
+            }
+        }
+
+        return $limitingIngredient;
     }
 }

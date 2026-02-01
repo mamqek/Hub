@@ -9,6 +9,8 @@ export interface RecipeDialogState {
     item: string;
     amount: number;
     ingredients: IngredientLimit[];
+    useIngredientsToMax: boolean;
+    selectedRecipes: Record<string, string>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -17,6 +19,8 @@ export class RecipeDialogStateService {
         item: '',
         amount: 0,
         ingredients: [],
+        useIngredientsToMax: false,
+        selectedRecipes: {},
     };
 
     getState(): RecipeDialogState {
@@ -27,6 +31,8 @@ export class RecipeDialogStateService {
                 itemName: ingredient.itemName,
                 amount: ingredient.amount,
             })),
+            useIngredientsToMax: this.state.useIngredientsToMax,
+            selectedRecipes: { ...this.state.selectedRecipes },
         };
     }
 
@@ -38,6 +44,8 @@ export class RecipeDialogStateService {
                 itemName: ingredient.itemName,
                 amount: ingredient.amount,
             })),
+            useIngredientsToMax: state.useIngredientsToMax,
+            selectedRecipes: { ...state.selectedRecipes },
         };
     }
 }

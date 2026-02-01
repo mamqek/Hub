@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ConnectedPosition } from '@angular/cdk/overlay';
 import { RecipeNode } from '../../services/recipe.service';
 
@@ -14,9 +14,12 @@ import { IngredientsService } from 'app/satisfactory-calculator/services/ingredi
 export class SatisfactoryCardComponent implements OnInit {
 
     @Input() data!: RecipeNode;
+    @Input() isHighlighted = false;
+    @Output() selectRecipe = new EventEmitter<void>();
 
     machineImageUrl: string = 'images/';
     isHintOpen = false;
+    private hideHintTimeout: ReturnType<typeof setTimeout> | null = null;
     hintPositions: ConnectedPosition[] = [
         { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 12 },
         { originX: 'end', originY: 'bottom', overlayX: 'start', overlayY: 'bottom', offsetX: 12 },
@@ -43,10 +46,27 @@ export class SatisfactoryCardComponent implements OnInit {
     }
 
     showHint() {
+        if (this.hideHintTimeout) {
+            clearTimeout(this.hideHintTimeout);
+            this.hideHintTimeout = null;
+        }
         this.isHintOpen = true;
     }
 
     hideHint() {
-        this.isHintOpen = false;
+        if (this.hideHintTimeout) {
+            clearTimeout(this.hideHintTimeout);
+        }
+        // Delay close slightly so moving from node -> hint does not collapse it.
+        this.hideHintTimeout = setTimeout(() => {
+            this.isHintOpen = false;
+            this.hideHintTimeout = null;
+        }, 120);
+    }
+
+    onSelectRecipeClick(event: MouseEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.selectRecipe.emit();
     }
 }

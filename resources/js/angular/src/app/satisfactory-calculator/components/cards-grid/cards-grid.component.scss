@@ -191,3 +191,16 @@
     will-change: auto;
 
 }
+
+.summary-item-name {
+    cursor: pointer;
+    display: inline-block;
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.summary-item-name.is-selected {
+    background-color: rgba(0, 220, 255, 0.2);
+    color: #9cf7ff;
+}

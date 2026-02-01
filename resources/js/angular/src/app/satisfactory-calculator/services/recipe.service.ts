@@ -10,6 +10,7 @@ export interface ProducedItem {
 }
 
 export interface RecipeNode extends ProducedItem {
+    recipeName?: string;      // Recipe used to produce this item
     machineName: string;     // Machine used to produce the item
     machineCount: number;    // Number of machines required
     ingredients?: number[];      // Ingridietns recipe id
@@ -34,11 +35,13 @@ export interface IngredientsData {
 export interface BaseIngredientsResponse {
     item: string;
     baseIngredients: Ingredient[];
+    recipeOptions?: Record<string, string[]>;
 }
 
 export interface RecipeResponse {
     ingredientsData: IngredientsData;
     recipeNodeArr: RecipeNode[];
+    recipeOptions?: Record<string, string[]>;
 }
 
 
@@ -55,24 +58,36 @@ export class RecipeService {
 
     constructor(private _httpClient: HttpClient) { }
 
-    public getRecipe(item: string, amount: number): Observable<RecipeResponse> {
+    public getRecipe(item: string, amount: number, selectedRecipes?: Record<string, string>): Observable<RecipeResponse> {
         let params = new HttpParams()
             .set('item', item)
             .set('amount', amount.toString());         
+        if (selectedRecipes && Object.keys(selectedRecipes).length > 0) {
+            params = params.set('selectedRecipes', JSON.stringify(selectedRecipes));
+        }
         return this._httpClient.get<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipe`, { params });
     }
 
-    public getBaseIngredients(item: string, amount?: number): Observable<BaseIngredientsResponse> {
+    public getBaseIngredients(item: string, amount?: number, selectedRecipes?: Record<string, string>): Observable<BaseIngredientsResponse> {
         let params = new HttpParams().set('item', item);
         if (amount !== undefined) {
             params = params.set('amount', amount.toString());
+        }
+        if (selectedRecipes && Object.keys(selectedRecipes).length > 0) {
+            params = params.set('selectedRecipes', JSON.stringify(selectedRecipes));
         }
 
         return this._httpClient.get<BaseIngredientsResponse>(`${environment.apiBaseUrl}/satisfactory/getBaseIngredients`, { params });
     }
 
-    public getRecipeWithLimits(item: string, ingredients: Ingredient[]): Observable<RecipeResponse> {
-        const body = { item, ingredients };
+    public getRecipeWithLimits(
+        item: string,
+        ingredients: Ingredient[],
+        amount?: number,
+        useIngredientsToMax?: boolean,
+        selectedRecipes?: Record<string, string>
+    ): Observable<RecipeResponse> {
+        const body = { item, ingredients, amount, useIngredientsToMax, selectedRecipes };
         return this._httpClient.post<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipeWithLimits`, body);
     }
 

@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>Select recipe for {{ data.item }}</h2>
+
+<mat-dialog-content>
+    <mat-form-field class="recipe-field">
+        <mat-label>Recipe</mat-label>
+        <mat-select [(ngModel)]="selectedRecipe" name="selectedRecipe">
+            <mat-option value="">System default</mat-option>
+            <mat-option *ngFor="let option of data.options" [value]="option">
+                {{ option }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-button (click)="save()" cdkFocusInitial>Apply</button>
+</mat-dialog-actions>

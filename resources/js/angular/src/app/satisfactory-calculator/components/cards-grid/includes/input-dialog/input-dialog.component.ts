@@ -1,40 +1,53 @@
-import { Component, ChangeDetectionStrategy, ViewChild, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, OnInit, OnDestroy, ChangeDetectorRef, Inject, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {MatButtonModule} from '@angular/material/button';
-import {MatDialogModule, MatDialogRef} from '@angular/material/dialog';
-import {MatInputModule} from '@angular/material/input';
-import {MatFormFieldModule} from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import {FormsModule} from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { InputNumberComponent } from 'app/input-number/input-number.component';
 import { recipeItems } from '../../../../data/recipe-items';
 import { RecipeService, Ingredient } from '../../../../services/recipe.service';
 import { RecipeDialogStateService, IngredientLimit } from '../../../../services/recipe-dialog-state.service';
 
+interface RecipeDialogData {
+    item?: string;
+    selectedRecipes?: Record<string, string>;
+}
 
 @Component({
     selector: 'input-dialog',
     standalone: true,
     imports: [
         CommonModule,
-        MatDialogModule, 
-        MatButtonModule, 
-        MatInputModule, 
-        MatFormFieldModule, 
+        MatDialogModule,
+        MatButtonModule,
+        MatInputModule,
+        MatFormFieldModule,
         MatAutocompleteModule,
+        MatSelectModule,
+        MatCheckboxModule,
         InputNumberComponent,
-        FormsModule
+        FormsModule,
     ],
     templateUrl: './input-dialog.component.html',
     styleUrl: './input-dialog.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InputDialogComponent implements OnInit, OnDestroy {
-    item: string = '';
-    amount: number = 0;
-    ingredientQuery: string = '';
+    item = '';
+    amount = 0;
+    ingredientQuery = '';
     selectedIngredients: IngredientLimit[] = [];
+    useIngredientsToMax = false;
+
+    selectedRecipes: Record<string, string> = {};
+    recipeOptions: Record<string, string[]> = {};
+    selectedMainRecipe = '';
 
     allItems: string[] = recipeItems.sort((a: string, b: string) => a.localeCompare(b));
     filteredRecipeItems: string[] = [...this.allItems];
@@ -53,19 +66,26 @@ export class InputDialogComponent implements OnInit, OnDestroy {
         private dialogRef: MatDialogRef<InputDialogComponent>,
         private dialogState: RecipeDialogStateService,
         private recipeService: RecipeService,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        @Optional() @Inject(MAT_DIALOG_DATA) private data: RecipeDialogData | null
     ) {
         this.itemIndex = new Map(this.allItems.map((item) => [this.normalizeName(item), item]));
     }
 
     ngOnInit() {
         const state = this.dialogState.getState();
-        this.item = state.item;
+        this.item = this.data?.item ?? state.item;
         this.amount = state.amount;
         this.selectedIngredients = state.ingredients.map((ingredient) => ({
             itemName: ingredient.itemName,
             amount: ingredient.amount,
         }));
+        this.useIngredientsToMax = state.useIngredientsToMax;
+
+        this.selectedRecipes = {
+            ...state.selectedRecipes,
+            ...(this.data?.selectedRecipes ?? {}),
+        };
 
         this.filterRecipeItems(this.item);
         if (this.item && this.itemIndex.has(this.normalizeName(this.item))) {
@@ -93,6 +113,8 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             this.selectedRecipeKey = null;
             this.availableIngredients = [];
             this.filteredIngredientOptions = [];
+            this.recipeOptions = {};
+            this.selectedMainRecipe = '';
         }
 
         this.persistState();
@@ -146,6 +168,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
 
         this.ingredientQuery = '';
         this.filterIngredientOptions('');
+        this.syncUseMaxState();
         this.persistState();
     }
 
@@ -155,6 +178,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             (ingredient) => this.normalizeName(ingredient.itemName) !== normalized
         );
         this.filterIngredientOptions(this.ingredientQuery);
+        this.syncUseMaxState();
         this.persistState();
     }
 
@@ -166,11 +190,37 @@ export class InputDialogComponent implements OnInit, OnDestroy {
         return this.selectedIngredients.length > 0;
     }
 
+    get mainRecipeOptions(): string[] {
+        const canonicalItem = this.itemIndex.get(this.normalizeName(this.item)) ?? this.item;
+        if (this.recipeOptions[canonicalItem]) {
+            return this.recipeOptions[canonicalItem];
+        }
+        const normalized = this.normalizeName(canonicalItem);
+        const key = Object.keys(this.recipeOptions).find((candidate) => this.normalizeName(candidate) === normalized);
+        return key ? this.recipeOptions[key] : [];
+    }
+
+    onMainRecipeChange(value: string) {
+        const canonicalItem = this.itemIndex.get(this.normalizeName(this.item)) ?? this.item;
+        const recipeName = `${value || ''}`.trim();
+        if (!recipeName) {
+            delete this.selectedRecipes[canonicalItem];
+            this.selectedMainRecipe = '';
+        } else {
+            this.selectedRecipes[canonicalItem] = recipeName;
+            this.selectedMainRecipe = recipeName;
+        }
+        this.loadBaseIngredients(canonicalItem);
+        this.persistState();
+    }
+
     persistState() {
         this.dialogState.saveState({
             item: this.item,
             amount: this.amount,
             ingredients: this.selectedIngredients,
+            useIngredientsToMax: this.useIngredientsToMax,
+            selectedRecipes: this.selectedRecipes,
         });
     }
 
@@ -182,26 +232,28 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             this.selectedRecipeKey = null;
             this.availableIngredients = [];
             this.filteredIngredientOptions = [];
-            return;
-        }
-
-        if (this.selectedRecipeKey === normalized && this.availableIngredients.length) {
+            this.recipeOptions = {};
+            this.selectedMainRecipe = '';
             return;
         }
 
         this.selectedRecipeKey = normalized;
         this.baseIngredientsRequest?.unsubscribe();
-        this.baseIngredientsRequest = this.recipeService.getBaseIngredients(recipeName).subscribe({
+        this.baseIngredientsRequest = this.recipeService.getBaseIngredients(recipeName, undefined, this.selectedRecipes).subscribe({
             next: (response) => {
                 const ingredients = Array.isArray(response?.baseIngredients) ? response.baseIngredients : [];
                 this.applyAvailableIngredients(ingredients);
+                this.recipeOptions = response?.recipeOptions ?? {};
+                this.syncMainRecipeSelection(recipeName);
                 this.cdr.markForCheck();
             },
             error: () => {
                 this.availableIngredients = [];
                 this.filteredIngredientOptions = [];
+                this.recipeOptions = {};
+                this.selectedMainRecipe = '';
                 this.cdr.markForCheck();
-            }
+            },
         });
     }
 
@@ -225,9 +277,27 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             this.selectedIngredients = [];
         }
 
+        this.syncUseMaxState();
         this.filterIngredientOptions(this.ingredientQuery);
         this.persistState();
         this.cdr.markForCheck();
+    }
+
+    private syncMainRecipeSelection(recipeName: string) {
+        const normalized = this.normalizeName(recipeName);
+        const canonicalItem = this.itemIndex.get(normalized) || recipeName;
+        const options = this.recipeOptions[canonicalItem] ?? [];
+        const selected = this.selectedRecipes[canonicalItem];
+
+        if (selected && options.includes(selected)) {
+            this.selectedMainRecipe = selected;
+            return;
+        }
+
+        this.selectedMainRecipe = options[0] ?? '';
+        if (this.selectedMainRecipe) {
+            this.selectedRecipes[canonicalItem] = this.selectedMainRecipe;
+        }
     }
 
     private normalizeName(value: string): string {
@@ -235,12 +305,19 @@ export class InputDialogComponent implements OnInit, OnDestroy {
     }
 
     submit() {
-        // Close the dialog and pass the data back        
         this.persistState();
         this.dialogRef.close({
-            item: this.item, 
+            item: this.item,
             amount: this.amount,
             ingredients: this.selectedIngredients,
+            useIngredientsToMax: this.useIngredientsToMax,
+            selectedRecipes: this.selectedRecipes,
         });
+    }
+
+    private syncUseMaxState() {
+        if (!this.selectedIngredients.length) {
+            this.useIngredientsToMax = false;
+        }
     }
 }

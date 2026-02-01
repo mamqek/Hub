@@ -2,6 +2,7 @@
     matBadge="{{data.indentLevel}}"
     matBadgeSize="large"
     class="card rounded-md"
+    [class.is-highlighted]="isHighlighted"
     id="card-{{data.id}}"
     appReady
     cdkOverlayOrigin
@@ -35,6 +36,9 @@
     <div class="card-hint rounded-lg" (mouseenter)="showHint()" (mouseleave)="hideHint()">
         <h5 class="card-hint-title">{{data.itemName}}</h5>
         <p class="card-hint-text">
+            Recipe: <span>{{data.recipeName || 'Unknown'}}</span>
+        </p>
+        <p class="card-hint-text">
             Produced in: <span>{{data.machineName}}</span>
         </p>
         <p class="card-hint-text">
@@ -46,5 +50,6 @@
             1 underclocked to {{ (data.machineCount % 1 * 100) | number:'1.0-0' }}%.
         </p>
         <p class="card-hint-text">Produces <span>{{data.productionRate}} p/m </span></p>
+        <button type="button" class="select-recipe-button" (click)="onSelectRecipeClick($event)">Select recipe</button>
     </div>
 </ng-template>

@@ -34,12 +34,14 @@
             <satisfactory-card
                 *ngIf="cell else placeholder"
                 [data]="cell"
+                [isHighlighted]="isNodeHighlighted(cell)"
                 appReady  
                 cdkDrag 
                 [cdkDragScale]="2"
                 [cdkDragData]="cell"
                 (cdkDragStarted)="dragStarted($event)"
                 (cdkDragMoved)="dragMoved($event)"
+                (selectRecipe)="openRecipeSelectorForNode(cell)"
                 data-jtk-target="true"
                 data-jtk-source="true"
             ></satisfactory-card>
@@ -102,7 +104,7 @@ output
                         @for (ingredient of section.value; track ingredient) {
                             <mat-list-item>
                                 <img matListItemAvatar basePath [path]="getItemImageUrl(ingredient.itemName)" alt="...">
-                                <p matListItemTitle>{{ingredient.itemName}}</p>
+                                <p matListItemTitle class="summary-item-name" [class.is-selected]="isPanelItemSelected(ingredient.itemName)" (click)="onPanelItemClick(ingredient.itemName)">{{ingredient.itemName}}</p>
                                 <p  matListItemLine>
                                     <span>{{ingredient.amount}} p/m</span>
                                 </p>
@@ -120,6 +122,3 @@ output
 
     
 <!-- </cdk-virtual-scroll-viewport> -->
-
-
-

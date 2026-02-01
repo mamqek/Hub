@@ -12,8 +12,26 @@
           </mat-autocomplete>
         </mat-form-field>
 
-        <div class="amount-field" [class.is-inactive]="useIngredientLimits" [attr.aria-disabled]="useIngredientLimits">
-          <input-number label="How many?" [(modelValue)]="amount" (modelValueChange)="persistState()" suffix="p/m" [min]="1" [max]="1000"></input-number>
+        <mat-form-field class="recipe-field" *ngIf="mainRecipeOptions.length > 0">
+          <mat-label>Alternate recipe ({{ item }})</mat-label>
+          <mat-select [(ngModel)]="selectedMainRecipe" name="selectedMainRecipe" (selectionChange)="onMainRecipeChange($event.value)">
+            <mat-option *ngFor="let option of mainRecipeOptions" [value]="option">{{ option }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="amount-row">
+          <div class="amount-field" [class.is-inactive]="useIngredientLimits && useIngredientsToMax" [attr.aria-disabled]="useIngredientLimits && useIngredientsToMax">
+            <input-number label="How many?" [(modelValue)]="amount" (modelValueChange)="persistState()" suffix="p/m" [min]="1" [max]="1000"></input-number>
+          </div>
+          <mat-checkbox
+            class="use-max-toggle"
+            [(ngModel)]="useIngredientsToMax"
+            name="useIngredientsToMax"
+            [disabled]="!useIngredientLimits"
+            (change)="persistState()"
+          >
+            Use ingredients to max
+          </mat-checkbox>
         </div>
 
         <mat-form-field class="ingredient-field" [class.is-inactive]="!availableIngredients.length">
