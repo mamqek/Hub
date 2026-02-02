@@ -1,13 +1,8 @@
 import { Component, inject, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { CdkDragDrop, CdkDrag, CdkDropList, CdkDragStart, CdkDragMove } from '@angular/cdk/drag-drop';
-import { ConnectedPosition } from '@angular/cdk/overlay';
-import { MatDialog } from '@angular/material/dialog';
+import ELK from 'elkjs/lib/elk.bundled.js';
 
 import { RecipeService, RecipeNode, RecipeResponse, IngredientsData, Ingredient, OptimizationGoal } from '../../services/recipe.service';
-import { DragScrollService } from '../../services/drag-scroll.service';
-import { DrawLinesService } from '../../services/draw-lines.service';
-import { DrawCircularGraphService } from 'app/satisfactory-calculator/services/draw-circular-graph.service';
 import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 import { InputDialogComponent } from './includes/input-dialog/input-dialog.component';
@@ -15,6 +10,8 @@ import {
     RecipeSelectDialogComponent,
     RecipeSelectDialogResult,
 } from './includes/recipe-select-dialog/recipe-select-dialog.component';
+import { ConnectedPosition } from '@angular/cdk/overlay';
+import { MatDialog } from '@angular/material/dialog';
 
 interface ActiveQuery {
     item: string;
@@ -33,6 +30,15 @@ interface InputDialogResult {
     optimizationGoals?: OptimizationGoal[];
 }
 
+interface RenderEdge {
+    id: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    label: string;
+}
+
 @Component({
     selector: 'cards-grid',
     templateUrl: './cards-grid.component.html',
@@ -40,16 +46,8 @@ interface InputDialogResult {
 })
 export class CardsGridComponent implements OnInit, OnDestroy {
 
-    gridSize: number = 50;
-    itemSize: number = 70;
-    gap: number = 0;
-    cellSize: number = this.itemSize + this.gap;
-    currentCellSize: number = this.cellSize;
-
-    @ViewChild('boardDiv') boardDiv!: ElementRef;
-    board: (RecipeNode | null)[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(null));
-    nodes: RecipeNode[] = [];
-    boardZoomLevel: number = 1;
+    itemSize = 70;
+    boardZoomLevel = 1;
     selectedPanelItem: string | null = null;
     isShowingDirection = false;
 
@@ -59,6 +57,28 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         output: [],
         byproduct: []
     };
+
+    nodes: RecipeNode[] = [];
+    renderedEdges: RenderEdge[] = [];
+    private nodePositions = new Map<number, { x: number; y: number }>();
+
+    contentWidth = 2000;
+    contentHeight = 2000;
+
+    scale = 1;
+    panX = 0;
+    panY = 0;
+
+    private isPanning = false;
+    private isNodeDragging = false;
+    private dragNodeId: number | null = null;
+    private dragStartMouseX = 0;
+    private dragStartMouseY = 0;
+    private dragStartPanX = 0;
+    private dragStartPanY = 0;
+    private dragStartNodeX = 0;
+    private dragStartNodeY = 0;
+    private hasUserAdjustedView = false;
 
     selectedRecipes: Record<string, string> = {};
     recipeOptions: Record<string, string[]> = {};
@@ -71,6 +91,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         optimizationGoals: [],
     };
 
+    private elk = new ELK();
     private activeRequest?: Subscription;
 
     summaryPositions: ConnectedPosition[] = [
@@ -78,27 +99,24 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -12 },
     ];
 
+    @ViewChild('viewport') viewportRef!: ElementRef<HTMLElement>;
+
     constructor(
         private recipeService: RecipeService,
-        private dragScrollService: DragScrollService,
-        private drawLinesService: DrawLinesService,
-        private drawCircularGraphService: DrawCircularGraphService,
         private zoomService: ZoomService,
         private ingredientsService: IngredientsService,
         private cdr: ChangeDetectorRef
-    ) {
-        this.viewportHeight = window.innerHeight;
-        this.viewportWidth = window.innerWidth;
-    }
+    ) {}
 
-    viewportHeight: number;
-    viewportWidth: number;
+    readonly dialog = inject(MatDialog);
+
+    get viewTransform(): string {
+        return `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
+    }
 
     trackById(index: number, _item: any): number {
         return index;
     }
-
-    readonly dialog = inject(MatDialog);
 
     openDialog() {
         const dialogRef = this.dialog.open(InputDialogComponent, {
@@ -135,16 +153,13 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     showDirection() {
         this.isShowingDirection = true;
-        this.drawLinesService.startDirectionAnimation();
     }
 
     stopDirection() {
         this.isShowingDirection = false;
-        this.drawLinesService.stopDirectionAnimation();
     }
 
     public ngOnInit(): void {
-        setTimeout(() => { this.centerClientView(); }, 0);
         this.loadInitialRecipeWithRetry();
     }
 
@@ -153,82 +168,39 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         this.recipeService.unsubscribe();
     }
 
-    private nodesWithArrowIdArr: number[] = [];
-
-    dragStarted(event: CdkDragStart) {
-        let node = event.source.data;
-
-        this.nodesWithArrowIdArr = [
-            ...('parentId' in node ? [node.id] : []),
-            ...node.ingredients ?? []
-        ];
-
-        this.drawLinesService.hideLinesByElementId(this.nodesWithArrowIdArr);
-    }
-
-    dragMoved(_event: CdkDragMove) {
-        // Reserved for live line updates while dragging.
-    }
-
-    drop(event: CdkDragDrop<{ x: number; y: number }>) {
-        const previousIndex = event.previousContainer.data;
-        const currentIndex = event.container.data;
-
-        if (previousIndex !== currentIndex) {
-            this.cdr.detectChanges();
-            this.board[previousIndex.y][previousIndex.x] = null;
-            this.board[currentIndex.y][currentIndex.x] = event.item.data;
-
-            this.drawLinesService.removeLinesByElementId(this.nodesWithArrowIdArr);
-            let node: RecipeNode = event.item.data;
-            const nodesById = new Map(this.nodes.map((n) => [n.id, n]));
-            let arr = ('parentId' in node ? [{ id: node.id, children: node.ingredients, parentId: node.parentId }] : [])
-                .concat(node.ingredients ? node.ingredients.map(id => ({ id, children: [], parentId: node.id })) : [])
-                .map((line) => {
-                    const lineNode = nodesById.get(line.id);
-                    return {
-                        ...line,
-                        flowText: lineNode ? `${lineNode.productionRate} p/m` : '',
-                    };
-                });
-
-            setTimeout(() => {
-                this.drawLinesService.drawLines(arr);
-            }, 0);
-        } else {
-            this.drawLinesService.redrawLinesByElementId(this.nodesWithArrowIdArr);
+    @HostListener('window:resize')
+    onResize() {
+        if (!this.hasUserAdjustedView) {
+            this.fitContentToViewport();
         }
     }
 
-    enterPredicate = (drag: CdkDrag, drop: CdkDropList) => {
-        return !this.board[drop.data.y][drop.data.x];
-    }
-
     @HostListener('window:keydown', ['$event'])
-    zoomBoard(event: WheelEvent | KeyboardEvent, element: HTMLElement = this.boardDiv.nativeElement) {
-        if (event instanceof KeyboardEvent && event.code === 'Space' && !event.repeat && !this.isDialogOpen()) {
+    onKeyDown(event: KeyboardEvent) {
+        if (event.code === 'KeyC' && !event.ctrlKey && !event.metaKey && !this.isDialogOpen()) {
             const target = event.target as HTMLElement | null;
             const tagName = (target?.tagName || '').toLowerCase();
             const isEditable = target?.isContentEditable || ['input', 'textarea', 'select'].includes(tagName);
             if (!isEditable) {
                 event.preventDefault();
-                this.showDirection();
+                this.centerView();
             }
             return;
         }
 
-        if (event instanceof KeyboardEvent && (event.ctrlKey || event.metaKey) && event.key === 'C'
-            || this.isDialogOpen()) {
+        if (event.code !== 'Space' || event.repeat || this.isDialogOpen()) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        const tagName = (target?.tagName || '').toLowerCase();
+        const isEditable = target?.isContentEditable || ['input', 'textarea', 'select'].includes(tagName);
+        if (isEditable) {
             return;
         }
 
         event.preventDefault();
-        this.zoomService.handleZoom(event, element, (output: number | null) => {
-            if (output !== null) {
-                this.boardZoomLevel = output;
-                this.drawLinesService.hideAllLines();
-            }
-        });
+        this.showDirection();
     }
 
     @HostListener('window:keyup', ['$event'])
@@ -239,33 +211,103 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         }
     }
 
-    onZoomEnd(event: TransitionEvent) {
-        if (event.propertyName === 'transform' && (event.target as HTMLElement).classList.contains('board')) {
-            this.drawLinesService.redrawAllLines();
+    centerView() {
+        this.hasUserAdjustedView = false;
+        this.fitContentToViewport();
+    }
+
+    @HostListener('window:mousemove', ['$event'])
+    onGlobalMouseMove(event: MouseEvent) {
+        if (this.isNodeDragging && this.dragNodeId !== null) {
+            const dx = (event.clientX - this.dragStartMouseX) / this.scale;
+            const dy = (event.clientY - this.dragStartMouseY) / this.scale;
+            this.nodePositions.set(this.dragNodeId, {
+                x: this.dragStartNodeX + dx,
+                y: this.dragStartNodeY + dy,
+            });
+            this.updateEdgeGeometry();
+            this.cdr.markForCheck();
+            return;
+        }
+
+        if (this.isPanning) {
+            const dx = event.clientX - this.dragStartMouseX;
+            const dy = event.clientY - this.dragStartMouseY;
+            this.panX = this.dragStartPanX + dx;
+            this.panY = this.dragStartPanY + dy;
+            this.hasUserAdjustedView = true;
+            this.cdr.markForCheck();
         }
     }
 
-    onMouseDown(event: MouseEvent) {
-        if (event?.target instanceof HTMLElement) {
-            if (!event.target.className.includes('card')) {
-                this.dragScrollService.onMouseDown(event);
-            }
-        }
+    @HostListener('window:mouseup')
+    onGlobalMouseUp() {
+        this.isPanning = false;
+        this.isNodeDragging = false;
+        this.dragNodeId = null;
     }
 
-    centerClientView() {
-        const boardHeight = this.gridSize * this.cellSize;
-        const boardMiddlePositionX = boardHeight / 2;
-        const boardMiddlePositionY = boardHeight / 2;
+    onCanvasPointerDown(event: MouseEvent) {
+        if (event.button !== 0 || this.isDialogOpen()) {
+            return;
+        }
+        this.isPanning = true;
+        this.dragStartMouseX = event.clientX;
+        this.dragStartMouseY = event.clientY;
+        this.dragStartPanX = this.panX;
+        this.dragStartPanY = this.panY;
+        this.hasUserAdjustedView = true;
+    }
 
-        const centerXOffset = this.viewportWidth * 0.5;
-        const centerYOffset = this.viewportHeight * 0.5;
+    onNodePointerDown(event: MouseEvent, node: RecipeNode) {
+        if (event.button !== 0 || this.isDialogOpen()) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        this.isNodeDragging = true;
+        this.dragNodeId = node.id;
+        this.dragStartMouseX = event.clientX;
+        this.dragStartMouseY = event.clientY;
+        const pos = this.getNodePosition(node.id);
+        this.dragStartNodeX = pos.x;
+        this.dragStartNodeY = pos.y;
+        this.hasUserAdjustedView = true;
+    }
 
-        window.scrollTo({
-            left: boardMiddlePositionX - centerXOffset + this.cellSize / 2,
-            top: boardMiddlePositionY - centerYOffset + this.cellSize / 2,
-            behavior: 'smooth'
-        });
+    onWheel(event: WheelEvent) {
+        if (this.isDialogOpen()) {
+            return;
+        }
+        event.preventDefault();
+
+        const viewport = this.viewportRef?.nativeElement;
+        if (!viewport) {
+            return;
+        }
+
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+        const newScale = Math.max(0.35, Math.min(2.8, this.scale * zoomFactor));
+        if (newScale === this.scale) {
+            return;
+        }
+
+        const worldX = (mouseX - this.panX) / this.scale;
+        const worldY = (mouseY - this.panY) / this.scale;
+
+        this.panX = mouseX - worldX * newScale;
+        this.panY = mouseY - worldY * newScale;
+        this.scale = newScale;
+        this.boardZoomLevel = Number(this.scale.toFixed(2));
+        this.hasUserAdjustedView = true;
+    }
+
+    getNodePosition(id: number): { x: number; y: number } {
+        return this.nodePositions.get(id) || { x: 0, y: 0 };
     }
 
     getItemImageUrl(name: string): string {
@@ -331,7 +373,6 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             }
             const selectedRecipe = result.selectedRecipe;
 
-            // Node-level override can recalc only the clicked branch.
             if (sourceNode && !result.applyToAll && selectedRecipe) {
                 this.rebuildSingleBranch(sourceNode, itemKey, selectedRecipe);
                 return;
@@ -377,16 +418,17 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         const branchAmount = Number.isFinite(branchRate) && branchRate > 0 ? branchRate : 1;
         const branchRecipes: Record<string, string> = { ...this.selectedRecipes, [itemKey]: selectedRecipe };
 
-        this.recipeService.getRecipe(itemKey, branchAmount, branchRecipes).subscribe({
+        this.recipeService.getRecipe(itemKey, branchAmount, branchRecipes, this.activeQuery.optimizationGoals).subscribe({
             next: (branchData: RecipeResponse) => {
                 const branchNodes = Array.isArray(branchData.recipeNodeArr) ? branchData.recipeNodeArr : [];
                 if (!branchNodes.length) {
                     return;
                 }
                 this.replaceBranch(node.id, branchNodes);
+                this.applyNodeColors();
                 this.recipeOptions = { ...this.recipeOptions, ...(branchData.recipeOptions ?? {}) };
                 this.ingredientsData = this.buildIngredientsDataFromNodes();
-                this.renderCurrentNodes();
+                void this.layoutGraph();
             },
             error: (err) => console.error('Error rebuilding branch:', err),
         });
@@ -410,22 +452,22 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         let nextId = Math.max(-1, ...survivors.map((n) => n.id), rootId) + 1;
         const idMap = new Map<number, number>();
         idMap.set(replacementRoot.id, rootId);
-        for (const node of replacementNodes) {
-            if (node.id === replacementRoot.id) {
+        for (const candidate of replacementNodes) {
+            if (candidate.id === replacementRoot.id) {
                 continue;
             }
-            idMap.set(node.id, nextId++);
+            idMap.set(candidate.id, nextId++);
         }
 
-        const remapped = replacementNodes.map((node) => {
-            const mappedId = idMap.get(node.id)!;
-            const mappedParent = node.parentId === undefined ? undefined : idMap.get(node.parentId);
-            const mappedIngredients = (node.ingredients || [])
+        const remapped = replacementNodes.map((candidate) => {
+            const mappedId = idMap.get(candidate.id)!;
+            const mappedParent = candidate.parentId === undefined ? undefined : idMap.get(candidate.parentId);
+            const mappedIngredients = (candidate.ingredients || [])
                 .map((childId) => idMap.get(childId))
                 .filter((childId): childId is number => childId !== undefined);
 
             const updated: RecipeNode = {
-                ...node,
+                ...candidate,
                 id: mappedId,
                 ingredients: mappedIngredients,
             };
@@ -543,31 +585,191 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private applyRecipeData(data: RecipeResponse) {
-        console.log('Received recipe data:', data);
         this.nodes = data.recipeNodeArr;
+        this.applyNodeColors();
         this.ingredientsData = data.ingredientsData;
         this.recipeOptions = data.recipeOptions ?? {};
         this.selectedPanelItem = null;
-
-        this.renderCurrentNodes();
+        void this.layoutGraph();
     }
 
-    private renderCurrentNodes() {
-        this.drawCircularGraphService.clearBoard(this.board);
-        this.drawLinesService.resetLines();
-        this.cdr.detectChanges();
+    private applyNodeColors() {
+        const extractionPalette: Array<{ match: RegExp; color: string }> = [
+            { match: /iron/i, color: '#b84034' },
+            { match: /copper/i, color: '#c86e2e' },
+            { match: /caterium/i, color: '#caa313' },
+            { match: /coal/i, color: '#333333' },
+            { match: /limestone/i, color: '#8f8b83' },
+            { match: /quartz/i, color: '#73a4cb' },
+            { match: /sulfur/i, color: '#baa81b' },
+            { match: /bauxite/i, color: '#8a4e2d' },
+            { match: /uranium/i, color: '#4a9d2f' },
+            { match: /sam/i, color: '#6f4fd1' },
+            { match: /water/i, color: '#2f7fd9' },
+            { match: /nitrogen/i, color: '#4ca9d8' },
+            { match: /oil/i, color: '#5a465f' },
+        ];
 
-        this.board = this.drawCircularGraphService.initGraph(this.nodes, this.board);
-        this.cdr.detectChanges();
+        const derivedPalette = ['#c056b7', '#3c9f6f', '#4e85d6', '#c57a2d', '#7c63cf', '#3a9ea6'];
+        const nodeById = new Map(this.nodes.map((node) => [node.id, node]));
+        const distanceMemo = new Map<number, number>();
 
-        this.drawLinesService.drawLines(this.nodes
-            .map(node => ({
-                id: node.id,
-                children: node.ingredients,
-                parentId: node.parentId,
-                flowText: `${node.productionRate} p/m`,
-            }))
-        );
+        const distanceFromExtraction = (node: RecipeNode): number => {
+            if (distanceMemo.has(node.id)) {
+                return distanceMemo.get(node.id)!;
+            }
+            if (node.isBaseMaterial || !node.ingredients || node.ingredients.length === 0) {
+                distanceMemo.set(node.id, 0);
+                return 0;
+            }
+
+            const childDistances = node.ingredients
+                .map((childId) => nodeById.get(childId))
+                .filter((child): child is RecipeNode => Boolean(child))
+                .map((child) => distanceFromExtraction(child));
+
+            const distance = childDistances.length ? Math.min(...childDistances) + 1 : 0;
+            distanceMemo.set(node.id, distance);
+            return distance;
+        };
+
+        const getExtractionColor = (itemName: string): string => {
+            const found = extractionPalette.find((entry) => entry.match.test(itemName));
+            return found ? found.color : '#6b7a8f';
+        };
+
+        for (const node of this.nodes) {
+            const distance = distanceFromExtraction(node);
+            if (distance === 0) {
+                node.cardColor = getExtractionColor(node.itemName);
+                continue;
+            }
+            node.cardColor = derivedPalette[(distance - 1) % derivedPalette.length];
+        }
     }
 
+    private async layoutGraph() {
+        if (!this.nodes.length) {
+            this.renderedEdges = [];
+            return;
+        }
+
+        try {
+            const layoutInput: any = {
+                id: 'root',
+                layoutOptions: {
+                    'elk.algorithm': 'layered',
+                    'elk.direction': 'RIGHT',
+                    'elk.layered.spacing.nodeNodeBetweenLayers': '170',
+                    'elk.spacing.nodeNode': '90',
+                    'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+                },
+                children: this.nodes
+                    .slice()
+                    .sort((a, b) => a.id - b.id)
+                    .map((node) => ({ id: `${node.id}`, width: this.itemSize, height: this.itemSize })),
+                edges: this.nodes
+                    .filter((node) => node.parentId !== undefined)
+                    .map((node) => ({
+                        id: `e-${node.id}-${node.parentId}`,
+                        sources: [`${node.id}`],
+                        targets: [`${node.parentId}`],
+                    })),
+            };
+
+            const layout = await this.elk.layout(layoutInput);
+            const positioned = new Map<number, { x: number; y: number }>();
+            for (const child of layout.children || []) {
+                const id = Number(child.id);
+                if (Number.isFinite(id)) {
+                    positioned.set(id, { x: (child.x || 0) + 80, y: (child.y || 0) + 80 });
+                }
+            }
+
+            if (positioned.size > 0) {
+                this.nodePositions = positioned;
+            }
+        } catch (error) {
+            console.error('ELK layout failed, using fallback layout.', error);
+            let y = 80;
+            this.nodePositions = new Map(this.nodes.map((node, idx) => [node.id, { x: 80 + idx * 30, y: y += 35 }]));
+        }
+
+        this.updateEdgeGeometry();
+        this.updateContentSize();
+
+        if (!this.hasUserAdjustedView) {
+            this.fitContentToViewport();
+        }
+
+        this.cdr.detectChanges();
+    }
+
+    get suppressCardHints(): boolean {
+        return this.isNodeDragging || this.isPanning || this.isShowingDirection;
+    }
+
+    private updateEdgeGeometry() {
+        const nodeMap = new Map(this.nodes.map((node) => [node.id, node]));
+        this.renderedEdges = this.nodes
+            .filter((node) => node.parentId !== undefined)
+            .map((node) => {
+                const childPos = this.getNodePosition(node.id);
+                const parentPos = this.getNodePosition(node.parentId!);
+                return {
+                    id: `edge-${node.id}-${node.parentId}`,
+                    x1: childPos.x + this.itemSize,
+                    y1: childPos.y + this.itemSize / 2,
+                    x2: parentPos.x,
+                    y2: parentPos.y + this.itemSize / 2,
+                    label: `${node.productionRate} p/m`,
+                };
+            })
+            .filter((edge) => nodeMap.has(Number(edge.id.split('-')[1])));
+    }
+
+    private updateContentSize() {
+        let maxX = 0;
+        let maxY = 0;
+        for (const pos of this.nodePositions.values()) {
+            maxX = Math.max(maxX, pos.x + this.itemSize + 120);
+            maxY = Math.max(maxY, pos.y + this.itemSize + 120);
+        }
+        this.contentWidth = Math.max(1200, maxX);
+        this.contentHeight = Math.max(900, maxY);
+    }
+
+    private fitContentToViewport() {
+        const viewport = this.viewportRef?.nativeElement;
+        if (!viewport || !this.nodes.length) {
+            return;
+        }
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        for (const pos of this.nodePositions.values()) {
+            minX = Math.min(minX, pos.x);
+            minY = Math.min(minY, pos.y);
+            maxX = Math.max(maxX, pos.x + this.itemSize);
+            maxY = Math.max(maxY, pos.y + this.itemSize);
+        }
+
+        const graphWidth = Math.max(1, maxX - minX + 200);
+        const graphHeight = Math.max(1, maxY - minY + 200);
+
+        const vw = viewport.clientWidth;
+        const vh = viewport.clientHeight;
+
+        const nextScale = Math.max(0.35, Math.min(1.4, Math.min(vw / graphWidth, vh / graphHeight)));
+        this.scale = nextScale;
+        this.boardZoomLevel = Number(this.scale.toFixed(2));
+
+        const centerX = minX + graphWidth / 2;
+        const centerY = minY + graphHeight / 2;
+        this.panX = vw / 2 - centerX * this.scale;
+        this.panY = vh / 2 - centerY * this.scale;
+    }
 }

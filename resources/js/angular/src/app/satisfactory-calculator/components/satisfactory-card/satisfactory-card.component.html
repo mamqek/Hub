@@ -3,6 +3,7 @@
     matBadgeSize="large"
     class="card rounded-md"
     [class.is-highlighted]="isHighlighted"
+    [style.background-color]="data.cardColor || 'tomato'"
     id="card-{{data.id}}"
     appReady
     cdkOverlayOrigin
@@ -10,17 +11,17 @@
     (mouseenter)="showHint()"
     (mouseleave)="hideHint()"
 >
-    <img class="card-image" basePath [path]="machineImageUrl"/>
+    <img class="card-image" basePath [path]="machineImageUrl" draggable="false"/>
 
     <div class="circle produced-item">
-        <img basePath [path]="getItemImageUrl(data.itemName)"/>
+        <img basePath [path]="getItemImageUrl(data.itemName)" draggable="false"/>
     </div>
     <div *ngIf="data.byproducts" class="byproduct-items">
         <ng-container *ngFor="let byproduct of data.byproducts; let i = index">
             <div class="circle byproduct-item" [ngStyle]="{
                 'right': 'calc(-15% + ' + i * 15 + 'px)',
             }" >
-                <img basePath [path]="getItemImageUrl(byproduct.itemName)"/>
+                <img basePath [path]="getItemImageUrl(byproduct.itemName)" draggable="false"/>
             </div>
         </ng-container>
     </div>  

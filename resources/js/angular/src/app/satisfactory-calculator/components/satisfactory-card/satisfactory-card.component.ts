@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ConnectedPosition } from '@angular/cdk/overlay';
 import { RecipeNode } from '../../services/recipe.service';
 
@@ -11,10 +11,11 @@ import { IngredientsService } from 'app/satisfactory-calculator/services/ingredi
   templateUrl: './satisfactory-card.component.html',
   styleUrl: './satisfactory-card.component.scss',
 })
-export class SatisfactoryCardComponent implements OnInit {
+export class SatisfactoryCardComponent implements OnInit, OnChanges {
 
     @Input() data!: RecipeNode;
     @Input() isHighlighted = false;
+    @Input() suppressHint = false;
     @Output() selectRecipe = new EventEmitter<void>();
 
     machineImageUrl: string = 'images/';
@@ -46,6 +47,9 @@ export class SatisfactoryCardComponent implements OnInit {
     }
 
     showHint() {
+        if (this.suppressHint) {
+            return;
+        }
         if (this.hideHintTimeout) {
             clearTimeout(this.hideHintTimeout);
             this.hideHintTimeout = null;
@@ -68,5 +72,11 @@ export class SatisfactoryCardComponent implements OnInit {
         event.preventDefault();
         event.stopPropagation();
         this.selectRecipe.emit();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['suppressHint']?.currentValue) {
+            this.isHintOpen = false;
+        }
     }
 }

@@ -1,69 +1,67 @@
-<!-- <cdk-virtual-scroll-viewport 
-    class="virtual-view "
-    [itemSize]='currentCellSize'
-    [style.height.px]="viewportHeight"
+<div class="board-viewport" #viewport (mousedown)="onCanvasPointerDown($event)" (wheel)="onWheel($event)">
+    <div
+        class="board-content"
+        [style.width.px]="contentWidth"
+        [style.height.px]="contentHeight"
+        [style.transform]="viewTransform"
+    >
+        <svg class="edge-layer" [attr.width]="contentWidth" [attr.height]="contentHeight">
+            <defs>
+                <marker id="edgeArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M0,0 L8,4 L0,8 z" fill="#f2f200"></path>
+                </marker>
+            </defs>
 
-        <ng-container *cdkVirtualFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+            <g *ngFor="let edge of renderedEdges; trackBy: trackById">
+                <line
+                    class="edge-line"
+                    [class.animated]="isShowingDirection"
+                    [attr.x1]="edge.x1"
+                    [attr.y1]="edge.y1"
+                    [attr.x2]="edge.x2"
+                    [attr.y2]="edge.y2"
+                    marker-end="url(#edgeArrow)"
+                ></line>
+                <text
+                    *ngIf="isShowingDirection"
+                    class="edge-label"
+                    [attr.x]="(edge.x1 + edge.x2) / 2"
+                    [attr.y]="(edge.y1 + edge.y2) / 2 - 6"
+                    text-anchor="middle"
+                >
+                    {{ edge.label }}
+                </text>
+            </g>
+        </svg>
 
->     -->
-
-<div 
-    class="board"
-    #boardDiv   
-    cdkDropListGroup 
-    (mousedown)="onMouseDown($event)"
-    (wheel)="zoomBoard($event, boardDiv)"
-    (transitionend)="onZoomEnd($event)"
-    [ngStyle]="{
-        'grid-template-columns': 'repeat(' + gridSize + ', '+ itemSize + 'px)',
-    }"
->
-    <ng-container *ngFor="let row of board; let y = index">                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-        <div
-            *ngFor="let cell of row; let x = index; trackBy: trackById"
-            class="cell"
-            [ngStyle]="{
-                'width': itemSize + 'px',
-                'height': itemSize + 'px',
-            }"
-            cdkDropList
-            (cdkDropListDropped)="drop($event)"
-            [cdkDropListData]="{x: x, y: y}"
-            [cdkDropListEnterPredicate]="enterPredicate"
-        >
-            <satisfactory-card
-                *ngIf="cell else placeholder"
-                [data]="cell"
-                [isHighlighted]="isNodeHighlighted(cell)"
-                appReady  
-                cdkDrag 
-                [cdkDragScale]="2"
-                [cdkDragData]="cell"
-                (cdkDragStarted)="dragStarted($event)"
-                (cdkDragMoved)="dragMoved($event)"
-                (selectRecipe)="openRecipeSelectorForNode(cell)"
-                data-jtk-target="true"
-                data-jtk-source="true"
-            ></satisfactory-card>
-
-            <ng-template #placeholder>
-                <div 
-                    class="placeholder h-full w-full rounded-md"
-                    [ngStyle]="{
-                        'background-color': (x + y) % 2 === 0 ? 'rgba(0, 62, 31, 0.1)' : 'rgba(0, 62, 31, 0.25)',
-                    }"
-                ></div>
-            </ng-template>
-            
+        <div class="node-layer">
+            <div
+                *ngFor="let node of nodes; trackBy: trackById"
+                class="node-wrapper"
+                [style.transform]="'translate(' + getNodePosition(node.id).x + 'px, ' + getNodePosition(node.id).y + 'px)'"
+                [style.width.px]="itemSize"
+                [style.height.px]="itemSize"
+                (mousedown)="onNodePointerDown($event, node)"
+            >
+                <satisfactory-card
+                    [data]="node"
+                    [isHighlighted]="isNodeHighlighted(node)"
+                    [suppressHint]="suppressCardHints"
+                    (selectRecipe)="openRecipeSelectorForNode(node)"
+                    appReady
+                ></satisfactory-card>
+            </div>
         </div>
-    </ng-container>
-
+    </div>
 </div>
 
 <div class="overlay">
     <button class="overlay-element input" mat-button (click)="openDialog()">New Recipe</button>
     <div class="overlay-panel right">
-        <span class="overlay-element zoom rounded-md">x{{boardZoomLevel}}</span>
+        <div class="zoom-controls">
+            <button class="overlay-element center" mat-button (click)="centerView()">Center</button>
+            <span class="overlay-element zoom rounded-md">x{{boardZoomLevel}}</span>
+        </div>
 
         <button
             class="overlay-element direction"
@@ -77,22 +75,6 @@
         >
             {{ isShowingDirection ? 'Showing directions' : 'Hold Space for lines direction' }}
         </button>
-
-        <!-- WHy does it get sorted after coming to frontend?
-        {input: Array(3), intermidiete: Array(11), output: Array(1), byproduct: Array(1)}
-byproduct
-: 
-[{…}]
-input
-: 
-(3) [{…}, {…}, {…}]
-intermidiete
-: 
-(11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-output
-: 
-[{…}] -->
-
 
         <div class="summary-origin" cdkOverlayOrigin #summaryOrigin="cdkOverlayOrigin"></div>
         <ng-template
@@ -119,10 +101,10 @@ output
                                 <p  matListItemLine>
                                     <span>{{ingredient.amount}} p/m</span>
                                 </p>
-                                <button type="button" matListItemMeta class="summary-recipe-button" (click)="openRecipeSelectorForItem(ingredient.itemName)">Recipe</button>
+                                <button type="button" matListItemMeta class="mat-mdc-list-item-meta mdc-list-item__end summary-recipe-button" (click)="openRecipeSelectorForItem(ingredient.itemName)">Recipe</button>
                             </mat-list-item>
                         }
-                        </mat-list> 
+                        </mat-list>
                     </mat-expansion-panel>
                 </mat-accordion>
             </div>
@@ -130,7 +112,3 @@ output
 
     </div>
 </div>
-
-
-    
-<!-- </cdk-virtual-scroll-viewport> -->

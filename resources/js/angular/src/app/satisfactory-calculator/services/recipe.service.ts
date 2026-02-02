@@ -11,6 +11,7 @@ export interface ProducedItem {
 
 export interface RecipeNode extends ProducedItem {
     recipeName?: string;      // Recipe used to produce this item
+    cardColor?: string;       // Visual color used in graph card
     machineName: string;     // Machine used to produce the item
     machineCount: number;    // Number of machines required
     ingredients?: number[];      // Ingridietns recipe id

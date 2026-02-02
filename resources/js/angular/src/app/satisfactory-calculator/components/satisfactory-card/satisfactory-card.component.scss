@@ -35,6 +35,8 @@
     &-image {
         padding: 0.3rem;
         object-fit: cover; // Ensures the image covers the area without distortion
+        -webkit-user-drag: none;
+        user-select: none;
     }
 
     &-hint {
@@ -77,6 +79,12 @@
 
         &.byproduct-item {
 
+        }
+
+        img {
+            -webkit-user-drag: none;
+            user-select: none;
+            pointer-events: none;
         }
     }
 }
