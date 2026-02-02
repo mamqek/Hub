@@ -50,3 +50,24 @@ body {
 .cdk-global-overlay-wrapper {
     z-index: 5000;
 }
+
+/* Sidebar recipe button lives in CDK overlay, so keep overrides global. */
+.overlay-summary .mdc-list-item__end.summary-recipe-button {
+    color: #111 !important;
+    background-color: #e5e7eb !important;
+}
+
+.overlay-summary .mdc-list-item__end.summary-recipe-button::before,
+.overlay-summary .mdc-list-item__end.summary-recipe-button::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Flow labels shown on LeaderLine while holding direction button. */
+.leader-line text {
+    stroke: transparent !important;
+    stroke-width: 0 !important;
+    paint-order: fill !important;
+    fill: #ffffff !important;
+    font-weight: bold !important;
+}

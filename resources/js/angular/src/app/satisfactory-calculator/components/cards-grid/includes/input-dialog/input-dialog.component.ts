@@ -8,15 +8,17 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
 import { InputNumberComponent } from 'app/input-number/input-number.component';
 import { recipeItems } from '../../../../data/recipe-items';
-import { RecipeService, Ingredient } from '../../../../services/recipe.service';
+import { RecipeService, Ingredient, OptimizationGoal } from '../../../../services/recipe.service';
 import { RecipeDialogStateService, IngredientLimit } from '../../../../services/recipe-dialog-state.service';
 
 interface RecipeDialogData {
     item?: string;
     selectedRecipes?: Record<string, string>;
+    optimizationGoals?: OptimizationGoal[];
 }
 
 @Component({
@@ -31,6 +33,7 @@ interface RecipeDialogData {
         MatAutocompleteModule,
         MatSelectModule,
         MatCheckboxModule,
+        DragDropModule,
         InputNumberComponent,
         FormsModule,
     ],
@@ -48,6 +51,23 @@ export class InputDialogComponent implements OnInit, OnDestroy {
     selectedRecipes: Record<string, string> = {};
     recipeOptions: Record<string, string[]> = {};
     selectedMainRecipe = '';
+    optimizationGoals: OptimizationGoal[] = [];
+    selectedGoalType = 'minimize_item_input';
+    goalTarget = '';
+    filteredGoalTargets: string[] = [];
+
+    readonly goalTypes: Array<{ value: string; label: string }> = [
+        { value: 'maximize_item_output', label: 'Maximize item output' },
+        { value: 'minimize_item_output', label: 'Minimize item output' },
+        { value: 'maximize_item_input', label: 'Maximize item input' },
+        { value: 'minimize_item_input', label: 'Minimize item input' },
+        { value: 'maximize_item_consumption', label: 'Maximize item consumption' },
+        { value: 'minimize_item_consumption', label: 'Minimize item consumption' },
+        { value: 'maximize_item_production', label: 'Maximize item production' },
+        { value: 'minimize_item_production', label: 'Minimize item production' },
+        { value: 'maximize_recipe', label: 'Maximize recipe usage' },
+        { value: 'minimize_recipe', label: 'Minimize recipe usage' },
+    ];
 
     allItems: string[] = recipeItems.sort((a: string, b: string) => a.localeCompare(b));
     filteredRecipeItems: string[] = [...this.allItems];
@@ -86,8 +106,13 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             ...state.selectedRecipes,
             ...(this.data?.selectedRecipes ?? {}),
         };
+        this.optimizationGoals = [
+            ...state.optimizationGoals.map((goal) => ({ ...goal })),
+            ...((this.data?.optimizationGoals ?? []).map((goal) => ({ ...goal }))),
+        ];
 
         this.filterRecipeItems(this.item);
+        this.filterGoalTargets('');
         if (this.item && this.itemIndex.has(this.normalizeName(this.item))) {
             this.loadBaseIngredients(this.item);
         }
@@ -221,7 +246,49 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             ingredients: this.selectedIngredients,
             useIngredientsToMax: this.useIngredientsToMax,
             selectedRecipes: this.selectedRecipes,
+            optimizationGoals: this.optimizationGoals,
         });
+    }
+
+    addOptimizationGoal() {
+        const target = `${this.goalTarget || ''}`.trim();
+        if (!target) {
+            return;
+        }
+        this.optimizationGoals.push({ type: this.selectedGoalType, target });
+        this.goalTarget = '';
+        this.filterGoalTargets('');
+        this.persistState();
+    }
+
+    removeOptimizationGoal(index: number) {
+        if (index < 0 || index >= this.optimizationGoals.length) {
+            return;
+        }
+        this.optimizationGoals.splice(index, 1);
+        this.persistState();
+    }
+
+    dropOptimizationGoal(event: CdkDragDrop<OptimizationGoal[]>) {
+        if (event.previousIndex === event.currentIndex) {
+            return;
+        }
+        moveItemInArray(this.optimizationGoals, event.previousIndex, event.currentIndex);
+        this.persistState();
+    }
+
+    filterGoalTargets(value: string) {
+        const query = (value || '').toLowerCase().trim();
+        if (!query) {
+            this.filteredGoalTargets = [...this.allItems];
+            return;
+        }
+        this.filteredGoalTargets = this.allItems.filter((item) => item.toLowerCase().includes(query));
+    }
+
+    onGoalTargetSelected(value: string) {
+        this.goalTarget = value;
+        this.filterGoalTargets(value);
     }
 
     private loadBaseIngredients(value: string) {
@@ -239,7 +306,12 @@ export class InputDialogComponent implements OnInit, OnDestroy {
 
         this.selectedRecipeKey = normalized;
         this.baseIngredientsRequest?.unsubscribe();
-        this.baseIngredientsRequest = this.recipeService.getBaseIngredients(recipeName, undefined, this.selectedRecipes).subscribe({
+        this.baseIngredientsRequest = this.recipeService.getBaseIngredients(
+            recipeName,
+            undefined,
+            this.selectedRecipes,
+            this.optimizationGoals
+        ).subscribe({
             next: (response) => {
                 const ingredients = Array.isArray(response?.baseIngredients) ? response.baseIngredients : [];
                 this.applyAvailableIngredients(ingredients);
@@ -312,6 +384,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             ingredients: this.selectedIngredients,
             useIngredientsToMax: this.useIngredientsToMax,
             selectedRecipes: this.selectedRecipes,
+            optimizationGoals: this.optimizationGoals,
         });
     }
 

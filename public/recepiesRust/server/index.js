@@ -196,7 +196,7 @@ const rawInputs = computeRawInputs(BASE_INCLUDED_RECIPE_GROUPS);
  * - Baseline: default + extraction groups.
  * - Selected recipes: explicitly included, alternatives for same output excluded.
  */
-const buildProblem = ({ item, amount, limits, useMax, selectedRecipes }) => {
+const buildProblem = ({ item, amount, limits, useMax, selectedRecipes, optimizationGoals }) => {
     const canonicalItem = resolveItemName(item);
     const selectedMap = parseObjectPayload(selectedRecipes);
     const excludedRecipes = new Set();
@@ -230,12 +230,21 @@ const buildProblem = ({ item, amount, limits, useMax, selectedRecipes }) => {
         problem.output_items[name] = 'unlimited';
     }
 
+    const normalizedGoals = parseArrayPayload(optimizationGoals)
+        .filter((goal) => Array.isArray(goal) && typeof goal[0] === 'string' && goal.length >= 2)
+        .map(([goalType, goalValue]) => [goalType, goalValue]);
+
     if (useMax) {
         problem.output_items[canonicalItem] = 'unlimited';
-        problem.optimization_goals = [['maximize_item_output', canonicalItem]];
     } else {
         const targetAmount = safeNumber(amount) > 0 ? safeNumber(amount) : 1;
         problem.output_items[canonicalItem] = targetAmount;
+    }
+
+    if (normalizedGoals.length > 0) {
+        problem.optimization_goals = normalizedGoals;
+    } else if (useMax) {
+        problem.optimization_goals = [['maximize_item_output', canonicalItem]];
     }
 
     problem.minimize_machine_count = true;
@@ -488,13 +497,14 @@ app.all('/run-calc', async (req, res) => {
         const limits = parseArrayPayload(params.ingredients);
         const useIngredientsToMax = toBoolean(params.useIngredientsToMax);
         const selectedRecipes = parseObjectPayload(params.selectedRecipes);
+        const optimizationGoals = parseArrayPayload(params.optimizationGoals);
 
         console.log(
             `Calculating plan for item="${item}", amount=${amount}, useIngredientsToMax=${useIngredientsToMax}`
         );
 
         const solve = async (useMax) => {
-            const problem = buildProblem({ item, amount, limits, useMax, selectedRecipes });
+            const problem = buildProblem({ item, amount, limits, useMax, selectedRecipes, optimizationGoals });
             return runOptimizer(problem);
         };
 

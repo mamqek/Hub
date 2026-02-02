@@ -18,7 +18,8 @@ class RecipeController extends Controller
         Log::info('Calling calculation service for: ' . $item . ' with amount ' . $amount);
 
         $selectedRecipes = $this->parseSelectedRecipes($request->query('selectedRecipes'));
-        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes);
+        $optimizationGoals = $this->parseOptimizationGoals($request->query('optimizationGoals'));
+        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals);
         if (isset($result['error'])) {
             return response()->json(['error' => $result['error']], $result['status'] ?? 500);
         }
@@ -48,7 +49,8 @@ class RecipeController extends Controller
 
         $amount = (float) ($request->query('amount') ?? 1);
         $selectedRecipes = $this->parseSelectedRecipes($request->query('selectedRecipes'));
-        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes);
+        $optimizationGoals = $this->parseOptimizationGoals($request->query('optimizationGoals'));
+        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals);
         if (isset($result['error'])) {
             return response()->json(['error' => $result['error']], $result['status'] ?? 500);
         }
@@ -81,6 +83,7 @@ class RecipeController extends Controller
             $useIngredientsToMax = false;
         }
         $selectedRecipes = $this->parseSelectedRecipes($request->input('selectedRecipes', $request->query('selectedRecipes')));
+        $optimizationGoals = $this->parseOptimizationGoals($request->input('optimizationGoals', $request->query('optimizationGoals')));
 
         $rawIngredients = $request->input('ingredients', $request->query('ingredients'));
         if (is_string($rawIngredients)) {
@@ -92,7 +95,7 @@ class RecipeController extends Controller
         }
 
         $amount = $requestedAmount !== null ? (float) $requestedAmount : 1.0;
-        $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes);
+        $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes, $optimizationGoals);
         if (isset($boundedResult['error'])) {
             return response()->json(['error' => $boundedResult['error']], $boundedResult['status'] ?? 500);
         }
@@ -289,7 +292,8 @@ class RecipeController extends Controller
         float $amount,
         array $ingredients = [],
         bool $useIngredientsToMax = false,
-        array $selectedRecipes = []
+        array $selectedRecipes = [],
+        array $optimizationGoals = []
     ): array {
         $calcServiceUrl = env('CALC_SERVICE_URL');
         if (!$calcServiceUrl) {
@@ -307,6 +311,9 @@ class RecipeController extends Controller
         }
         if ($selectedRecipes) {
             $payload['selectedRecipes'] = $selectedRecipes;
+        }
+        if ($optimizationGoals) {
+            $payload['optimizationGoals'] = $optimizationGoals;
         }
 
         $response = Http::post($calcServiceUrl . 'run-calc', $payload);
@@ -329,6 +336,37 @@ class RecipeController extends Controller
             }
         }
         return [];
+    }
+
+    protected function parseOptimizationGoals($value): array {
+        if (is_array($value)) {
+            return $this->normalizeOptimizationGoals($value);
+        }
+
+        if (is_string($value) && trim($value) !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return $this->normalizeOptimizationGoals($decoded);
+            }
+        }
+
+        return [];
+    }
+
+    protected function normalizeOptimizationGoals(array $goals): array {
+        $normalized = [];
+        foreach ($goals as $goal) {
+            if (!is_array($goal) || count($goal) < 2) {
+                continue;
+            }
+            $goalType = $goal[0] ?? null;
+            $goalValue = $goal[1] ?? null;
+            if (!is_string($goalType) || trim($goalType) === '' || $goalValue === null) {
+                continue;
+            }
+            $normalized[] = [$goalType, $goalValue];
+        }
+        return $normalized;
     }
 
     protected function buildIngredientMap(array $ingredients): array {

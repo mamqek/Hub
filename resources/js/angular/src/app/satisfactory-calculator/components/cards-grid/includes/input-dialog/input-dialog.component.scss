@@ -1,11 +1,19 @@
 
 .recipe-form {
-    min-width: 100px;
-    width: 300px;
+    width: 100%;
+    max-width: 640px;
+    min-width: 0;
+    margin: 0 auto;
 
     > * {
         width: 100%;
+        min-width: 0;
     }
+}
+
+.dialog-content {
+    max-height: min(78vh, 760px);
+    overflow-x: hidden;
 }
 
 .selected-ingredients {
@@ -74,4 +82,79 @@
 .amount-field.is-inactive {
     opacity: 0.5;
     pointer-events: none;
+}
+
+.goals-section {
+    margin-top: 0.75rem;
+}
+
+.goals-title {
+    font-size: 0.9rem;
+    margin: 0 0 0.45rem;
+}
+
+.goal-add-row {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: end;
+}
+
+.goal-type-field {
+    min-width: 0;
+}
+
+.goal-target-field {
+    min-width: 0;
+}
+
+.goal-add-button {
+    min-width: 64px;
+}
+
+.goal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 0.5rem;
+}
+
+.goal-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+}
+
+.goal-handle {
+    cursor: move;
+    opacity: 0.75;
+    font-size: 0.75rem;
+}
+
+.goal-text {
+    font-size: 0.84rem;
+    word-break: break-word;
+}
+
+.goal-remove-button {
+    min-width: 68px;
+}
+
+@media (max-width: 760px) {
+    .goal-add-row {
+        grid-template-columns: 1fr;
+    }
+
+    .goal-type-field,
+    .goal-target-field {
+        min-width: 0;
+    }
+
+    .goal-add-button {
+        justify-self: end;
+    }
 }

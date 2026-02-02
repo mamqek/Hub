@@ -62,18 +62,6 @@
         
     }
 
-    .select-recipe-button {
-        border: 0;
-        border-radius: 4px;
-        background: rgba(0, 0, 0, 0.2);
-        color: inherit;
-        cursor: pointer;
-        padding: 0.35rem 0.6rem;
-        text-align: left;
-    }
-
-
-
     .circle {
         position: absolute;
         width: 25px;
@@ -91,4 +79,18 @@
 
         }
     }
+}
+
+.card-hint .select-recipe-button {
+    border: 0;
+    border-radius: 4px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e5e7eb !important;
+    color: #111 !important;
+    cursor: pointer;
+    padding: 0 0.6rem;
+    line-height: 1;
 }

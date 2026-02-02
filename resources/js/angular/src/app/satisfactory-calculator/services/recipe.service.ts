@@ -25,6 +25,11 @@ export interface Ingredient {
     amount: number;
 }
 
+export interface OptimizationGoal {
+    type: string;
+    target: string;
+}
+
 export interface IngredientsData {
     input: Ingredient[];
     intermediate: Ingredient[];
@@ -58,23 +63,39 @@ export class RecipeService {
 
     constructor(private _httpClient: HttpClient) { }
 
-    public getRecipe(item: string, amount: number, selectedRecipes?: Record<string, string>): Observable<RecipeResponse> {
+    public getRecipe(
+        item: string,
+        amount: number,
+        selectedRecipes?: Record<string, string>,
+        optimizationGoals?: OptimizationGoal[]
+    ): Observable<RecipeResponse> {
         let params = new HttpParams()
             .set('item', item)
             .set('amount', amount.toString());         
         if (selectedRecipes && Object.keys(selectedRecipes).length > 0) {
             params = params.set('selectedRecipes', JSON.stringify(selectedRecipes));
         }
+        if (optimizationGoals && optimizationGoals.length > 0) {
+            params = params.set('optimizationGoals', JSON.stringify(optimizationGoals.map((goal) => [goal.type, goal.target])));
+        }
         return this._httpClient.get<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipe`, { params });
     }
 
-    public getBaseIngredients(item: string, amount?: number, selectedRecipes?: Record<string, string>): Observable<BaseIngredientsResponse> {
+    public getBaseIngredients(
+        item: string,
+        amount?: number,
+        selectedRecipes?: Record<string, string>,
+        optimizationGoals?: OptimizationGoal[]
+    ): Observable<BaseIngredientsResponse> {
         let params = new HttpParams().set('item', item);
         if (amount !== undefined) {
             params = params.set('amount', amount.toString());
         }
         if (selectedRecipes && Object.keys(selectedRecipes).length > 0) {
             params = params.set('selectedRecipes', JSON.stringify(selectedRecipes));
+        }
+        if (optimizationGoals && optimizationGoals.length > 0) {
+            params = params.set('optimizationGoals', JSON.stringify(optimizationGoals.map((goal) => [goal.type, goal.target])));
         }
 
         return this._httpClient.get<BaseIngredientsResponse>(`${environment.apiBaseUrl}/satisfactory/getBaseIngredients`, { params });
@@ -85,9 +106,17 @@ export class RecipeService {
         ingredients: Ingredient[],
         amount?: number,
         useIngredientsToMax?: boolean,
-        selectedRecipes?: Record<string, string>
+        selectedRecipes?: Record<string, string>,
+        optimizationGoals?: OptimizationGoal[]
     ): Observable<RecipeResponse> {
-        const body = { item, ingredients, amount, useIngredientsToMax, selectedRecipes };
+        const body = {
+            item,
+            ingredients,
+            amount,
+            useIngredientsToMax,
+            selectedRecipes,
+            optimizationGoals: optimizationGoals?.map((goal) => [goal.type, goal.target]) || [],
+        };
         return this._httpClient.post<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipeWithLimits`, body);
     }
 

@@ -5,6 +5,7 @@ interface ParentOrChild {
     parentId?: number;
     id: number;
     children?: number[];
+    flowText?: string;
 };
 @Injectable({
   providedIn: null
@@ -17,7 +18,10 @@ export class DrawLinesService {
     private transitionStartTimeout: any = null;
     private lines: any[] = [];
     private elementIdLineMap: any = {};
+    private elementIdFlowTextMap: Record<number, string> = {};
+    private elementIdFlowLabelMap: Record<number, any> = {};
     private hidden = true;
+    private directionAnimationEnabled = false;
 
     drawLines (elementArr: ParentOrChild[]) {
         
@@ -54,6 +58,7 @@ export class DrawLinesService {
 
             // TODO: have an array is value
             this.elementIdLineMap[element.id] = line;
+            this.elementIdFlowTextMap[element.id] = element.flowText || '';
             processedIds.push(element.id);
         });
 
@@ -81,6 +86,42 @@ export class DrawLinesService {
         this.hidden = false;
     }
 
+    startDirectionAnimation() {
+        if (this.directionAnimationEnabled || this.lines.length === 0) return;
+        this.directionAnimationEnabled = true;
+        Object.entries(this.elementIdLineMap).forEach(([id, lineAny]) => {
+            const line: any = lineAny as any;
+            const flowId = Number(id);
+            const flowText = this.elementIdFlowTextMap[flowId];
+            if (line && typeof line.setOptions === 'function') {
+                if (flowText && !this.elementIdFlowLabelMap[flowId]) {
+                    this.elementIdFlowLabelMap[flowId] = LeaderLine.captionLabel(flowText, {
+                        color: '#f2f200',
+                        outlineColor: 'rgba(0,0,0,0)',
+                    });
+                }
+                line.setOptions({
+                    dash: { animation: true },
+                    middleLabel: this.elementIdFlowLabelMap[flowId] || '',
+                });
+            }
+            line.show('none');
+        });
+    }
+
+    stopDirectionAnimation() {
+        if (!this.directionAnimationEnabled) return;
+        this.directionAnimationEnabled = false;
+        Object.entries(this.elementIdLineMap).forEach(([id, lineAny]) => {
+            const line: any = lineAny as any;
+            if (line && typeof line.setOptions === 'function') {
+                line.setOptions({ dash: { animation: false }, middleLabel: '' });
+            }
+            line.show('none');
+        });
+        this.elementIdFlowLabelMap = {};
+    }
+
     hideAllLines() {
         if (this.hidden) return;
         this.lines.forEach(line => line.hide("none"));
@@ -102,6 +143,8 @@ export class DrawLinesService {
         elementIdArr.forEach(id => {
             this.elementIdLineMap[id].remove();
             delete this.elementIdLineMap[id];
+            delete this.elementIdFlowTextMap[id];
+            delete this.elementIdFlowLabelMap[id];
         });
         this.lines = Object.values(this.elementIdLineMap);  
     }
@@ -119,5 +162,7 @@ export class DrawLinesService {
     resetLines() {
         this.removeAllLines();
         this.elementIdLineMap = {};
+        this.elementIdFlowTextMap = {};
+        this.elementIdFlowLabelMap = {};
     }
 }

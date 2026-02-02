@@ -10,6 +10,9 @@
             </mat-option>
         </mat-select>
     </mat-form-field>
+    <mat-checkbox *ngIf="data.showApplyScope" [(ngModel)]="applyToAll" name="applyToAll">
+        Change for all production of this item?
+    </mat-checkbox>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

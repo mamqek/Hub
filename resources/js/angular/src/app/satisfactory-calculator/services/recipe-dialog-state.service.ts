@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { OptimizationGoal } from './recipe.service';
 
 export interface IngredientLimit {
     itemName: string;
@@ -11,6 +12,7 @@ export interface RecipeDialogState {
     ingredients: IngredientLimit[];
     useIngredientsToMax: boolean;
     selectedRecipes: Record<string, string>;
+    optimizationGoals: OptimizationGoal[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +23,7 @@ export class RecipeDialogStateService {
         ingredients: [],
         useIngredientsToMax: false,
         selectedRecipes: {},
+        optimizationGoals: [],
     };
 
     getState(): RecipeDialogState {
@@ -33,6 +36,7 @@ export class RecipeDialogStateService {
             })),
             useIngredientsToMax: this.state.useIngredientsToMax,
             selectedRecipes: { ...this.state.selectedRecipes },
+            optimizationGoals: this.state.optimizationGoals.map((goal) => ({ ...goal })),
         };
     }
 
@@ -46,6 +50,7 @@ export class RecipeDialogStateService {
             })),
             useIngredientsToMax: state.useIngredientsToMax,
             selectedRecipes: { ...state.selectedRecipes },
+            optimizationGoals: state.optimizationGoals.map((goal) => ({ ...goal })),
         };
     }
 }

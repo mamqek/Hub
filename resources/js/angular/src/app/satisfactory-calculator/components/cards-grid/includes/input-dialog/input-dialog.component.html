@@ -1,5 +1,5 @@
 <h2 mat-dialog-title>Submit new recipe</h2>
-<mat-dialog-content class="mat-typography w-fit justify-center">
+<mat-dialog-content class="mat-typography dialog-content">
 
     <form class="recipe-form ">
         <mat-form-field class="recipe-field">
@@ -76,6 +76,50 @@
               >
             </mat-form-field>
             <button type="button" mat-button class="remove-ingredient" (click)="removeIngredient(ingredient.itemName)">Remove</button>
+          </div>
+        </div>
+
+        <div class="goals-section">
+          <h4 class="goals-title">Optimization goals (ordered)</h4>
+          <div class="goal-add-row">
+            <mat-form-field class="goal-type-field">
+              <mat-label>Goal</mat-label>
+              <mat-select [(ngModel)]="selectedGoalType" name="selectedGoalType">
+                <mat-option *ngFor="let goalType of goalTypes" [value]="goalType.value">
+                  {{ goalType.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="goal-target-field">
+              <mat-label>Target item/recipe</mat-label>
+              <input
+                matInput
+                [(ngModel)]="goalTarget"
+                name="goalTarget"
+                placeholder="e.g. Crude Oil"
+                [matAutocomplete]="goalTargetAuto"
+                (ngModelChange)="filterGoalTargets($event)"
+              >
+              <mat-autocomplete #goalTargetAuto="matAutocomplete" (optionSelected)="onGoalTargetSelected($event.option.value)">
+                <mat-option *ngFor="let option of filteredGoalTargets" [value]="option">
+                  {{ option }}
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+            <button type="button" mat-button class="goal-add-button" (click)="addOptimizationGoal()">Add</button>
+          </div>
+
+          <div
+            class="goal-list"
+            cdkDropList
+            [cdkDropListData]="optimizationGoals"
+            (cdkDropListDropped)="dropOptimizationGoal($event)"
+          >
+            <div class="goal-item" cdkDrag *ngFor="let goal of optimizationGoals; let i = index">
+              <span class="goal-handle" cdkDragHandle>drag</span>
+              <span class="goal-text">{{ goal.type }} ({{ goal.target }})</span>
+              <button type="button" mat-button class="goal-remove-button" (click)="removeOptimizationGoal(i)">Remove</button>
+            </div>
           </div>
         </div>
 
