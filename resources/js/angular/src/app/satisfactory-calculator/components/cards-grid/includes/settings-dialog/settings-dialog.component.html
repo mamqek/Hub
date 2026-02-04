@@ -1,0 +1,110 @@
+<h2 mat-dialog-title>Settings</h2>
+<mat-dialog-content class="settings-content">
+    <aside class="settings-sidebar">
+        <button type="button" class="settings-category" [class.active]="activeCategory === 'colors'" (click)="activeCategory = 'colors'">Colors</button>
+        <button type="button" class="settings-category" [class.active]="activeCategory === 'history'" (click)="activeCategory = 'history'">History</button>
+        <button type="button" class="settings-category" [class.active]="activeCategory === 'importExport'" (click)="activeCategory = 'importExport'">Import / Export</button>
+    </aside>
+
+    <section class="settings-pane" *ngIf="activeCategory === 'colors'">
+        <div class="settings-group">
+            <h3>Board</h3>
+            <label class="settings-row">
+                <span>Canvas color</span>
+                <input type="color" [(ngModel)]="settings.colors.board.canvasColor" name="canvasColor">
+            </label>
+            <label class="settings-row">
+                <span>Arrows color</span>
+                <input type="color" [(ngModel)]="settings.colors.board.arrowsColor" name="arrowsColor">
+            </label>
+        </div>
+
+        <div class="settings-group">
+            <h3>Overlay</h3>
+            <label class="settings-row">
+                <span>Element background</span>
+                <input type="color" [(ngModel)]="settings.colors.overlay.backgroundColor" name="overlayBackgroundColor">
+            </label>
+            <label class="settings-row">
+                <span>Element text</span>
+                <input type="color" [(ngModel)]="settings.colors.overlay.textColor" name="overlayTextColor">
+            </label>
+        </div>
+
+        <div class="settings-group">
+            <h3>Nodes - Resource colors</h3>
+            <mat-checkbox [(ngModel)]="settings.colors.nodes.disableResourceColors" name="disableResourceColors">
+                Disable resource colors
+            </mat-checkbox>
+            <div class="settings-grid">
+                <label class="settings-row" *ngFor="let key of resourceColorKeys">
+                    <span>{{ key }}</span>
+                    <input type="color" [(ngModel)]="settings.colors.nodes.resourceColors[key]" [name]="'resource-' + key">
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>Layers</h3>
+            <mat-checkbox [(ngModel)]="settings.colors.nodes.disableLayerColors" name="disableLayerColors">
+                Disable layer colors
+            </mat-checkbox>
+
+            <label class="settings-row" *ngIf="settings.colors.nodes.disableLayerColors">
+                <span>All layers color</span>
+                <input type="color" [(ngModel)]="settings.colors.nodes.unifiedLayerColor" name="unifiedLayerColor">
+            </label>
+
+            <div class="settings-grid" *ngIf="!settings.colors.nodes.disableLayerColors">
+                <label class="settings-row" *ngFor="let color of settings.colors.nodes.layerColors; let i = index">
+                    <span>Layer {{ i }}</span>
+                    <input type="color" [(ngModel)]="settings.colors.nodes.layerColors[i]" [name]="'layer-' + i">
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <section class="settings-pane" *ngIf="activeCategory === 'history'">
+        <div class="settings-group">
+            <h3>Previous requests</h3>
+            <div *ngIf="historyEntries.length === 0" class="settings-empty">No history yet.</div>
+            <div class="history-list" *ngIf="historyEntries.length > 0">
+                <div class="history-row" *ngFor="let entry of historyEntries">
+                    <div class="history-meta">
+                        <strong>{{ entry.query.item }}</strong>
+                        <span>{{ entry.query.amount }} p/m • {{ entry.createdAt | date:'short' }}</span>
+                    </div>
+                    <button type="button" mat-button class="history-load-button" (click)="loadFromHistory(entry.id)">Load</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="settings-pane" *ngIf="activeCategory === 'importExport'">
+        <div class="settings-group">
+            <h3>Export selection</h3>
+            <mat-checkbox
+                *ngFor="let key of settingsCategoryKeys"
+                [(ngModel)]="exportSelection['settings:' + key]"
+                [name]="'export-' + key"
+            >
+                Settings: {{ key }}
+            </mat-checkbox>
+            <mat-checkbox [(ngModel)]="exportSelection[historyExportKey]" name="export-history">
+                History
+            </mat-checkbox>
+        </div>
+
+        <div class="settings-group settings-actions">
+            <button type="button" mat-button (click)="onImportClick()">Import</button>
+            <button type="button" mat-button (click)="exportSelected()" [disabled]="!canExport()">Export</button>
+            <input #importFileInput type="file" accept="application/json" class="hidden-input" (change)="onImportFileSelected($event)">
+            <div class="settings-error" *ngIf="importError">{{ importError }}</div>
+        </div>
+    </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-button (click)="apply()" cdkFocusInitial>Apply</button>
+</mat-dialog-actions>

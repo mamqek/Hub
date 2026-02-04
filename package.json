@@ -3,12 +3,15 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "dev:all": "sh -c 'php artisan serve & npm run dev & npm run service:calculator & wait'",
+        "dev:sc": "sh -c 'php artisan serve & npm run angular & npm run service:calculator & wait'",
         "vue": "vite",
         "angular": "cd resources/js/angular && npm start",
         "all": "vite && cd resources/js/angular && npm start",
         "build": "vite build",
         "prod": "cd resources/js/angular && npm run build:prod && cd ../../.. && npm run build",
         "start:service": "node resources/js/chat/service.js",
+        "service:calculator": "node public/recepiesRust/server/index.js",
         "start:calculator": "node public/recepiesRust/server/index.js",
         "vercel:prod": "npm run build && vercel . --prod --force"
     },

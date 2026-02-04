@@ -1,4 +1,4 @@
-<div class="board-viewport" #viewport (mousedown)="onCanvasPointerDown($event)" (wheel)="onWheel($event)">
+<div class="board-viewport" #viewport (mousedown)="onCanvasPointerDown($event)" (wheel)="onWheel($event)" [style.background-color]="settings.colors.board.canvasColor">
     <div
         class="board-content"
         [style.width.px]="contentWidth"
@@ -8,7 +8,7 @@
         <svg class="edge-layer" [attr.width]="contentWidth" [attr.height]="contentHeight">
             <defs>
                 <marker id="edgeArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                    <path d="M0,0 L8,4 L0,8 z" fill="#f2f200"></path>
+                    <path d="M0,0 L8,4 L0,8 z" [attr.fill]="settings.colors.board.arrowsColor"></path>
                 </marker>
             </defs>
 
@@ -16,6 +16,7 @@
                 <line
                     class="edge-line"
                     [class.animated]="isShowingDirection"
+                    [attr.stroke]="settings.colors.board.arrowsColor"
                     [attr.x1]="edge.x1"
                     [attr.y1]="edge.y1"
                     [attr.x2]="edge.x2"
@@ -25,6 +26,7 @@
                 <text
                     *ngIf="isShowingDirection"
                     class="edge-label"
+                    [attr.fill]="settings.colors.board.arrowsColor"
                     [attr.x]="(edge.x1 + edge.x2) / 2"
                     [attr.y]="(edge.y1 + edge.y2) / 2 - 6"
                     text-anchor="middle"
@@ -55,8 +57,37 @@
     </div>
 </div>
 
-<div class="overlay">
-    <button class="overlay-element input" mat-button (click)="openDialog()">New Recipe</button>
+<div
+    class="overlay"
+    [style.--overlay-background]="overlayBackgroundColor"
+    [style.--overlay-text]="overlayTextColor"
+>
+    <div class="overlay-left">
+        <button class="overlay-element input" mat-button (click)="openDialog()">New Recipe</button>
+        <div class="history-shortcuts" *ngIf="historyEntries.length > 0">
+            <button
+                *ngFor="let historyEntry of quickHistoryEntries"
+                type="button"
+                class="overlay-element history-shortcut"
+                [class.is-active]="historyEntry.id === currentHistoryId"
+                [attr.aria-label]="'Load ' + historyEntry.query.item"
+                [attr.title]="getHistoryTooltip(historyEntry)"
+                (click)="loadFromHistory(historyEntry.id)"
+            >
+                <img basePath [path]="getItemImageUrl(historyEntry.query.item)" [alt]="historyEntry.query.item">
+            </button>
+
+            <button
+                *ngIf="hasHistoryOverflow"
+                type="button"
+                class="overlay-element history-shortcut stacked"
+                aria-label="Open history list"
+                (click)="openHistoryFromSettings()"
+            >
+                <span>+{{ hiddenHistoryCount }}</span>
+            </button>
+        </div>
+    </div>
     <div class="overlay-panel right">
         <div class="zoom-controls">
             <button class="overlay-element center" mat-button (click)="centerView()">Center</button>
@@ -76,16 +107,32 @@
             {{ isShowingDirection ? 'Showing directions' : 'Hold Space for lines direction' }}
         </button>
 
-        <div class="summary-origin" cdkOverlayOrigin #summaryOrigin="cdkOverlayOrigin"></div>
-        <ng-template
-            cdkConnectedOverlay
-            [cdkConnectedOverlayOrigin]="summaryOrigin"
-            [cdkConnectedOverlayOpen]="true"
-            [cdkConnectedOverlayHasBackdrop]="false"
-            [cdkConnectedOverlayPositions]="summaryPositions"
-        >
-            <div class="overlay-element rounded-lg summary overlay-summary">
+        <div class="summary-wrapper">
+            <div
+                class="overlay-element rounded-lg summary overlay-summary"
+                (wheel)="$event.stopPropagation()"
+                [style.--overlay-background]="overlayBackgroundColor"
+                [style.--overlay-text]="overlayTextColor"
+                [style.--mat-expansion-container-background-color]="overlayBackgroundColor"
+                [style.--mat-expansion-container-text-color]="overlayTextColor"
+                [style.--mat-expansion-header-text-color]="overlayTextColor"
+                [style.--mdc-list-list-item-label-text-color]="overlayTextColor"
+            >
                 <mat-accordion multi class="example-headers-align">
+                    <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>Statistics</mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <mat-list>
+                            <mat-list-item><p matListItemTitle>Machines</p><p matListItemLine>{{ statistics.totalMachineCount ?? '-' }}</p></mat-list-item>
+                            <mat-list-item><p matListItemTitle>Recipes</p><p matListItemLine>{{ statistics.recipeCount ?? '-' }}</p></mat-list-item>
+                            <mat-list-item><p matListItemTitle>Items</p><p matListItemLine>{{ statistics.itemCount ?? '-' }}</p></mat-list-item>
+                            <mat-list-item><p matListItemTitle>Power</p><p matListItemLine>{{ statistics.powerConsumption ?? '-' }} MW</p></mat-list-item>
+                            <mat-list-item *ngIf="statistics.netPowerConsumption !== undefined"><p matListItemTitle>Net power consumption</p><p matListItemLine>{{ statistics.netPowerConsumption }} MW</p></mat-list-item>
+                            <mat-list-item *ngIf="statistics.powerProduction !== undefined"><p matListItemTitle>Power gen</p><p matListItemLine>{{ statistics.powerProduction }} MW</p></mat-list-item>
+                            <mat-list-item *ngIf="statistics.augmentedPowerProduction !== undefined"><p matListItemTitle>Aug. power</p><p matListItemLine>{{ statistics.augmentedPowerProduction }} MW</p></mat-list-item>
+                        </mat-list>
+                    </mat-expansion-panel>
                     <mat-expansion-panel *ngFor="let section of ingredientsData | keyvalue">
                         <mat-expansion-panel-header>
                             <mat-panel-title> {{section.key | titlecase}} </mat-panel-title>
@@ -108,7 +155,10 @@
                     </mat-expansion-panel>
                 </mat-accordion>
             </div>
-        </ng-template>
+        </div>
+
 
     </div>
+
+    <button class="overlay-element settings-fab" mat-button (click)="openSettingsDialog()" aria-label="Settings">⚙</button>
 </div>

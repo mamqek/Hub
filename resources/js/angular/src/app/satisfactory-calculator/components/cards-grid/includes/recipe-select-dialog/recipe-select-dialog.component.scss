@@ -2,3 +2,35 @@
     min-width: 320px;
     width: 100%;
 }
+
+.recipe-option-label {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.recipe-option-flags {
+    opacity: 0.8;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    display: block;
+}
+
+.selected-recipe-meta {
+    margin: 0 0 0.75rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.selected-recipe-flags {
+    margin: 0;
+    font-size: 0.78rem;
+    opacity: 0.9;
+}
+
+.selected-recipe-desc {
+    margin: 0.35rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    opacity: 0.95;
+}

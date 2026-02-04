@@ -38,16 +38,40 @@ export interface IngredientsData {
     byproduct: Ingredient[];
 }
 
+export interface RecipeStatistics {
+    recipeCount?: number;
+    itemCount?: number;
+    totalMachineCount?: string;
+    powerConsumption?: string;
+    netPowerConsumption?: string;
+    powerProduction?: string;
+    augmentedPowerProduction?: string;
+}
+
+export interface AlternateRecipeMeta {
+    itemName: string;
+    recipeName: string;
+    resourceSaving: boolean | null;
+    powerSaving: boolean | null;
+    spaceSaving: boolean | null;
+    lessComplex: boolean | null;
+    description?: string | null;
+    sourceUrl?: string | null;
+}
+
 export interface BaseIngredientsResponse {
     item: string;
     baseIngredients: Ingredient[];
     recipeOptions?: Record<string, string[]>;
+    alternateRecipeMeta?: Record<string, AlternateRecipeMeta>;
 }
 
 export interface RecipeResponse {
     ingredientsData: IngredientsData;
     recipeNodeArr: RecipeNode[];
     recipeOptions?: Record<string, string[]>;
+    alternateRecipeMeta?: Record<string, AlternateRecipeMeta>;
+    statistics?: RecipeStatistics;
 }
 
 

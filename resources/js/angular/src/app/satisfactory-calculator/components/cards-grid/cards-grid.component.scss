@@ -6,12 +6,14 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-color: #01110A;
+    background-color: #163428;
+    --overlay-background: #{$overlay-background};
+    --overlay-text: #ffffff;
 
-    --mat-expansion-container-background-color: rgba($overlay-background, 0.9);
-    --mat-expansion-container-text-color: white;
-    --mat-expansion-header-text-color: white;
-    --mdc-list-list-item-label-text-color: white;
+    --mat-expansion-container-background-color: var(--overlay-background);
+    --mat-expansion-container-text-color: var(--overlay-text);
+    --mat-expansion-header-text-color: var(--overlay-text);
+    --mdc-list-list-item-label-text-color: var(--overlay-text);
 }
 
 .board-viewport {
@@ -105,19 +107,15 @@
             justify-content: flex-start;
             align-items: flex-end;
             flex-direction: column;
+            height: 100%;
+            min-height: 0;
         }
-    }
-
-    .summary-origin {
-        width: 0;
-        height: 0;
-        align-self: flex-end;
     }
 
     &-element {
         pointer-events: all;
-        background-color: $overlay-background;
-        color: white !important;
+        background-color: var(--overlay-background);
+        color: var(--overlay-text) !important;
         z-index: 1000;
 
         &.zoom {
@@ -130,20 +128,107 @@
         }
 
         &.summary {
-            background-color: $overlay-background;
-            --mat-expansion-container-background-color: #01110A;
-            --mat-expansion-container-text-color: white;
-            --mat-expansion-header-text-color: white;
-            --mdc-list-list-item-label-text-color: white;
-            overflow-y: scroll;
+            background-color: var(--overlay-background);
+            --mat-expansion-container-background-color: var(--overlay-background);
+            --mat-expansion-container-text-color: var(--overlay-text);
+            --mat-expansion-header-text-color: var(--overlay-text);
+            --mdc-list-list-item-label-text-color: var(--overlay-text);
+            width: 100%;
+            max-height: 100%;
+            height: auto;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-
-            &::-webkit-scrollbar {
-                display: none;
-            }
         }
     }
+}
+
+.summary-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: min(420px, 92vw);
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.overlay-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.history-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.history-shortcut {
+    width: 74px;
+    height: 74px;
+    min-width: 74px;
+    border-radius: 50%;
+    padding: 10px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--overlay-text) !important;
+    border: 2px solid transparent;
+    background-color: var(--overlay-background);
+
+    img {
+        width: 58px;
+        height: 58px;
+        object-fit: contain;
+        border-radius: 50%;
+    }
+}
+
+.history-shortcut.is-active {
+    border-color: #00dcff;
+    box-shadow: 0 0 0 3px rgba(0, 220, 255, 0.25);
+}
+
+.history-shortcut.stacked {
+    position: relative;
+    font-weight: 700;
+    font-size: 0.85rem;
+    overflow: visible;
+}
+
+.history-shortcut.stacked::before,
+.history-shortcut.stacked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: -1;
+}
+
+.history-shortcut.stacked::before {
+    transform: translate(3px, 3px);
+}
+
+.history-shortcut.stacked::after {
+    transform: translate(6px, 6px);
+}
+
+.settings-fab {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    color: var(--overlay-text) !important;
 }
 
 .zoom-controls {
@@ -200,4 +285,12 @@
 :host ::ng-deep .overlay-summary .summary-recipe-button::before {
     content: none !important;
     display: none !important;
+}
+
+:host ::ng-deep .overlay-summary .example-headers-align {
+    height: auto;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.2rem;
 }

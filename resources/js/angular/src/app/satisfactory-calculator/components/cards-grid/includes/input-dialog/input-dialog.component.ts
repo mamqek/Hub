@@ -7,12 +7,13 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subscription } from 'rxjs';
 import { InputNumberComponent } from 'app/input-number/input-number.component';
 import { recipeItems } from '../../../../data/recipe-items';
-import { RecipeService, Ingredient, OptimizationGoal } from '../../../../services/recipe.service';
+import { AlternateRecipeMeta, RecipeService, Ingredient, OptimizationGoal } from '../../../../services/recipe.service';
 import { RecipeDialogStateService, IngredientLimit } from '../../../../services/recipe-dialog-state.service';
 
 interface RecipeDialogData {
@@ -33,6 +34,7 @@ interface RecipeDialogData {
         MatAutocompleteModule,
         MatSelectModule,
         MatCheckboxModule,
+        MatSnackBarModule,
         DragDropModule,
         InputNumberComponent,
         FormsModule,
@@ -50,6 +52,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
 
     selectedRecipes: Record<string, string> = {};
     recipeOptions: Record<string, string[]> = {};
+    alternateRecipeMeta: Record<string, AlternateRecipeMeta> = {};
     selectedMainRecipe = '';
     optimizationGoals: OptimizationGoal[] = [];
     selectedGoalType = 'minimize_item_input';
@@ -78,6 +81,9 @@ export class InputDialogComponent implements OnInit, OnDestroy {
 
     private itemIndex = new Map<string, string>();
     private baseIngredientsRequest?: Subscription;
+    private submitRequest?: Subscription;
+    isSubmitting = false;
+    submitError = '';
 
     @ViewChild('recipeTrigger', { read: MatAutocompleteTrigger }) recipeTrigger?: MatAutocompleteTrigger;
     @ViewChild('ingredientTrigger', { read: MatAutocompleteTrigger }) ingredientTrigger?: MatAutocompleteTrigger;
@@ -86,6 +92,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
         private dialogRef: MatDialogRef<InputDialogComponent>,
         private dialogState: RecipeDialogStateService,
         private recipeService: RecipeService,
+        private snackBar: MatSnackBar,
         private cdr: ChangeDetectorRef,
         @Optional() @Inject(MAT_DIALOG_DATA) private data: RecipeDialogData | null
     ) {
@@ -120,6 +127,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.baseIngredientsRequest?.unsubscribe();
+        this.submitRequest?.unsubscribe();
         this.persistState();
     }
 
@@ -139,6 +147,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             this.availableIngredients = [];
             this.filteredIngredientOptions = [];
             this.recipeOptions = {};
+            this.alternateRecipeMeta = {};
             this.selectedMainRecipe = '';
         }
 
@@ -239,6 +248,27 @@ export class InputDialogComponent implements OnInit, OnDestroy {
         this.persistState();
     }
 
+    getAlternateRecipeMeta(recipeName: string): AlternateRecipeMeta | null {
+        if (!recipeName) {
+            return null;
+        }
+        return this.alternateRecipeMeta[recipeName] || null;
+    }
+
+    get selectedMainRecipeMeta(): AlternateRecipeMeta | null {
+        return this.getAlternateRecipeMeta(this.selectedMainRecipe);
+    }
+
+    flagText(value: boolean | null | undefined): string {
+        if (value === true) {
+            return 'Yes';
+        }
+        if (value === false) {
+            return 'No';
+        }
+        return '-';
+    }
+
     persistState() {
         this.dialogState.saveState({
             item: this.item,
@@ -300,6 +330,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
             this.availableIngredients = [];
             this.filteredIngredientOptions = [];
             this.recipeOptions = {};
+            this.alternateRecipeMeta = {};
             this.selectedMainRecipe = '';
             return;
         }
@@ -316,6 +347,10 @@ export class InputDialogComponent implements OnInit, OnDestroy {
                 const ingredients = Array.isArray(response?.baseIngredients) ? response.baseIngredients : [];
                 this.applyAvailableIngredients(ingredients);
                 this.recipeOptions = response?.recipeOptions ?? {};
+                this.alternateRecipeMeta = {
+                    ...this.alternateRecipeMeta,
+                    ...(response?.alternateRecipeMeta ?? {}),
+                };
                 this.syncMainRecipeSelection(recipeName);
                 this.cdr.markForCheck();
             },
@@ -323,6 +358,7 @@ export class InputDialogComponent implements OnInit, OnDestroy {
                 this.availableIngredients = [];
                 this.filteredIngredientOptions = [];
                 this.recipeOptions = {};
+                this.alternateRecipeMeta = {};
                 this.selectedMainRecipe = '';
                 this.cdr.markForCheck();
             },
@@ -377,14 +413,56 @@ export class InputDialogComponent implements OnInit, OnDestroy {
     }
 
     submit() {
+        const normalized = this.normalizeName(this.item);
+        const canonicalItem = this.itemIndex.get(normalized);
+        if (!canonicalItem) {
+            this.submitError = 'Please select a valid item from the list.';
+            this.snackBar.open(this.submitError, 'Close', { duration: 4000 });
+            this.cdr.markForCheck();
+            return;
+        }
+
+        this.submitError = '';
+        this.isSubmitting = true;
         this.persistState();
-        this.dialogRef.close({
-            item: this.item,
+
+        const payload = {
+            item: canonicalItem,
             amount: this.amount,
             ingredients: this.selectedIngredients,
             useIngredientsToMax: this.useIngredientsToMax,
             selectedRecipes: this.selectedRecipes,
             optimizationGoals: this.optimizationGoals,
+        };
+
+        this.submitRequest?.unsubscribe();
+        const request$ = this.useIngredientLimits
+            ? this.recipeService.getRecipeWithLimits(
+                canonicalItem,
+                this.selectedIngredients,
+                this.amount,
+                this.useIngredientsToMax,
+                this.selectedRecipes,
+                this.optimizationGoals
+            )
+            : this.recipeService.getRecipe(
+                canonicalItem,
+                this.amount,
+                this.selectedRecipes,
+                this.optimizationGoals
+            );
+
+        this.submitRequest = request$.subscribe({
+            next: () => {
+                this.isSubmitting = false;
+                this.dialogRef.close(payload);
+            },
+            error: (error) => {
+                this.isSubmitting = false;
+                this.submitError = this.extractErrorMessage(error);
+                this.snackBar.open(this.submitError, 'Close', { duration: 6500 });
+                this.cdr.markForCheck();
+            },
         });
     }
 
@@ -392,5 +470,38 @@ export class InputDialogComponent implements OnInit, OnDestroy {
         if (!this.selectedIngredients.length) {
             this.useIngredientsToMax = false;
         }
+    }
+
+    private extractErrorMessage(error: any): string {
+        const apiError = error?.error;
+        if (typeof apiError === 'string' && apiError.trim()) {
+            return this.simplifySolverError(apiError);
+        }
+        if (apiError && typeof apiError === 'object') {
+            if (typeof apiError.userMessage === 'string' && apiError.userMessage.trim()) {
+                return apiError.userMessage;
+            }
+            if (typeof apiError.error === 'string') {
+                return this.simplifySolverError(apiError.error);
+            }
+            if (typeof apiError.message === 'string') {
+                return this.simplifySolverError(apiError.message);
+            }
+        }
+        if (typeof error?.message === 'string' && error.message.trim()) {
+            return this.simplifySolverError(error.message);
+        }
+        return 'Calculator failed for this setup. Adjust limits/recipe and try again.';
+    }
+
+    private simplifySolverError(message: string): string {
+        const normalized = `${message}`.trim();
+        if (/unbounded/i.test(normalized)) {
+            return 'No finite max found for this setup (model is unbounded). Try adding more limits or disable "Use ingredients to max".';
+        }
+        if (/infeasible/i.test(normalized)) {
+            return 'No solution for this setup (model is infeasible). Try relaxing limits or switching recipes.';
+        }
+        return normalized;
     }
 }

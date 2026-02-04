@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\SatisfactoryAlternateRecipeStore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
 {
+    public function __construct(protected SatisfactoryAlternateRecipeStore $alternateRecipeStore)
+    {
+    }
 
     public function getRecipe(Request $request) {
         $item = $request->query('item');
@@ -21,7 +25,11 @@ class RecipeController extends Controller
         $optimizationGoals = $this->parseOptimizationGoals($request->query('optimizationGoals'));
         $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals);
         if (isset($result['error'])) {
-            return response()->json(['error' => $result['error']], $result['status'] ?? 500);
+            return response()->json([
+                'error' => $result['error'],
+                'userMessage' => $result['userMessage'] ?? null,
+                'details' => $result['details'] ?? null,
+            ], $result['status'] ?? 500);
         }
         Log::info('Received calculation result for: ' . print_r($result, true));
 
@@ -32,11 +40,14 @@ class RecipeController extends Controller
             'output' => [],
             'byproduct' => [],
         ];
+        $recipeOptions = $result['recipeOptions'] ?? [];
 
         return response()->json([
             "recipeNodeArr" => $recipeNodes,
             "ingredientsData" => $ingredientsData,
-            "recipeOptions" => $result['recipeOptions'] ?? []
+            "recipeOptions" => $recipeOptions,
+            "alternateRecipeMeta" => $this->buildAlternateRecipeMeta($recipeOptions),
+            "statistics" => $result['statistics'] ?? []
         ] , 200);
         // return response()->json(['output' =>  $output], 200);
     }
@@ -52,7 +63,11 @@ class RecipeController extends Controller
         $optimizationGoals = $this->parseOptimizationGoals($request->query('optimizationGoals'));
         $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals);
         if (isset($result['error'])) {
-            return response()->json(['error' => $result['error']], $result['status'] ?? 500);
+            return response()->json([
+                'error' => $result['error'],
+                'userMessage' => $result['userMessage'] ?? null,
+                'details' => $result['details'] ?? null,
+            ], $result['status'] ?? 500);
         }
 
         $ingredientsData = $result['ingredientsData'] ?? [
@@ -62,11 +77,13 @@ class RecipeController extends Controller
             'byproduct' => [],
         ];
         $baseIngredients = $ingredientsData['input'] ?? [];
+        $recipeOptions = $result['recipeOptions'] ?? [];
 
         return response()->json([
             'item' => $item,
             'baseIngredients' => $baseIngredients,
-            'recipeOptions' => $result['recipeOptions'] ?? [],
+            'recipeOptions' => $recipeOptions,
+            'alternateRecipeMeta' => $this->buildAlternateRecipeMeta($recipeOptions),
         ], 200);
     }
 
@@ -97,7 +114,11 @@ class RecipeController extends Controller
         $amount = $requestedAmount !== null ? (float) $requestedAmount : 1.0;
         $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes, $optimizationGoals);
         if (isset($boundedResult['error'])) {
-            return response()->json(['error' => $boundedResult['error']], $boundedResult['status'] ?? 500);
+            return response()->json([
+                'error' => $boundedResult['error'],
+                'userMessage' => $boundedResult['userMessage'] ?? null,
+                'details' => $boundedResult['details'] ?? null,
+            ], $boundedResult['status'] ?? 500);
         }
 
         $recipeNodes = $boundedResult['recipeNodeArr'] ?? [];
@@ -107,6 +128,7 @@ class RecipeController extends Controller
             'output' => [],
             'byproduct' => [],
         ];
+        $recipeOptions = $boundedResult['recipeOptions'] ?? [];
 
         $resolvedAmount = $boundedResult['amount'] ?? null;
         if ($resolvedAmount === null) {
@@ -122,169 +144,10 @@ class RecipeController extends Controller
             'limitedBy' => $limitingIngredient,
             'recipeNodeArr' => $recipeNodes,
             'ingredientsData' => $ingredientsData,
-            'recipeOptions' => $boundedResult['recipeOptions'] ?? [],
+            'recipeOptions' => $recipeOptions,
+            'alternateRecipeMeta' => $this->buildAlternateRecipeMeta($recipeOptions),
+            'statistics' => $boundedResult['statistics'] ?? [],
         ], 200);
-    }
-
-    protected function parseTree($output) {
-
-        $stack = [];
-        $recipesArr = [];
-        $count = 0;
-        
-        foreach ($output as $index => $line) {
-            if ( $index == 0 ) {
-                $count = 0;
-                continue;
-            }
-
-            // Stop parsing when we reach the input ingredients
-            if (strpos($line, 'Input') !== false) {
-                break;
-            }
-
-            // Remove leading * or - or < and parse the details
-            $indentLevel = $this->getIndentLevel($line);
-            $newNode = $this->parseRow($line, $count, $indentLevel);
-
-            // Check if it's a byproduct or base material
-            if (strpos($line, '<') !== false) {
-                $newNode['byproduct'] = true;
-            } elseif (strpos($line, '- ') !== false) {
-                $newNode['isBaseMaterial'] = true;
-            }
-
-            // Traverse up the stack to the appropriate parent
-            while ((count($stack) > $indentLevel + (isset($newNode['byproduct']) ? 1 : 0))) {
-                array_pop($stack);
-            }
-            
-            $stackSize =  count($stack);
-
-            if ($stackSize > 0) {
-                if (isset($newNode['byproduct'])) {
-                    unset($newNode['byproduct']);
-                    unset($newNode['machine']);
-
-                    // save the byproduct node to the parent node in stack
-                    $stack[$indentLevel]['byproducts'] = [];
-                    $stack[$indentLevel]['byproducts'][] = $newNode;
-
-                    // add node's id to parent in array
-                    $recipesArr[$stack[$indentLevel]['id']]['byproducts'] = [];
-                    $recipesArr[$stack[$indentLevel]['id']]['byproducts'][] = [
-                        'id' => $newNode['id'],
-                        'productionRate' => $newNode['productionRate'],
-                        'itemName' => $newNode['itemName'],
-                    ];
-                } else {
-
-                    $stack[$indentLevel - 1]['ingredients'][] = $newNode;
-                    $ingredientsArrLength = count($stack[$indentLevel - 1]['ingredients']);
-                    $stack[] = &$stack[$indentLevel - 1]['ingredients'][$ingredientsArrLength - 1];
-
-                    // add node's id to parent 
-                    $recipesArr[$stack[$indentLevel - 1]['id']]['ingredients'][] = $newNode['id'];
-                    $newNode['parentId'] = $stack[$indentLevel - 1]['id'];
-                }
-            } else {
-                $stack[] = $newNode;
-            }
-            
-            $recipesArr[] = $newNode;
-            $count +=1;
-        }
-        // Log::info(print_r($stack[0], true));
-
-        return $recipesArr;
-    }
-
-    function parseIngredients($output) {
-        $ingredients = [
-            'input' => [],
-            'intermediate' => [],
-            'output' => [],
-            'byproduct' => [],
-        ];
-        $currentType = null;
-
-        foreach ($output as $line) {
-            $trimmed = trim($line);
-            $lower = strtolower($trimmed);
-
-            if (str_starts_with($lower, 'input ingredients')) {
-                $currentType = 'input';
-                continue;
-            }
-            if (str_starts_with($lower, 'intermediate ingredients')) {
-                $currentType = 'intermediate';
-                continue;
-            }
-            if (str_starts_with($lower, 'output ingredients') || str_starts_with($lower, 'output products')) {
-                $currentType = 'output';
-                continue;
-            }
-            if (str_starts_with($lower, 'byproduct ingredients') || str_starts_with($lower, 'byproducts')) {
-                $currentType = 'byproduct';
-                continue;
-            }
-
-            if ($currentType && str_starts_with(ltrim($line), '*')) {
-                $ingredient = $this->ingredientToObj($line);
-                if ($ingredient) {
-                    $ingredients[$currentType][] = $ingredient;
-                }
-            }
-        }
-
-        return $ingredients;
-    }
-
-    function getIndentLevel($line) {
-        return ((strlen($line) - strlen(ltrim($line, ' '))) - 1) / 2; // Assuming 3 spaces per indent level
-    }
-
-    protected function parseRow($row, $count, $indentLevel) {
-        preg_match('/^\s*[\*\-<]\s*(\d+\.\d+)\s+([a-zA-Z\s\-]+):\s+(\d+\.\d+)\s+([a-zA-Z\s]+)/', $row, $matches);
-
-
-        // Return the parsed values in an associative array if matched
-        if ($matches) {
-            return [
-                'id' => $count,
-                'productionRate' => $matches[1],         // First number (rate)
-                'itemName' => trim($matches[2]),   // Item name (trim spaces)
-                'machineCount' => $matches[3], // Second number (count of machines)
-                'machineName' => $matches[4],       // Machine type
-                'indentLevel' => $indentLevel,
-                'ingredients' => []                // ingredients nodes ids
-            ];
-        }
-        
-        preg_match('/([\d.]+)\s+(.*?)$/', $row, $matches); // For lines without producer (basic resources)
-
-        if ($matches) {
-            return [
-                'id' => $count,
-                'productionRate' => $matches[1],         // First number (rate)
-                'itemName' => trim($matches[2]),   // Item name (trim spaces)
-                'indentLevel' => $indentLevel,
-                'machineName' => "*Extractor"       // Machine type
-            ];
-        }
-
-    }
-
-    protected function ingredientToObj($row) {
-        preg_match('/([\d.]+)\s+(.*?)$/', $row, $matches); // For lines without producer (basic resources)
-
-        if ($matches) {
-            return [
-                'amount' => $matches[1],         // First number (rate)
-                'itemName' => trim($matches[2]),   // Item name (trim spaces)
-            ];
-        }
-        
     }
 
     protected function fetchCalcOutput(
@@ -319,7 +182,17 @@ class RecipeController extends Controller
         $response = Http::post($calcServiceUrl . 'run-calc', $payload);
 
         if ($response->failed()) {
-            return ['error' => $response->body(), 'status' => 500];
+            $json = $response->json();
+            if (is_array($json)) {
+                return [
+                    'error' => $json['error'] ?? 'Calculation failed.',
+                    'userMessage' => $json['userMessage'] ?? null,
+                    'details' => $json['details'] ?? null,
+                    'status' => $response->status() ?: 500,
+                ];
+            }
+
+            return ['error' => $response->body(), 'status' => $response->status() ?: 500];
         }
 
         return $response->json();
@@ -369,32 +242,6 @@ class RecipeController extends Controller
         return $normalized;
     }
 
-    protected function buildIngredientMap(array $ingredients): array {
-        $map = [];
-        foreach ($ingredients as $ingredient) {
-            if (!is_array($ingredient)) {
-                continue;
-            }
-
-            $name = $ingredient['itemName'] ?? $ingredient['name'] ?? null;
-            $amount = $ingredient['amount'] ?? $ingredient['qty'] ?? null;
-
-            if (!$name || $amount === null) {
-                continue;
-            }
-
-            $key = $this->normalizeIngredientName($name);
-            $value = (float) $amount;
-            if ($value <= 0) {
-                continue;
-            }
-
-            $map[$key] = ($map[$key] ?? 0) + $value;
-        }
-
-        return $map;
-    }
-
     protected function normalizeIngredientList(array $ingredients): array {
         $normalized = [];
         foreach ($ingredients as $ingredient) {
@@ -422,21 +269,54 @@ class RecipeController extends Controller
         return strtolower($name);
     }
 
-    protected function restoreIngredientName(string $key, array $ingredients): string {
-        foreach ($ingredients as $ingredient) {
-            if (!is_array($ingredient)) {
+    protected function normalizeRecipeName(string $name): string {
+        return SatisfactoryAlternateRecipeStore::normalizeRecipeName($name);
+    }
+
+    protected function buildAlternateRecipeMeta(array $recipeOptions): array {
+        if (!count($recipeOptions)) {
+            return [];
+        }
+
+        $recipeNames = [];
+        foreach ($recipeOptions as $options) {
+            if (!is_array($options)) {
                 continue;
             }
-            $name = $ingredient['itemName'] ?? $ingredient['name'] ?? null;
-            if (!$name) {
-                continue;
-            }
-            if ($this->normalizeIngredientName($name) === $key) {
-                return $name;
+            foreach ($options as $recipeName) {
+                if (!is_string($recipeName) || trim($recipeName) === '') {
+                    continue;
+                }
+                $recipeNames[] = trim($recipeName);
             }
         }
 
-        return $key;
+        if (!count($recipeNames)) {
+            return [];
+        }
+
+        $lookup = $this->alternateRecipeStore->getLookup();
+
+        $meta = [];
+        foreach ($recipeNames as $recipeName) {
+            $normalized = $this->normalizeRecipeName($recipeName);
+            $record = $lookup[$normalized] ?? null;
+            if (!$record) {
+                continue;
+            }
+            $meta[$recipeName] = [
+                'itemName' => $record['itemName'] ?? '',
+                'recipeName' => $record['recipeName'] ?? $recipeName,
+                'resourceSaving' => $record['resourceSaving'] ?? null,
+                'powerSaving' => $record['powerSaving'] ?? null,
+                'spaceSaving' => $record['spaceSaving'] ?? null,
+                'lessComplex' => $record['lessComplex'] ?? null,
+                'description' => $record['description'] ?? null,
+                'sourceUrl' => $record['sourceUrl'] ?? null,
+            ];
+        }
+
+        return $meta;
     }
 
     protected function findOutputAmount(array $outputItems, string $item): ?float {

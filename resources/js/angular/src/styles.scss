@@ -21,12 +21,6 @@ body {
 
     display: grid;
     place-items: center;
-
-    .leader-line {
-        will-change: transform;
-        z-index: 1 !important;
-        pointer-events: none !important;
-    }
 }
 
 
@@ -61,13 +55,4 @@ body {
 .overlay-summary .mdc-list-item__end.summary-recipe-button::after {
     content: none !important;
     display: none !important;
-}
-
-/* Flow labels shown on LeaderLine while holding direction button. */
-.leader-line text {
-    stroke: transparent !important;
-    stroke-width: 0 !important;
-    paint-order: fill !important;
-    fill: #ffffff !important;
-    font-weight: bold !important;
 }

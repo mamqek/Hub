@@ -2,16 +2,21 @@ import { Component, inject, HostListener, OnInit, OnDestroy, ElementRef, ViewChi
 import { Subscription } from 'rxjs';
 import ELK from 'elkjs/lib/elk.bundled.js';
 
-import { RecipeService, RecipeNode, RecipeResponse, IngredientsData, Ingredient, OptimizationGoal } from '../../services/recipe.service';
-import { ZoomService } from 'app/satisfactory-calculator/services/zoom.service';
+import { AlternateRecipeMeta, RecipeService, RecipeNode, RecipeResponse, IngredientsData, Ingredient, OptimizationGoal, RecipeStatistics } from '../../services/recipe.service';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 import { InputDialogComponent } from './includes/input-dialog/input-dialog.component';
+import {
+    SettingsDialogCategory,
+    SettingsDialogCloseResult,
+    SettingsDialogComponent,
+} from './includes/settings-dialog/settings-dialog.component';
 import {
     RecipeSelectDialogComponent,
     RecipeSelectDialogResult,
 } from './includes/recipe-select-dialog/recipe-select-dialog.component';
-import { ConnectedPosition } from '@angular/cdk/overlay';
 import { MatDialog } from '@angular/material/dialog';
+import { CalculatorSettings, CalculatorSettingsService } from '../../services/calculator-settings.service';
+import { CalculatorHistoryService, RecipeHistoryEntry } from '../../services/calculator-history.service';
 
 interface ActiveQuery {
     item: string;
@@ -57,6 +62,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         output: [],
         byproduct: []
     };
+    statistics: RecipeStatistics = {};
 
     nodes: RecipeNode[] = [];
     renderedEdges: RenderEdge[] = [];
@@ -82,6 +88,10 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     selectedRecipes: Record<string, string> = {};
     recipeOptions: Record<string, string[]> = {};
+    alternateRecipeMeta: Record<string, AlternateRecipeMeta> = {};
+    settings: CalculatorSettings;
+    historyEntries: RecipeHistoryEntry[] = [];
+    currentHistoryId: string | null = null;
 
     activeQuery: ActiveQuery = {
         item: 'supercomputer',
@@ -93,20 +103,19 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     private elk = new ELK();
     private activeRequest?: Subscription;
-
-    summaryPositions: ConnectedPosition[] = [
-        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 12 },
-        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -12 },
-    ];
+    private settingsSub?: Subscription;
 
     @ViewChild('viewport') viewportRef!: ElementRef<HTMLElement>;
 
     constructor(
         private recipeService: RecipeService,
-        private zoomService: ZoomService,
         private ingredientsService: IngredientsService,
-        private cdr: ChangeDetectorRef
-    ) {}
+        private cdr: ChangeDetectorRef,
+        private settingsService: CalculatorSettingsService,
+        private historyService: CalculatorHistoryService
+    ) {
+        this.settings = this.settingsService.getSettings();
+    }
 
     readonly dialog = inject(MatDialog);
 
@@ -160,12 +169,46 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     public ngOnInit(): void {
-        this.loadInitialRecipeWithRetry();
+        this.historyEntries = this.historyService.getHistory();
+        this.settingsSub = this.settingsService.settings$.subscribe((next) => {
+            this.settings = next;
+            if (this.nodes.length) {
+                this.applyNodeColors();
+                this.cdr.markForCheck();
+            }
+        });
+        if (!this.restoreLatestHistory()) {
+            this.loadInitialRecipeWithRetry();
+        }
     }
 
     ngOnDestroy(): void {
         this.activeRequest?.unsubscribe();
+        this.settingsSub?.unsubscribe();
         this.recipeService.unsubscribe();
+    }
+
+    openSettingsDialog(initialCategory: SettingsDialogCategory = 'colors') {
+        const dialogRef = this.dialog.open(SettingsDialogComponent, {
+            backdropClass: 'recipe-dialog-backdrop',
+            width: '920px',
+            maxWidth: '96vw',
+            data: {
+                initialCategory,
+                historyEntries: this.historyEntries,
+                currentBoardEntry: this.buildCurrentBoardHistoryEntry(),
+            },
+        });
+        dialogRef.afterClosed().subscribe((result: SettingsDialogCloseResult | undefined) => {
+            if (!result?.loadHistoryId) {
+                return;
+            }
+            this.loadFromHistory(result.loadHistoryId);
+        });
+    }
+
+    openHistoryFromSettings(): void {
+        this.openSettingsDialog('history');
     }
 
     @HostListener('window:resize')
@@ -291,7 +334,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         const mouseY = event.clientY - rect.top;
 
         const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
-        const newScale = Math.max(0.35, Math.min(2.8, this.scale * zoomFactor));
+        const newScale = Math.max(0.15, Math.min(2.8, this.scale * zoomFactor));
         if (newScale === this.scale) {
             return;
         }
@@ -336,6 +379,93 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         return this.normalizeItemName(name) === this.selectedPanelItem;
     }
 
+    get quickHistoryEntries(): RecipeHistoryEntry[] {
+        if (this.historyEntries.length <= 4) {
+            return this.historyEntries;
+        }
+        return this.historyEntries.slice(0, 3);
+    }
+
+    get hasHistoryOverflow(): boolean {
+        return this.historyEntries.length > 4;
+    }
+
+    get hiddenHistoryCount(): number {
+        return Math.max(0, this.historyEntries.length - 3);
+    }
+
+    get overlayBackgroundColor(): string {
+        return this.settings?.colors?.overlay?.backgroundColor || '#11251b';
+    }
+
+    get overlayTextColor(): string {
+        return this.settings?.colors?.overlay?.textColor || '#ffffff';
+    }
+
+    loadFromHistory(historyId: string): void {
+        const promoted = this.historyService.promote(historyId);
+        if (!promoted) {
+            return;
+        }
+
+        this.historyEntries = this.historyService.getHistory();
+        this.currentHistoryId = promoted.id;
+        this.selectedRecipes = { ...(promoted.selectedRecipes || {}) };
+        this.activeQuery = {
+            item: promoted.query.item,
+            amount: promoted.query.amount,
+            ingredients: Array.isArray(promoted.query.ingredients) ? promoted.query.ingredients : [],
+            useIngredientsToMax: Boolean(promoted.query.useIngredientsToMax),
+            optimizationGoals: Array.isArray(promoted.query.optimizationGoals) ? promoted.query.optimizationGoals : [],
+        };
+        this.applyRecipeData(promoted.response, false);
+    }
+
+    private restoreLatestHistory(): boolean {
+        const latest = this.historyEntries[0];
+        if (!latest?.response?.recipeNodeArr?.length) {
+            return false;
+        }
+
+        this.currentHistoryId = latest.id;
+        this.selectedRecipes = { ...(latest.selectedRecipes || {}) };
+        this.activeQuery = {
+            item: latest.query.item,
+            amount: latest.query.amount,
+            ingredients: Array.isArray(latest.query.ingredients) ? latest.query.ingredients : [],
+            useIngredientsToMax: Boolean(latest.query.useIngredientsToMax),
+            optimizationGoals: Array.isArray(latest.query.optimizationGoals) ? latest.query.optimizationGoals : [],
+        };
+        this.applyRecipeData(latest.response, false);
+        return true;
+    }
+
+    private buildCurrentBoardHistoryEntry(): RecipeHistoryEntry | null {
+        if (!this.nodes.length) {
+            return null;
+        }
+
+        return {
+            id: 'current-board',
+            createdAt: Date.now(),
+            query: {
+                item: this.activeQuery.item,
+                amount: this.activeQuery.amount,
+                ingredients: Array.isArray(this.activeQuery.ingredients) ? this.activeQuery.ingredients : [],
+                useIngredientsToMax: Boolean(this.activeQuery.useIngredientsToMax),
+                optimizationGoals: Array.isArray(this.activeQuery.optimizationGoals) ? this.activeQuery.optimizationGoals : [],
+            },
+            selectedRecipes: { ...this.selectedRecipes },
+            response: {
+                ingredientsData: this.ingredientsData,
+                recipeNodeArr: this.nodes,
+                recipeOptions: this.recipeOptions,
+                alternateRecipeMeta: this.alternateRecipeMeta,
+                statistics: this.statistics,
+            },
+        };
+    }
+
     openRecipeSelectorForNode(node: RecipeNode): void {
         const itemKey = this.resolveRecipeItemKey(node.itemName);
         this.openRecipeDialogForItem(itemKey, node);
@@ -364,6 +494,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                 options,
                 selected: this.selectedRecipes[itemKey] ?? '',
                 showApplyScope: Boolean(sourceNode),
+                alternateRecipeMeta: this.alternateRecipeMeta,
             },
         });
 
@@ -407,6 +538,10 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                     return;
                 }
                 this.recipeOptions[itemKey] = fetchedOptions;
+                this.alternateRecipeMeta = {
+                    ...this.alternateRecipeMeta,
+                    ...(response?.alternateRecipeMeta ?? {}),
+                };
                 this.openRecipeDialog(itemKey, fetchedOptions, sourceNode);
             },
             error: (err) => console.error('Error fetching recipe options:', err),
@@ -427,6 +562,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                 this.replaceBranch(node.id, branchNodes);
                 this.applyNodeColors();
                 this.recipeOptions = { ...this.recipeOptions, ...(branchData.recipeOptions ?? {}) };
+                this.alternateRecipeMeta = { ...this.alternateRecipeMeta, ...(branchData.alternateRecipeMeta ?? {}) };
                 this.ingredientsData = this.buildIngredientsDataFromNodes();
                 void this.layoutGraph();
             },
@@ -584,33 +720,86 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         });
     }
 
-    private applyRecipeData(data: RecipeResponse) {
+    private applyRecipeData(data: RecipeResponse, saveToHistory: boolean = true) {
+        console.log('Received recipe data:', data);
         this.nodes = data.recipeNodeArr;
         this.applyNodeColors();
         this.ingredientsData = data.ingredientsData;
         this.recipeOptions = data.recipeOptions ?? {};
+        this.alternateRecipeMeta = data.alternateRecipeMeta ?? {};
+        this.statistics = this.buildDisplayStatistics(data.statistics);
+        console.log('Computed statistics:', this.statistics);
         this.selectedPanelItem = null;
+        if (saveToHistory) {
+            this.historyEntries = this.historyService.push({
+                query: {
+                    item: this.activeQuery.item,
+                    amount: this.activeQuery.amount,
+                    ingredients: Array.isArray(this.activeQuery.ingredients) ? this.activeQuery.ingredients : [],
+                    useIngredientsToMax: Boolean(this.activeQuery.useIngredientsToMax),
+                    optimizationGoals: Array.isArray(this.activeQuery.optimizationGoals) ? this.activeQuery.optimizationGoals : [],
+                },
+                selectedRecipes: { ...this.selectedRecipes },
+                response: data,
+            });
+            this.currentHistoryId = this.historyEntries[0]?.id || null;
+        }
         void this.layoutGraph();
     }
 
+    getHistoryTooltip(entry: RecipeHistoryEntry): string {
+        const normalizedItem = this.normalizeItemName(entry.query.item);
+        const selectedRecipeKey = Object.keys(entry.selectedRecipes || {}).find(
+            (key) => this.normalizeItemName(key) === normalizedItem
+        );
+        const selectedRecipe = selectedRecipeKey ? entry.selectedRecipes[selectedRecipeKey] : '';
+        return selectedRecipe
+            ? `${entry.query.item} - ${selectedRecipe}`
+            : entry.query.item;
+    }
+
+    private buildDisplayStatistics(source?: RecipeStatistics): RecipeStatistics {
+        const stats: RecipeStatistics = { ...(source || {}) };
+
+        if (stats.totalMachineCount === undefined) {
+            const total = this.nodes.reduce((sum, node) => sum + (Number.parseFloat(`${node.machineCount || 0}`) || 0), 0);
+            stats.totalMachineCount = total.toFixed(2);
+        }
+
+        if (stats.recipeCount === undefined) {
+            stats.recipeCount = new Set(
+                this.nodes
+                    .map((node) => (node.recipeName || '').trim())
+                    .filter((name) => !!name && name.toLowerCase() !== 'raw resource')
+            ).size;
+        }
+
+        if (stats.itemCount === undefined) {
+            stats.itemCount = new Set(this.nodes.map((node) => node.itemName)).size;
+        }
+
+        return stats;
+    }
+
     private applyNodeColors() {
-        const extractionPalette: Array<{ match: RegExp; color: string }> = [
-            { match: /iron/i, color: '#b84034' },
-            { match: /copper/i, color: '#c86e2e' },
-            { match: /caterium/i, color: '#caa313' },
-            { match: /coal/i, color: '#333333' },
-            { match: /limestone/i, color: '#8f8b83' },
-            { match: /quartz/i, color: '#73a4cb' },
-            { match: /sulfur/i, color: '#baa81b' },
-            { match: /bauxite/i, color: '#8a4e2d' },
-            { match: /uranium/i, color: '#4a9d2f' },
-            { match: /sam/i, color: '#6f4fd1' },
-            { match: /water/i, color: '#2f7fd9' },
-            { match: /nitrogen/i, color: '#4ca9d8' },
-            { match: /oil/i, color: '#5a465f' },
+        const resourceColors = this.settings.colors.nodes.resourceColors;
+        const extractionPalette: Array<{ match: RegExp; key: string }> = [
+            { match: /iron/i, key: 'iron' },
+            { match: /copper/i, key: 'copper' },
+            { match: /caterium/i, key: 'caterium' },
+            { match: /coal/i, key: 'coal' },
+            { match: /limestone/i, key: 'limestone' },
+            { match: /quartz/i, key: 'quartz' },
+            { match: /sulfur/i, key: 'sulfur' },
+            { match: /bauxite/i, key: 'bauxite' },
+            { match: /uranium/i, key: 'uranium' },
+            { match: /sam/i, key: 'sam' },
+            { match: /water/i, key: 'water' },
+            { match: /nitrogen/i, key: 'nitrogen' },
+            { match: /oil/i, key: 'oil' },
         ];
 
-        const derivedPalette = ['#c056b7', '#3c9f6f', '#4e85d6', '#c57a2d', '#7c63cf', '#3a9ea6'];
+        const layerPalette = this.settings.colors.nodes.layerColors;
         const nodeById = new Map(this.nodes.map((node) => [node.id, node]));
         const distanceMemo = new Map<number, number>();
 
@@ -634,17 +823,27 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         };
 
         const getExtractionColor = (itemName: string): string => {
+            if (this.settings.colors.nodes.disableResourceColors) {
+                return layerPalette[0] || '#6b7a8f';
+            }
             const found = extractionPalette.find((entry) => entry.match.test(itemName));
-            return found ? found.color : '#6b7a8f';
+            if (!found) {
+                return resourceColors['default'] || '#6b7a8f';
+            }
+            return resourceColors[found.key] || resourceColors['default'] || '#6b7a8f';
         };
 
         for (const node of this.nodes) {
             const distance = distanceFromExtraction(node);
-            if (distance === 0) {
+            if (distance === 0 && !this.settings.colors.nodes.disableResourceColors) {
                 node.cardColor = getExtractionColor(node.itemName);
                 continue;
             }
-            node.cardColor = derivedPalette[(distance - 1) % derivedPalette.length];
+            if (this.settings.colors.nodes.disableLayerColors) {
+                node.cardColor = this.settings.colors.nodes.unifiedLayerColor || '#4e85d6';
+                continue;
+            }
+            node.cardColor = layerPalette[Math.min(distance, layerPalette.length - 1)] || '#4e85d6';
         }
     }
 
@@ -763,7 +962,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         const vw = viewport.clientWidth;
         const vh = viewport.clientHeight;
 
-        const nextScale = Math.max(0.35, Math.min(1.4, Math.min(vw / graphWidth, vh / graphHeight)));
+        const nextScale = Math.max(0.15, Math.min(1.4, Math.min(vw / graphWidth, vh / graphHeight)));
         this.scale = nextScale;
         this.boardZoomLevel = Number(this.scale.toFixed(2));
 

@@ -15,9 +15,27 @@
         <mat-form-field class="recipe-field" *ngIf="mainRecipeOptions.length > 0">
           <mat-label>Alternate recipe ({{ item }})</mat-label>
           <mat-select [(ngModel)]="selectedMainRecipe" name="selectedMainRecipe" (selectionChange)="onMainRecipeChange($event.value)">
-            <mat-option *ngFor="let option of mainRecipeOptions" [value]="option">{{ option }}</mat-option>
+            <mat-option *ngFor="let option of mainRecipeOptions" [value]="option">
+              <div class="recipe-option-label">{{ option }}</div>
+              <small class="recipe-option-flags" *ngIf="getAlternateRecipeMeta(option) as meta">
+                Resource: {{ flagText(meta.resourceSaving) }} •
+                Power: {{ flagText(meta.powerSaving) }} •
+                Space: {{ flagText(meta.spaceSaving) }} •
+                Complex: {{ flagText(meta.lessComplex) }}
+              </small>
+            </mat-option>
           </mat-select>
         </mat-form-field>
+
+        <div class="selected-recipe-meta" *ngIf="selectedMainRecipeMeta as meta">
+          <p class="selected-recipe-flags">
+            Resource {{ flagText(meta.resourceSaving) }} ·
+            Power {{ flagText(meta.powerSaving) }} ·
+            Space {{ flagText(meta.spaceSaving) }} ·
+            Less Complex {{ flagText(meta.lessComplex) }}
+          </p>
+          <p class="selected-recipe-desc" *ngIf="meta.description">{{ meta.description }}</p>
+        </div>
 
         <div class="amount-row">
           <div class="amount-field" [class.is-inactive]="useIngredientLimits && useIngredientsToMax" [attr.aria-disabled]="useIngredientLimits && useIngredientsToMax">
@@ -123,6 +141,8 @@
           </div>
         </div>
 
+        <p class="submit-error" *ngIf="submitError">{{ submitError }}</p>
+
         <!-- <mat-form-field>
           <mat-label>How many p/m?</mat-label>
           <input type="number" matInput placeholder="computer" [(ngModel)]="amount" name="amount">
@@ -133,5 +153,5 @@
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-button (click)="submit()" cdkFocusInitial>Submit</button>
+  <button mat-button (click)="submit()" [disabled]="isSubmitting" cdkFocusInitial>{{ isSubmitting ? 'Submitting...' : 'Submit' }}</button>
 </mat-dialog-actions>

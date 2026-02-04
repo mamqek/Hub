@@ -1,0 +1,128 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { SessionStoreService } from './session-store.service';
+
+export interface ColorSettings {
+    board: {
+        canvasColor: string;
+        arrowsColor: string;
+    };
+    overlay: {
+        backgroundColor: string;
+        textColor: string;
+    };
+    nodes: {
+        disableResourceColors: boolean;
+        resourceColors: Record<string, string>;
+        disableLayerColors: boolean;
+        unifiedLayerColor: string;
+        layerColors: string[];
+    };
+}
+
+export interface CalculatorSettings {
+    colors: ColorSettings;
+}
+
+const DEFAULT_SETTINGS: CalculatorSettings = {
+    colors: {
+        board: {
+            canvasColor: '#163428',
+            arrowsColor: '#f2f200',
+        },
+        overlay: {
+            backgroundColor: '#11251b',
+            textColor: '#ffffff',
+        },
+        nodes: {
+            disableResourceColors: false,
+            resourceColors: {
+                iron: '#b84034',
+                copper: '#c86e2e',
+                caterium: '#caa313',
+                coal: '#333333',
+                limestone: '#8f8b83',
+                quartz: '#73a4cb',
+                sulfur: '#baa81b',
+                bauxite: '#8a4e2d',
+                uranium: '#4a9d2f',
+                sam: '#6f4fd1',
+                water: '#2f7fd9',
+                nitrogen: '#4ca9d8',
+                oil: '#5a465f',
+                default: '#6b7a8f',
+            },
+            disableLayerColors: false,
+            unifiedLayerColor: '#4e85d6',
+            layerColors: [
+                '#6b7a8f',
+                '#c056b7',
+                '#3c9f6f',
+                '#4e85d6',
+                '#c57a2d',
+                '#7c63cf',
+                '#3a9ea6',
+                '#b84b82',
+                '#4f9b48',
+            ],
+        },
+    },
+};
+
+const SETTINGS_STORE_KEY = 'calculator.settings';
+
+@Injectable({ providedIn: 'root' })
+export class CalculatorSettingsService {
+    private settingsSubject: BehaviorSubject<CalculatorSettings>;
+    readonly settings$: Observable<CalculatorSettings>;
+
+    constructor(private sessionStore: SessionStoreService) {
+        const stored = this.sessionStore.get<CalculatorSettings>(SETTINGS_STORE_KEY, this.clone(DEFAULT_SETTINGS));
+        this.settingsSubject = new BehaviorSubject<CalculatorSettings>(this.normalizeSettings(stored));
+        this.settings$ = this.settingsSubject.asObservable();
+    }
+
+    getSettings(): CalculatorSettings {
+        return this.normalizeSettings(this.settingsSubject.getValue());
+    }
+
+    setSettings(next: CalculatorSettings): void {
+        const normalized = this.normalizeSettings(next);
+        this.settingsSubject.next(normalized);
+        this.sessionStore.set(SETTINGS_STORE_KEY, normalized);
+    }
+
+    private normalizeSettings(value: CalculatorSettings | null | undefined): CalculatorSettings {
+        const incoming = (value || {}) as Partial<CalculatorSettings>;
+        const incomingColors = (incoming.colors || {}) as Partial<ColorSettings>;
+        const incomingNodes = (incomingColors.nodes || {}) as Partial<ColorSettings['nodes']>;
+
+        return {
+            colors: {
+                board: {
+                    ...DEFAULT_SETTINGS.colors.board,
+                    ...(incomingColors.board || {}),
+                },
+                overlay: {
+                    ...DEFAULT_SETTINGS.colors.overlay,
+                    ...(incomingColors.overlay || {}),
+                },
+                nodes: {
+                    ...DEFAULT_SETTINGS.colors.nodes,
+                    ...incomingNodes,
+                    resourceColors: {
+                        ...DEFAULT_SETTINGS.colors.nodes.resourceColors,
+                        ...(incomingNodes.resourceColors || {}),
+                    },
+                    layerColors: Array.isArray(incomingNodes.layerColors) && incomingNodes.layerColors.length
+                        ? [...incomingNodes.layerColors]
+                        : [...DEFAULT_SETTINGS.colors.nodes.layerColors],
+                },
+            },
+        };
+    }
+
+    private clone<T>(value: T): T {
+        return JSON.parse(JSON.stringify(value));
+    }
+}

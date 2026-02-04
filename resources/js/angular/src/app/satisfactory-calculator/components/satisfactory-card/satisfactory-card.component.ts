@@ -3,7 +3,6 @@ import { ConnectedPosition } from '@angular/cdk/overlay';
 import { RecipeNode } from '../../services/recipe.service';
 
 
-import {MatBadgeModule} from '@angular/material/badge';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 
 @Component({
@@ -30,16 +29,8 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
 
     constructor(private ingredientsService: IngredientsService) { }
 
-    ngOnInit(): void {        
-        if (this.data.isBaseMaterial) {
-            if (this.data.itemName.includes('Ore') || this.data.itemName.includes('Coal') || this.data.itemName.includes('Lime')) {
-                this.machineImageUrl += 'Miner_Mk1.webp';
-            } else if (this.data.itemName.includes('Oil')) {
-                this.machineImageUrl += 'Oil_Extractor.webp';
-            }
-        } else {
-            this.machineImageUrl += this.data.machineName + '.webp';
-        }
+    ngOnInit(): void {
+        this.updateMachineImageUrl();
     }
 
     getItemImageUrl(name: string): string {
@@ -75,8 +66,25 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes['data']) {
+            this.updateMachineImageUrl();
+        }
+
         if (changes['suppressHint']?.currentValue) {
             this.isHintOpen = false;
         }
+    }
+
+    private updateMachineImageUrl(): void {
+        if (!this.data) {
+            this.machineImageUrl = 'images/';
+            return;
+        }
+
+        this.machineImageUrl = this.ingredientsService.getMachineImageUrl(
+            this.data.machineName,
+            this.data.itemName,
+            this.data.isBaseMaterial
+        );
     }
 }

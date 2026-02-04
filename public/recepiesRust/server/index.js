@@ -317,6 +317,57 @@ const runOptimizer = (problem) => new Promise((resolve, reject) => {
     );
 });
 
+/** Build user-facing guidance for solver failures based on context + stderr content. */
+const mapCalculationError = (errorMessage, context) => {
+    const normalized = `${errorMessage || ''}`.trim();
+    const hasInfeasible = /infeasible/i.test(normalized);
+    const hasUnbounded = /unbounded/i.test(normalized);
+    const hasNoSolution = /no solution found/i.test(normalized);
+
+    if (hasUnbounded) {
+        if (context.useIngredientsToMax && context.limits.length > 0) {
+            return {
+                status: 422,
+                error: 'Max mode cannot find a finite solution for the current limits.',
+                userMessage: 'Your request is unbounded in "Use ingredients to max" mode. Try disabling "Use ingredients to max", adding more ingredient limits, or adding optimization goals that cap key flows.',
+                details: normalized,
+            };
+        }
+
+        return {
+            status: 422,
+            error: 'The request is mathematically unbounded.',
+            userMessage: 'The calculator cannot find a finite optimum for this request. Add stricter limits, provide a fixed output amount, or adjust optimization goals.',
+            details: normalized,
+        };
+    }
+
+    if (hasInfeasible || hasNoSolution) {
+        if (context.limits.length > 0) {
+            return {
+                status: 422,
+                error: 'No feasible plan with current ingredient limits.',
+                userMessage: 'The current ingredient limits and recipe selections conflict. Increase one or more limits, switch selected recipes, or reduce target output.',
+                details: normalized,
+            };
+        }
+
+        return {
+            status: 422,
+            error: 'No feasible plan for this request.',
+            userMessage: 'The selected output, recipes, and goals cannot be satisfied together. Try a smaller output or different recipe selections/goals.',
+            details: normalized,
+        };
+    }
+
+    return {
+        status: 500,
+        error: 'Calculation failed.',
+        userMessage: 'The calculator failed unexpectedly. Please retry or adjust your request.',
+        details: normalized || 'Unknown calculation error',
+    };
+};
+
 /** Find recipe in solved plan by checking which recipe outputs the requested item. */
 const findRecipeForItem = (plan, itemName) => {
     const matches = [];
@@ -479,6 +530,28 @@ const buildRecipeOptions = (plan, targetItem) => {
     return recipeOptions;
 };
 
+/** Build compact top-level statistics summary from optimizer output. */
+const buildStatistics = (plan) => {
+    const stats = {
+        recipeCount: Object.keys(plan.recipes || {}).length,
+        itemCount: Object.keys(plan.items || {}).length,
+        totalMachineCount: formatRate(plan.total_machine_count),
+        powerConsumption: formatRate(plan.power_consumption),
+    };
+
+    if (plan.net_power_consumption !== undefined) {
+        stats.netPowerConsumption = formatRate(plan.net_power_consumption);
+    }
+    if (plan.power_production !== undefined) {
+        stats.powerProduction = formatRate(plan.power_production);
+    }
+    if (plan.augmented_power_production !== undefined) {
+        stats.augmentedPowerProduction = formatRate(plan.augmented_power_production);
+    }
+
+    return stats;
+};
+
 /** Main calculation endpoint consumed by Laravel controller. */
 app.all('/run-calc', async (req, res) => {
     try {
@@ -515,7 +588,14 @@ app.all('/run-calc', async (req, res) => {
             if (!useIngredientsToMax && limits.length > 0) {
                 plan = await solve(true);
             } else {
-                throw error;
+                throw mapCalculationError(error?.message || String(error), {
+                    item,
+                    amount,
+                    limits,
+                    useIngredientsToMax,
+                    selectedRecipes,
+                    optimizationGoals,
+                });
             }
         }
 
@@ -527,10 +607,21 @@ app.all('/run-calc', async (req, res) => {
             recipeNodeArr: buildRecipeNodes(plan, item, targetRate),
             ingredientsData: buildIngredientsData(plan, item),
             recipeOptions: buildRecipeOptions(plan, item),
+            statistics: buildStatistics(plan),
         });
     } catch (error) {
         console.error('Calculation error:', error);
-        return res.status(500).json({ error: error?.message || 'Calculation failed.' });
+        const mapped = error?.userMessage
+            ? error
+            : mapCalculationError(error?.message || String(error), {
+                item: req.body?.item || req.query?.item || '',
+                amount: safeNumber(req.body?.amount ?? req.query?.amount),
+                limits: parseArrayPayload(req.body?.ingredients ?? req.query?.ingredients),
+                useIngredientsToMax: toBoolean(req.body?.useIngredientsToMax ?? req.query?.useIngredientsToMax),
+                selectedRecipes: parseObjectPayload(req.body?.selectedRecipes ?? req.query?.selectedRecipes),
+                optimizationGoals: parseArrayPayload(req.body?.optimizationGoals ?? req.query?.optimizationGoals),
+            });
+        return res.status(mapped.status || 500).json(mapped);
     }
 });
 

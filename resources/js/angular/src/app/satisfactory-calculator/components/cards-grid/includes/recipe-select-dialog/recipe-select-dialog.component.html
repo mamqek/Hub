@@ -6,10 +6,26 @@
         <mat-select [(ngModel)]="selectedRecipe" name="selectedRecipe">
             <mat-option value="">System default</mat-option>
             <mat-option *ngFor="let option of data.options" [value]="option">
-                {{ option }}
+                <div class="recipe-option-label">{{ option }}</div>
+                <small class="recipe-option-flags" *ngIf="getAlternateRecipeMeta(option) as meta">
+                    Resource: {{ flagText(meta.resourceSaving) }} •
+                    Power: {{ flagText(meta.powerSaving) }} •
+                    Space: {{ flagText(meta.spaceSaving) }} •
+                    Complex: {{ flagText(meta.lessComplex) }}
+                </small>
             </mat-option>
         </mat-select>
     </mat-form-field>
+
+    <div class="selected-recipe-meta" *ngIf="selectedRecipeMeta as meta">
+        <p class="selected-recipe-flags">
+            Resource {{ flagText(meta.resourceSaving) }} ·
+            Power {{ flagText(meta.powerSaving) }} ·
+            Space {{ flagText(meta.spaceSaving) }} ·
+            Less Complex {{ flagText(meta.lessComplex) }}
+        </p>
+        <p class="selected-recipe-desc" *ngIf="meta.description">{{ meta.description }}</p>
+    </div>
     <mat-checkbox *ngIf="data.showApplyScope" [(ngModel)]="applyToAll" name="applyToAll">
         Change for all production of this item?
     </mat-checkbox>
