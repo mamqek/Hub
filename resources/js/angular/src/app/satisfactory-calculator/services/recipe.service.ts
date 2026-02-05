@@ -31,6 +31,11 @@ export interface OptimizationGoal {
     target: string;
 }
 
+export interface FactorySettingsPayload {
+    minerLevel: number;
+    beltLevel: number;
+}
+
 export interface IngredientsData {
     input: Ingredient[];
     intermediate: Ingredient[];
@@ -42,6 +47,8 @@ export interface RecipeStatistics {
     recipeCount?: number;
     itemCount?: number;
     totalMachineCount?: string;
+    normalNodeCount?: string;
+    normalNodes?: Record<string, string>;
     powerConsumption?: string;
     netPowerConsumption?: string;
     powerProduction?: string;
@@ -92,7 +99,8 @@ export class RecipeService {
         item: string,
         amount: number,
         selectedRecipes?: Record<string, string>,
-        optimizationGoals?: OptimizationGoal[]
+        optimizationGoals?: OptimizationGoal[],
+        factorySettings?: FactorySettingsPayload
     ): Observable<RecipeResponse> {
         let params = new HttpParams()
             .set('item', item)
@@ -103,6 +111,9 @@ export class RecipeService {
         if (optimizationGoals && optimizationGoals.length > 0) {
             params = params.set('optimizationGoals', JSON.stringify(optimizationGoals.map((goal) => [goal.type, goal.target])));
         }
+        if (factorySettings) {
+            params = params.set('factorySettings', JSON.stringify(factorySettings));
+        }
         return this._httpClient.get<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipe`, { params });
     }
 
@@ -110,7 +121,8 @@ export class RecipeService {
         item: string,
         amount?: number,
         selectedRecipes?: Record<string, string>,
-        optimizationGoals?: OptimizationGoal[]
+        optimizationGoals?: OptimizationGoal[],
+        factorySettings?: FactorySettingsPayload
     ): Observable<BaseIngredientsResponse> {
         let params = new HttpParams().set('item', item);
         if (amount !== undefined) {
@@ -122,6 +134,9 @@ export class RecipeService {
         if (optimizationGoals && optimizationGoals.length > 0) {
             params = params.set('optimizationGoals', JSON.stringify(optimizationGoals.map((goal) => [goal.type, goal.target])));
         }
+        if (factorySettings) {
+            params = params.set('factorySettings', JSON.stringify(factorySettings));
+        }
 
         return this._httpClient.get<BaseIngredientsResponse>(`${environment.apiBaseUrl}/satisfactory/getBaseIngredients`, { params });
     }
@@ -132,7 +147,8 @@ export class RecipeService {
         amount?: number,
         useIngredientsToMax?: boolean,
         selectedRecipes?: Record<string, string>,
-        optimizationGoals?: OptimizationGoal[]
+        optimizationGoals?: OptimizationGoal[],
+        factorySettings?: FactorySettingsPayload
     ): Observable<RecipeResponse> {
         const body = {
             item,
@@ -141,6 +157,7 @@ export class RecipeService {
             useIngredientsToMax,
             selectedRecipes,
             optimizationGoals: optimizationGoals?.map((goal) => [goal.type, goal.target]) || [],
+            factorySettings,
         };
         return this._httpClient.post<RecipeResponse>(`${environment.apiBaseUrl}/satisfactory/getRecipeWithLimits`, body);
     }

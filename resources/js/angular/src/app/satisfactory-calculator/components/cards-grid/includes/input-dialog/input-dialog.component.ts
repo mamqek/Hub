@@ -58,6 +58,12 @@ export class InputDialogComponent implements OnInit, OnDestroy {
     selectedGoalType = 'minimize_item_input';
     goalTarget = '';
     filteredGoalTargets: string[] = [];
+    readonly metaFlags: Array<{ key: 'resourceSaving' | 'powerSaving' | 'spaceSaving' | 'lessComplex'; short: string; tooltip: string; class: string }> = [
+        { key: 'resourceSaving', short: 'R', tooltip: 'Resource saving: uses fewer raw resources', class: 'meta-resource' },
+        { key: 'powerSaving', short: 'P', tooltip: 'Power saving: lower energy usage', class: 'meta-power' },
+        { key: 'spaceSaving', short: 'S', tooltip: 'Space saving: fewer machines or footprint', class: 'meta-space' },
+        { key: 'lessComplex', short: 'C', tooltip: 'Less complex: fewer steps or inputs', class: 'meta-complex' },
+    ];
 
     readonly goalTypes: Array<{ value: string; label: string }> = [
         { value: 'maximize_item_output', label: 'Maximize item output' },
@@ -259,14 +265,15 @@ export class InputDialogComponent implements OnInit, OnDestroy {
         return this.getAlternateRecipeMeta(this.selectedMainRecipe);
     }
 
-    flagText(value: boolean | null | undefined): string {
-        if (value === true) {
-            return 'Yes';
+    isFlagTrue(value: boolean | null | undefined): boolean {
+        return value === true;
+    }
+
+    hasAnyMetaFlag(meta: AlternateRecipeMeta | null | undefined): boolean {
+        if (!meta) {
+            return false;
         }
-        if (value === false) {
-            return 'No';
-        }
-        return '-';
+        return this.metaFlags.some((flag) => this.isFlagTrue(meta[flag.key]));
     }
 
     persistState() {

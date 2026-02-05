@@ -2,7 +2,17 @@ import { Component, inject, HostListener, OnInit, OnDestroy, ElementRef, ViewChi
 import { Subscription } from 'rxjs';
 import ELK from 'elkjs/lib/elk.bundled.js';
 
-import { AlternateRecipeMeta, RecipeService, RecipeNode, RecipeResponse, IngredientsData, Ingredient, OptimizationGoal, RecipeStatistics } from '../../services/recipe.service';
+import {
+    AlternateRecipeMeta,
+    RecipeService,
+    RecipeNode,
+    RecipeResponse,
+    IngredientsData,
+    Ingredient,
+    OptimizationGoal,
+    RecipeStatistics,
+    FactorySettingsPayload,
+} from '../../services/recipe.service';
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 import { InputDialogComponent } from './includes/input-dialog/input-dialog.component';
 import {
@@ -15,7 +25,7 @@ import {
     RecipeSelectDialogResult,
 } from './includes/recipe-select-dialog/recipe-select-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { CalculatorSettings, CalculatorSettingsService } from '../../services/calculator-settings.service';
+import { CalculatorSettings, CalculatorSettingsService, FactorySettings } from '../../services/calculator-settings.service';
 import { CalculatorHistoryService, RecipeHistoryEntry } from '../../services/calculator-history.service';
 
 interface ActiveQuery {
@@ -44,6 +54,11 @@ interface RenderEdge {
     label: string;
 }
 
+interface CardStatsChange {
+    nodeId: number;
+    machineCount: number;
+}
+
 @Component({
     selector: 'cards-grid',
     templateUrl: './cards-grid.component.html',
@@ -63,10 +78,12 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         byproduct: []
     };
     statistics: RecipeStatistics = {};
+    isLoading = false;
 
     nodes: RecipeNode[] = [];
     renderedEdges: RenderEdge[] = [];
     private nodePositions = new Map<number, { x: number; y: number }>();
+    private cardMachineCounts = new Map<number, number>();
 
     contentWidth = 2000;
     contentHeight = 2000;
@@ -92,6 +109,8 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     settings: CalculatorSettings;
     historyEntries: RecipeHistoryEntry[] = [];
     currentHistoryId: string | null = null;
+    private pendingHistoryLabel: string | null = null;
+    isSummaryCollapsed = false;
 
     activeQuery: ActiveQuery = {
         item: 'supercomputer',
@@ -171,10 +190,15 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     public ngOnInit(): void {
         this.historyEntries = this.historyService.getHistory();
         this.settingsSub = this.settingsService.settings$.subscribe((next) => {
+            const previousFactory = this.settings?.factory;
             this.settings = next;
+            const factoryChanged = this.hasFactorySettingsChanged(previousFactory, next.factory);
             if (this.nodes.length) {
                 this.applyNodeColors();
                 this.cdr.markForCheck();
+            }
+            if (factoryChanged && this.activeQuery.item) {
+                this.rerunActiveQuery(false);
             }
         });
         if (!this.restoreLatestHistory()) {
@@ -201,6 +225,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         });
         dialogRef.afterClosed().subscribe((result: SettingsDialogCloseResult | undefined) => {
             if (!result?.loadHistoryId) {
+                this.historyEntries = this.historyService.getHistory();
                 return;
             }
             this.loadFromHistory(result.loadHistoryId);
@@ -209,6 +234,10 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     openHistoryFromSettings(): void {
         this.openSettingsDialog('history');
+    }
+
+    toggleSummary(): void {
+        this.isSummaryCollapsed = !this.isSummaryCollapsed;
     }
 
     @HostListener('window:resize')
@@ -476,6 +505,17 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         this.openRecipeDialogForItem(itemKey);
     }
 
+    onCardStatsChange(change: CardStatsChange): void {
+        if (!change || change.nodeId === undefined) {
+            return;
+        }
+        if (!this.nodes.some((node) => node.id === change.nodeId)) {
+            return;
+        }
+        this.cardMachineCounts.set(change.nodeId, change.machineCount);
+        this.updateLiveStatistics();
+    }
+
     private normalizeItemName(value: string): string {
         return (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
     }
@@ -487,12 +527,16 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private openRecipeDialog(itemKey: string, options: string[], sourceNode?: RecipeNode) {
+        const currentSelection = this.selectedRecipes[itemKey]
+            ?? this.findCurrentRecipeName(itemKey)
+            ?? sourceNode?.recipeName
+            ?? '';
         const dialogRef = this.dialog.open(RecipeSelectDialogComponent, {
             backdropClass: 'recipe-dialog-backdrop',
             data: {
                 item: itemKey,
                 options,
-                selected: this.selectedRecipes[itemKey] ?? '',
+                selected: currentSelection,
                 showApplyScope: Boolean(sourceNode),
                 alternateRecipeMeta: this.alternateRecipeMeta,
             },
@@ -503,9 +547,14 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                 return;
             }
             const selectedRecipe = result.selectedRecipe;
+            const previousRecipe = this.selectedRecipes[itemKey]
+                ?? this.findCurrentRecipeName(itemKey)
+                ?? sourceNode?.recipeName
+                ?? '';
+            const historyLabel = this.buildHistoryLabel(itemKey, previousRecipe, selectedRecipe);
 
             if (sourceNode && !result.applyToAll && selectedRecipe) {
-                this.rebuildSingleBranch(sourceNode, itemKey, selectedRecipe);
+                this.rebuildSingleBranch(sourceNode, itemKey, selectedRecipe, historyLabel);
                 return;
             }
 
@@ -515,7 +564,8 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                 this.selectedRecipes[itemKey] = selectedRecipe;
             }
 
-            this.rerunActiveQuery();
+            this.pendingHistoryLabel = historyLabel;
+            this.rerunActiveQuery(true);
         });
     }
 
@@ -530,7 +580,8 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             itemKey,
             this.activeQuery.amount,
             this.selectedRecipes,
-            this.activeQuery.optimizationGoals
+            this.activeQuery.optimizationGoals,
+            this.getFactorySettingsPayload()
         ).subscribe({
             next: (response) => {
                 const fetchedOptions = response?.recipeOptions?.[itemKey] ?? [];
@@ -548,12 +599,19 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         });
     }
 
-    private rebuildSingleBranch(node: RecipeNode, itemKey: string, selectedRecipe: string) {
+    private rebuildSingleBranch(node: RecipeNode, itemKey: string, selectedRecipe: string, historyLabel?: string) {
         const branchRate = Number.parseFloat(`${node.productionRate || 0}`);
         const branchAmount = Number.isFinite(branchRate) && branchRate > 0 ? branchRate : 1;
         const branchRecipes: Record<string, string> = { ...this.selectedRecipes, [itemKey]: selectedRecipe };
 
-        this.recipeService.getRecipe(itemKey, branchAmount, branchRecipes, this.activeQuery.optimizationGoals).subscribe({
+        this.isLoading = true;
+        this.recipeService.getRecipe(
+            itemKey,
+            branchAmount,
+            branchRecipes,
+            this.activeQuery.optimizationGoals,
+            this.getFactorySettingsPayload()
+        ).subscribe({
             next: (branchData: RecipeResponse) => {
                 const branchNodes = Array.isArray(branchData.recipeNodeArr) ? branchData.recipeNodeArr : [];
                 if (!branchNodes.length) {
@@ -564,9 +622,14 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                 this.recipeOptions = { ...this.recipeOptions, ...(branchData.recipeOptions ?? {}) };
                 this.alternateRecipeMeta = { ...this.alternateRecipeMeta, ...(branchData.alternateRecipeMeta ?? {}) };
                 this.ingredientsData = this.buildIngredientsDataFromNodes();
+                this.pushCurrentBoardHistory(historyLabel);
+                this.isLoading = false;
                 void this.layoutGraph();
             },
-            error: (err) => console.error('Error rebuilding branch:', err),
+            error: (err) => {
+                console.error('Error rebuilding branch:', err);
+                this.isLoading = false;
+            },
         });
     }
 
@@ -680,39 +743,65 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         };
     }
 
-    private rerunActiveQuery() {
+    private rerunActiveQuery(saveToHistory: boolean = true) {
         this.activeRequest?.unsubscribe();
+        if (!saveToHistory) {
+            this.pendingHistoryLabel = null;
+        }
         const { item, amount, ingredients, useIngredientsToMax, optimizationGoals } = this.activeQuery;
 
         if (Array.isArray(ingredients) && ingredients.length > 0) {
+            this.isLoading = true;
             this.activeRequest = this.recipeService.getRecipeWithLimits(
                 item,
                 ingredients,
                 amount,
                 useIngredientsToMax,
                 this.selectedRecipes,
-                optimizationGoals
+                optimizationGoals,
+                this.getFactorySettingsPayload()
             ).subscribe({
-                next: (data: RecipeResponse) => this.applyRecipeData(data),
-                error: (err) => console.error('Error fetching limited recipe:', err),
+                next: (data: RecipeResponse) => this.applyRecipeData(data, saveToHistory),
+                error: (err) => {
+                    console.error('Error fetching limited recipe:', err);
+                    this.isLoading = false;
+                },
             });
             return;
         }
 
-        this.activeRequest = this.recipeService.getRecipe(item, amount, this.selectedRecipes, optimizationGoals).subscribe({
-            next: (data: RecipeResponse) => this.applyRecipeData(data),
-            error: (err) => console.error('Error fetching data:', err),
+        this.isLoading = true;
+        this.activeRequest = this.recipeService.getRecipe(
+            item,
+            amount,
+            this.selectedRecipes,
+            optimizationGoals,
+            this.getFactorySettingsPayload()
+        ).subscribe({
+            next: (data: RecipeResponse) => this.applyRecipeData(data, saveToHistory),
+            error: (err) => {
+                console.error('Error fetching data:', err);
+                this.isLoading = false;
+            },
         });
     }
 
     private loadInitialRecipeWithRetry(maxAttempts: number = 3, attempt: number = 1) {
         const { item, amount, optimizationGoals } = this.activeQuery;
         this.activeRequest?.unsubscribe();
-        this.activeRequest = this.recipeService.getRecipe(item, amount, this.selectedRecipes, optimizationGoals).subscribe({
+        this.isLoading = true;
+        this.activeRequest = this.recipeService.getRecipe(
+            item,
+            amount,
+            this.selectedRecipes,
+            optimizationGoals,
+            this.getFactorySettingsPayload()
+        ).subscribe({
             next: (data: RecipeResponse) => this.applyRecipeData(data),
             error: (err) => {
                 console.error(`Initial getRecipe attempt ${attempt} failed:`, err);
                 if (attempt >= maxAttempts) {
+                    this.isLoading = false;
                     return;
                 }
                 setTimeout(() => this.loadInitialRecipeWithRetry(maxAttempts, attempt + 1), 700);
@@ -723,6 +812,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     private applyRecipeData(data: RecipeResponse, saveToHistory: boolean = true) {
         console.log('Received recipe data:', data);
         this.nodes = data.recipeNodeArr;
+        this.cardMachineCounts.clear();
         this.applyNodeColors();
         this.ingredientsData = data.ingredientsData;
         this.recipeOptions = data.recipeOptions ?? {};
@@ -730,24 +820,18 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         this.statistics = this.buildDisplayStatistics(data.statistics);
         console.log('Computed statistics:', this.statistics);
         this.selectedPanelItem = null;
+        this.isLoading = false;
         if (saveToHistory) {
-            this.historyEntries = this.historyService.push({
-                query: {
-                    item: this.activeQuery.item,
-                    amount: this.activeQuery.amount,
-                    ingredients: Array.isArray(this.activeQuery.ingredients) ? this.activeQuery.ingredients : [],
-                    useIngredientsToMax: Boolean(this.activeQuery.useIngredientsToMax),
-                    optimizationGoals: Array.isArray(this.activeQuery.optimizationGoals) ? this.activeQuery.optimizationGoals : [],
-                },
-                selectedRecipes: { ...this.selectedRecipes },
-                response: data,
-            });
-            this.currentHistoryId = this.historyEntries[0]?.id || null;
+            this.pushHistoryEntry(data, this.pendingHistoryLabel || undefined);
+            this.pendingHistoryLabel = null;
         }
         void this.layoutGraph();
     }
 
     getHistoryTooltip(entry: RecipeHistoryEntry): string {
+        if (entry.label && entry.label.trim() !== '') {
+            return entry.label;
+        }
         const normalizedItem = this.normalizeItemName(entry.query.item);
         const selectedRecipeKey = Object.keys(entry.selectedRecipes || {}).find(
             (key) => this.normalizeItemName(key) === normalizedItem
@@ -756,6 +840,75 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         return selectedRecipe
             ? `${entry.query.item} - ${selectedRecipe}`
             : entry.query.item;
+    }
+
+    private pushHistoryEntry(response: RecipeResponse, label?: string): void {
+        this.historyEntries = this.historyService.push({
+            label: label?.trim() || undefined,
+            query: {
+                item: this.activeQuery.item,
+                amount: this.activeQuery.amount,
+                ingredients: Array.isArray(this.activeQuery.ingredients) ? this.activeQuery.ingredients : [],
+                useIngredientsToMax: Boolean(this.activeQuery.useIngredientsToMax),
+                optimizationGoals: Array.isArray(this.activeQuery.optimizationGoals) ? this.activeQuery.optimizationGoals : [],
+            },
+            selectedRecipes: { ...this.selectedRecipes },
+            response,
+        });
+        this.currentHistoryId = this.historyEntries[0]?.id || null;
+    }
+
+    private pushCurrentBoardHistory(label?: string): void {
+        const current = this.buildCurrentBoardHistoryEntry();
+        if (!current) {
+            return;
+        }
+        this.historyEntries = this.historyService.push({
+            label: label?.trim() || undefined,
+            query: current.query,
+            selectedRecipes: current.selectedRecipes,
+            response: current.response,
+        });
+        this.currentHistoryId = this.historyEntries[0]?.id || null;
+    }
+
+    private resolveRecipeLabel(value: string | undefined | null): string {
+        const label = `${value || ''}`.trim();
+        return label ? label : 'Auto';
+    }
+
+    private buildHistoryLabel(itemKey: string, previousRecipe?: string | null, nextRecipe?: string | null): string {
+        const targetItem = this.activeQuery.item;
+        const prevLabel = this.resolveRecipeLabel(previousRecipe);
+        const nextLabel = this.resolveRecipeLabel(nextRecipe);
+        if (this.normalizeItemName(itemKey) === this.normalizeItemName(targetItem)) {
+            return `${targetItem}(${prevLabel} -> ${nextLabel})`;
+        }
+        return `${targetItem}(${itemKey}: ${prevLabel} -> ${nextLabel})`;
+    }
+
+    private findCurrentRecipeName(itemKey: string): string | undefined {
+        const normalizedKey = this.normalizeItemName(itemKey);
+        const node = this.nodes.find((candidate) => this.normalizeItemName(candidate.itemName) === normalizedKey);
+        const recipeName = `${node?.recipeName || ''}`.trim();
+        return recipeName || undefined;
+    }
+
+    canSelectRecipeForItem(itemName: string): boolean {
+        const normalizedKey = this.normalizeItemName(itemName);
+        const node = this.nodes.find((candidate) => this.normalizeItemName(candidate.itemName) === normalizedKey);
+        if (!node) {
+            return true;
+        }
+        if (node.isBaseMaterial) {
+            return false;
+        }
+        const recipeName = `${node.recipeName || ''}`.trim().toLowerCase();
+        if (recipeName === 'raw resource') {
+            return false;
+        }
+        const machineName = `${node.machineName || ''}`.trim().toLowerCase();
+        return !(machineName.includes('extractor') || machineName.includes('miner'));
     }
 
     private buildDisplayStatistics(source?: RecipeStatistics): RecipeStatistics {
@@ -779,6 +932,23 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         }
 
         return stats;
+    }
+
+    private updateLiveStatistics(): void {
+        const total = this.nodes.reduce((sum, node) => sum + this.resolveNodeMachineCount(node), 0);
+        this.statistics = {
+            ...(this.statistics || {}),
+            totalMachineCount: total.toFixed(2),
+        };
+    }
+
+    private resolveNodeMachineCount(node: RecipeNode): number {
+        const override = this.cardMachineCounts.get(node.id);
+        if (override !== undefined) {
+            return override;
+        }
+        const raw = Number.parseFloat(`${node.machineCount || 0}`);
+        return Number.isFinite(raw) ? raw : 0;
     }
 
     private applyNodeColors() {
@@ -906,6 +1076,22 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     get suppressCardHints(): boolean {
         return this.isNodeDragging || this.isPanning || this.isShowingDirection;
+    }
+
+    private getFactorySettingsPayload(): FactorySettingsPayload {
+        return {
+            minerLevel: this.settings?.factory?.minerLevel || 1,
+            beltLevel: this.settings?.factory?.beltLevel || 1,
+        };
+    }
+
+    private hasFactorySettingsChanged(previous?: FactorySettings, next?: FactorySettings): boolean {
+        if (!previous || !next) {
+            return false;
+        }
+
+        return previous.minerLevel !== next.minerLevel
+            || previous.beltLevel !== next.beltLevel;
     }
 
     private updateEdgeGeometry() {

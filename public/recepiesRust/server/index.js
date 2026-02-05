@@ -35,6 +35,29 @@ const ITEMS_PATH = path.join(OPTIMIZER_ROOT, 'items.json');
 
 // Solver baseline. Alternates are opt-in via selectedRecipes.
 const BASE_INCLUDED_RECIPE_GROUPS = ['default', 'extraction'];
+const MINER_GROUP_BY_LEVEL = {
+    1: 'miner_mk1',
+    2: 'miner_mk2',
+    3: 'miner_mk3',
+};
+const BELT_CAPACITY_BY_LEVEL = {
+    1: 60,
+    2: 120,
+    3: 270,
+    4: 480,
+    5: 780,
+    6: 1200,
+};
+const NORMAL_MINER_BASE_RATE_BY_LEVEL = {
+    1: 60,
+    2: 120,
+    3: 240,
+};
+const DEFAULT_FACTORY_SETTINGS = {
+    minerLevel: 1,
+    beltLevel: 1,
+};
+const LARGE_NODE_POOL = 1000000;
 
 /** Strip comments and trailing commas so JSON5-like files parse safely. */
 const sanitizeJson = (text) => {
@@ -59,6 +82,19 @@ const safeNumber = (value) => {
 
 /** Format rates to 2 decimals for frontend consistency. */
 const formatRate = (value) => safeNumber(value).toFixed(2);
+
+/** Snap values that are effectively integers to avoid noisy machine counts. */
+const snapNearInteger = (value, epsilon = 1e-2) => {
+    const num = safeNumber(value);
+    const rounded = Math.round(num);
+    return Math.abs(num - rounded) <= epsilon ? rounded : num;
+};
+
+/** Format machine counts, snapping near-integers to whole numbers. */
+const formatCount = (value) => {
+    const snapped = snapNearInteger(value);
+    return Number.isInteger(snapped) ? `${snapped}` : safeNumber(snapped).toFixed(2);
+};
 
 /** Normalize names for case-insensitive lookup. */
 const normalizeName = (value) => `${value || ''}`.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -106,6 +142,34 @@ const toBoolean = (value) => {
     return false;
 };
 
+/** Normalize factory-level extraction settings used by backend defaults. */
+const normalizeFactorySettings = (value) => {
+    const parsed = parseObjectPayload(value);
+    const minerCandidate = safeNumber(parsed.minerLevel);
+    const beltCandidate = safeNumber(parsed.beltLevel);
+
+    const minerLevel = minerCandidate === 2 || minerCandidate === 3 ? minerCandidate : 1;
+    const beltLevel = beltCandidate >= 1 && beltCandidate <= 6 ? Math.floor(beltCandidate) : 1;
+
+    return { minerLevel, beltLevel };
+};
+
+const buildFactoryExtractionSettings = (factorySettings) => {
+    const normalized = normalizeFactorySettings(factorySettings);
+    const minerGroup = MINER_GROUP_BY_LEVEL[normalized.minerLevel] || MINER_GROUP_BY_LEVEL[DEFAULT_FACTORY_SETTINGS.minerLevel];
+    const beltCapacity = BELT_CAPACITY_BY_LEVEL[normalized.beltLevel] || BELT_CAPACITY_BY_LEVEL[DEFAULT_FACTORY_SETTINGS.beltLevel];
+    const normalNodeBaseRate = NORMAL_MINER_BASE_RATE_BY_LEVEL[normalized.minerLevel] || NORMAL_MINER_BASE_RATE_BY_LEVEL[DEFAULT_FACTORY_SETTINGS.minerLevel];
+    const maxClockSpeed = Math.max(0.01, Math.min(2.5, beltCapacity / normalNodeBaseRate));
+
+    return {
+        ...normalized,
+        minerGroup,
+        beltCapacity,
+        normalNodeBaseRate,
+        maxClockSpeed,
+    };
+};
+
 const recipeData = loadJsonDataset(RECIPES_PATH);
 const allItems = loadJsonDataset(ITEMS_PATH);
 
@@ -127,8 +191,63 @@ const recipeMeta = new Map(Object.entries(recipeData).map(([name, data]) => [
         inputs: data.inputs || {},
         outputs: data.outputs || {},
         tags: data.tags || [],
+        nodeType: data.node_type || null,
     },
 ]));
+
+const NORMAL_EXTRACTION_NODE_LIMITS = (() => {
+    const limits = {};
+    for (const data of Object.values(recipeData)) {
+        const tags = Array.isArray(data.tags) ? data.tags : [];
+        const nodeType = typeof data.node_type === 'string' ? data.node_type : '';
+        if (!tags.includes('extraction')) {
+            continue;
+        }
+        if (!nodeType.startsWith('Normal ')) {
+            continue;
+        }
+        limits[nodeType] = LARGE_NODE_POOL;
+    }
+    return limits;
+})();
+
+const MINER_NORMAL_OUTPUT_RATE_BY_GROUP = (() => {
+    const byGroup = {
+        miner_mk1: {},
+        miner_mk2: {},
+        miner_mk3: {},
+    };
+
+    for (const data of Object.values(recipeData)) {
+        const tags = Array.isArray(data.tags) ? data.tags : [];
+        const nodeType = typeof data.node_type === 'string' ? data.node_type : '';
+        if (!nodeType.startsWith('Normal ')) {
+            continue;
+        }
+
+        const minerTag = tags.find((tag) => tag in byGroup);
+        if (!minerTag) {
+            continue;
+        }
+
+        const outputs = data.outputs || {};
+        const outputEntries = Object.entries(outputs);
+        if (!outputEntries.length) {
+            continue;
+        }
+
+        const [outputItem, outputQtyRaw] = outputEntries[0];
+        const outputQty = safeNumber(outputQtyRaw);
+        const recipeTime = safeNumber(data.time);
+        if (outputQty <= 0 || recipeTime <= 0) {
+            continue;
+        }
+
+        byGroup[minerTag][outputItem] = outputQty * 60 / recipeTime;
+    }
+
+    return byGroup;
+})();
 
 /** Map each output item to every recipe that can produce it. */
 const outputRecipesMap = (() => {
@@ -196,16 +315,30 @@ const rawInputs = computeRawInputs(BASE_INCLUDED_RECIPE_GROUPS);
  * - Baseline: default + extraction groups.
  * - Selected recipes: explicitly included, alternatives for same output excluded.
  */
-const buildProblem = ({ item, amount, limits, useMax, selectedRecipes, optimizationGoals }) => {
+const buildProblem = ({ item, amount, limits, useMax, selectedRecipes, optimizationGoals, factorySettings }) => {
     const canonicalItem = resolveItemName(item);
     const selectedMap = parseObjectPayload(selectedRecipes);
+    const extractionSettings = buildFactoryExtractionSettings(factorySettings);
     const excludedRecipes = new Set();
     const problem = {
         included_recipes: [...BASE_INCLUDED_RECIPE_GROUPS],
         excluded_recipes: [],
         input_items: {},
         output_items: {},
+        nodes: { ...NORMAL_EXTRACTION_NODE_LIMITS },
+        overclocking: {
+            [extractionSettings.minerGroup]: {
+                min_clock_speed: 0.01,
+                max_clock_speed: extractionSettings.maxClockSpeed,
+            },
+        },
     };
+
+    for (const minerGroup of Object.values(MINER_GROUP_BY_LEVEL)) {
+        if (minerGroup !== extractionSettings.minerGroup) {
+            excludedRecipes.add(minerGroup);
+        }
+    }
 
     for (const raw of rawInputs) {
         problem.input_items[raw] = 'unlimited';
@@ -428,8 +561,12 @@ const buildRecipeNodes = (plan, targetItem, targetRate) => {
 
         const outputRate = safeNumber(recipePlan.outputs?.[itemName]);
         const machineCountTotal = safeNumber(recipePlan.machine_count);
-        const scale = outputRate > 0 ? requiredRate / outputRate : 0;
-        node.machineCount = formatRate(outputRate > 0 ? machineCountTotal * scale : machineCountTotal);
+        let scale = outputRate > 0 ? requiredRate / outputRate : 0;
+        if (Math.abs(scale - 1) <= 1e-3) {
+            scale = 1;
+        }
+        const scaledMachineCount = outputRate > 0 ? machineCountTotal * scale : machineCountTotal;
+        node.machineCount = formatCount(scaledMachineCount);
 
         nodes.push(node);
 
@@ -530,12 +667,57 @@ const buildRecipeOptions = (plan, targetItem) => {
     return recipeOptions;
 };
 
+const buildNormalNodeStatistics = (plan, factorySettings) => {
+    const extractionSettings = buildFactoryExtractionSettings(factorySettings);
+    const minerRates = MINER_NORMAL_OUTPUT_RATE_BY_GROUP[extractionSettings.minerGroup] || {};
+    const nodeCountsByItem = {};
+    let totalNodeCount = 0;
+
+    for (const [itemName, itemPlan] of Object.entries(plan.items || {})) {
+        const baseRate = safeNumber(minerRates[itemName]);
+        if (baseRate <= 0) {
+            continue;
+        }
+
+        const produced = safeNumber(itemPlan?.produced);
+        const consumed = safeNumber(itemPlan?.consumed);
+        const netInputRequired = Math.max(consumed - produced, 0);
+        if (netInputRequired <= 0) {
+            continue;
+        }
+
+        const beltLimitedRate = Math.min(baseRate * 2.5, extractionSettings.beltCapacity);
+        if (beltLimitedRate <= 0) {
+            continue;
+        }
+
+        const requiredNodes = netInputRequired / beltLimitedRate;
+        nodeCountsByItem[itemName] = (nodeCountsByItem[itemName] || 0) + requiredNodes;
+        totalNodeCount += requiredNodes;
+    }
+
+    const sortedNodeCounts = Object.entries(nodeCountsByItem)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .reduce((acc, [itemName, count]) => {
+            acc[itemName] = formatRate(count);
+            return acc;
+        }, {});
+
+    return {
+        total: formatRate(totalNodeCount),
+        byItem: sortedNodeCounts,
+    };
+};
+
 /** Build compact top-level statistics summary from optimizer output. */
-const buildStatistics = (plan) => {
+const buildStatistics = (plan, factorySettings) => {
+    const nodeStats = buildNormalNodeStatistics(plan, factorySettings);
     const stats = {
         recipeCount: Object.keys(plan.recipes || {}).length,
         itemCount: Object.keys(plan.items || {}).length,
         totalMachineCount: formatRate(plan.total_machine_count),
+        normalNodeCount: nodeStats.total,
+        normalNodes: nodeStats.byItem,
         powerConsumption: formatRate(plan.power_consumption),
     };
 
@@ -571,13 +753,14 @@ app.all('/run-calc', async (req, res) => {
         const useIngredientsToMax = toBoolean(params.useIngredientsToMax);
         const selectedRecipes = parseObjectPayload(params.selectedRecipes);
         const optimizationGoals = parseArrayPayload(params.optimizationGoals);
+        const factorySettings = normalizeFactorySettings(params.factorySettings);
 
         console.log(
-            `Calculating plan for item="${item}", amount=${amount}, useIngredientsToMax=${useIngredientsToMax}`
+            `Calculating plan for item="${item}", amount=${amount}, useIngredientsToMax=${useIngredientsToMax}, minerMk=${factorySettings.minerLevel}, beltMk=${factorySettings.beltLevel}`
         );
 
         const solve = async (useMax) => {
-            const problem = buildProblem({ item, amount, limits, useMax, selectedRecipes, optimizationGoals });
+            const problem = buildProblem({ item, amount, limits, useMax, selectedRecipes, optimizationGoals, factorySettings });
             return runOptimizer(problem);
         };
 
@@ -595,6 +778,7 @@ app.all('/run-calc', async (req, res) => {
                     useIngredientsToMax,
                     selectedRecipes,
                     optimizationGoals,
+                    factorySettings,
                 });
             }
         }
@@ -607,7 +791,7 @@ app.all('/run-calc', async (req, res) => {
             recipeNodeArr: buildRecipeNodes(plan, item, targetRate),
             ingredientsData: buildIngredientsData(plan, item),
             recipeOptions: buildRecipeOptions(plan, item),
-            statistics: buildStatistics(plan),
+            statistics: buildStatistics(plan, factorySettings),
         });
     } catch (error) {
         console.error('Calculation error:', error);
@@ -620,6 +804,7 @@ app.all('/run-calc', async (req, res) => {
                 useIngredientsToMax: toBoolean(req.body?.useIngredientsToMax ?? req.query?.useIngredientsToMax),
                 selectedRecipes: parseObjectPayload(req.body?.selectedRecipes ?? req.query?.selectedRecipes),
                 optimizationGoals: parseArrayPayload(req.body?.optimizationGoals ?? req.query?.optimizationGoals),
+                factorySettings: normalizeFactorySettings(req.body?.factorySettings ?? req.query?.factorySettings),
             });
         return res.status(mapped.status || 500).json(mapped);
     }

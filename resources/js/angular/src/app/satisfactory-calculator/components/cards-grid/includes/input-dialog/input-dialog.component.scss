@@ -79,6 +79,51 @@
     line-height: 1.2;
 }
 
+.meta-icons {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.meta-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.08);
+    color: #eaf7f6;
+}
+
+.meta-icon.meta-resource {
+    background: rgba(72, 199, 116, 0.18);
+    border-color: rgba(72, 199, 116, 0.45);
+    color: #b7f3ce;
+}
+
+.meta-icon.meta-power {
+    background: rgba(242, 198, 109, 0.2);
+    border-color: rgba(242, 198, 109, 0.5);
+    color: #ffe2a8;
+}
+
+.meta-icon.meta-space {
+    background: rgba(110, 203, 255, 0.18);
+    border-color: rgba(110, 203, 255, 0.45);
+    color: #c7ecff;
+}
+
+.meta-icon.meta-complex {
+    background: rgba(255, 159, 159, 0.18);
+    border-color: rgba(255, 159, 159, 0.45);
+    color: #ffd0d0;
+}
+
 .selected-recipe-meta {
     margin-top: -0.35rem;
     margin-bottom: 0.8rem;

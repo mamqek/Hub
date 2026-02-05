@@ -13,6 +13,7 @@ export interface HistoryQueryState {
 export interface RecipeHistoryEntry {
     id: string;
     createdAt: number;
+    label?: string;
     query: HistoryQueryState;
     selectedRecipes: Record<string, string>;
     response: RecipeResponse;
@@ -34,6 +35,7 @@ export class CalculatorHistoryService {
         const nextEntry: RecipeHistoryEntry = {
             id: this.generateId(),
             createdAt: Date.now(),
+            label: entry.label,
             query: this.clone(entry.query),
             selectedRecipes: this.clone(entry.selectedRecipes),
             response: this.clone(entry.response),
@@ -46,6 +48,7 @@ export class CalculatorHistoryService {
                 ...topEntry,
                 createdAt: Date.now(),
                 response: nextEntry.response,
+                label: nextEntry.label ?? topEntry.label,
             };
             this.sessionStore.set(HISTORY_STORE_KEY, current);
             return this.clone(current);

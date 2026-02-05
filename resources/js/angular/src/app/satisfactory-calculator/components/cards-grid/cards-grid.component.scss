@@ -8,7 +8,7 @@
     overflow: hidden;
     background-color: #163428;
     --overlay-background: #{$overlay-background};
-    --overlay-text: #ffffff;
+    --overlay-text: #eff3f5;
 
     --mat-expansion-container-background-color: var(--overlay-background);
     --mat-expansion-container-text-color: var(--overlay-text);
@@ -143,6 +143,37 @@
     }
 }
 
+.loading-indicator {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3005;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 999px;
+    background: rgba(10, 12, 15, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.loading-spinner {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #f2c66d;
+    animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 .summary-wrapper {
     flex: 1 1 auto;
     min-height: 0;
@@ -150,6 +181,59 @@
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
+    position: relative;
+    --summary-toggle-visible: 44px;
+
+    -ms-overflow-style: none;
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    
+
+}
+
+.overlay-summary {
+    position: relative;
+    transition: transform 180ms ease;
+    will-change: transform;
+}
+
+.summary-wrapper.is-collapsed .overlay-summary {
+    transform: translateX(calc(100% - var(--summary-toggle-visible)));
+}
+
+.summary-wrapper.is-collapsed .summary-toggle {
+    right: auto;
+    left: 8px;
+}
+
+.summary-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(10, 12, 15, 0.7);
+    color: var(--overlay-text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 2;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.summary-toggle:hover {
+    background: rgba(19, 24, 31, 0.85);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.summary-toggle:active {
+    transform: scale(0.96);
 }
 
 .overlay-left {

@@ -2,6 +2,7 @@
 <mat-dialog-content class="settings-content">
     <aside class="settings-sidebar">
         <button type="button" class="settings-category" [class.active]="activeCategory === 'colors'" (click)="activeCategory = 'colors'">Colors</button>
+        <button type="button" class="settings-category" [class.active]="activeCategory === 'factory'" (click)="activeCategory = 'factory'">Factory</button>
         <button type="button" class="settings-category" [class.active]="activeCategory === 'history'" (click)="activeCategory = 'history'">History</button>
         <button type="button" class="settings-category" [class.active]="activeCategory === 'importExport'" (click)="activeCategory = 'importExport'">Import / Export</button>
     </aside>
@@ -64,6 +65,31 @@
         </div>
     </section>
 
+    <section class="settings-pane" *ngIf="activeCategory === 'factory'">
+        <div class="settings-group">
+            <h3>Extraction defaults</h3>
+            <label class="settings-row">
+                <span>Miner level</span>
+                <select [(ngModel)]="settings.factory.minerLevel" name="factoryMinerLevel">
+                    <option [ngValue]="1">Mk.1</option>
+                    <option [ngValue]="2">Mk.2</option>
+                    <option [ngValue]="3">Mk.3</option>
+                </select>
+            </label>
+            <label class="settings-row">
+                <span>Belt level</span>
+                <select [(ngModel)]="settings.factory.beltLevel" name="factoryBeltLevel">
+                    <option [ngValue]="1">Mk.1 (60/min)</option>
+                    <option [ngValue]="2">Mk.2 (120/min)</option>
+                    <option [ngValue]="3">Mk.3 (270/min)</option>
+                    <option [ngValue]="4">Mk.4 (480/min)</option>
+                    <option [ngValue]="5">Mk.5 (780/min)</option>
+                    <option [ngValue]="6">Mk.6 (1200/min)</option>
+                </select>
+            </label>
+        </div>
+    </section>
+
     <section class="settings-pane" *ngIf="activeCategory === 'history'">
         <div class="settings-group">
             <h3>Previous requests</h3>
@@ -71,7 +97,31 @@
             <div class="history-list" *ngIf="historyEntries.length > 0">
                 <div class="history-row" *ngFor="let entry of historyEntries">
                     <div class="history-meta">
-                        <strong>{{ entry.query.item }}</strong>
+                        <div class="history-title-row">
+                            <ng-container *ngIf="editingHistoryId !== entry.id; else editHistoryTitle">
+                                <strong class="history-title">{{ entry.label?.trim() || entry.query.item }}</strong>
+                                <button
+                                    type="button"
+                                    mat-button
+                                    class="history-edit-button"
+                                    (click)="startEditingHistory(entry)"
+                                    aria-label="Edit name"
+                                >
+                                    &#9998;
+                                </button>
+                            </ng-container>
+                            <ng-template #editHistoryTitle>
+                                <input
+                                    type="text"
+                                    class="history-name-input history-title-input"
+                                    placeholder="Name this save"
+                                    [(ngModel)]="editingHistoryLabel"
+                                    (keydown.enter)="commitHistoryLabel(entry)"
+                                    (keydown.escape)="cancelHistoryLabel()"
+                                    (blur)="commitHistoryLabel(entry)"
+                                >
+                            </ng-template>
+                        </div>
                         <span>{{ entry.query.amount }} p/m • {{ entry.createdAt | date:'short' }}</span>
                     </div>
                     <button type="button" mat-button class="history-load-button" (click)="loadFromHistory(entry.id)">Load</button>

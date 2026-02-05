@@ -47,14 +47,22 @@
             >
                 <satisfactory-card
                     [data]="node"
+                    [allNodes]="nodes"
+                    [factorySettings]="settings.factory"
                     [isHighlighted]="isNodeHighlighted(node)"
                     [suppressHint]="suppressCardHints"
                     (selectRecipe)="openRecipeSelectorForNode(node)"
+                    (openFactorySettings)="openSettingsDialog('factory')"
+                    (statsChange)="onCardStatsChange($event)"
                     appReady
                 ></satisfactory-card>
             </div>
         </div>
     </div>
+</div>
+
+<div *ngIf="isLoading" class="loading-indicator" aria-live="polite">
+    <span class="loading-spinner"></span>
 </div>
 
 <div
@@ -107,7 +115,7 @@
             {{ isShowingDirection ? 'Showing directions' : 'Hold Space for lines direction' }}
         </button>
 
-        <div class="summary-wrapper">
+        <div class="summary-wrapper" [class.is-collapsed]="isSummaryCollapsed">
             <div
                 class="overlay-element rounded-lg summary overlay-summary"
                 (wheel)="$event.stopPropagation()"
@@ -118,6 +126,14 @@
                 [style.--mat-expansion-header-text-color]="overlayTextColor"
                 [style.--mdc-list-list-item-label-text-color]="overlayTextColor"
             >
+                <button
+                    type="button"
+                    class="summary-toggle"
+                    (click)="toggleSummary()"
+                    [attr.aria-label]="isSummaryCollapsed ? 'Show summary' : 'Hide summary'"
+                >
+                    {{ isSummaryCollapsed ? '«' : '»' }}
+                </button>
                 <mat-accordion multi class="example-headers-align">
                     <mat-expansion-panel>
                         <mat-expansion-panel-header>
@@ -125,6 +141,7 @@
                         </mat-expansion-panel-header>
                         <mat-list>
                             <mat-list-item><p matListItemTitle>Machines</p><p matListItemLine>{{ statistics.totalMachineCount ?? '-' }}</p></mat-list-item>
+                            <mat-list-item *ngIf="statistics.normalNodeCount !== undefined"><p matListItemTitle>Normal nodes</p><p matListItemLine>{{ statistics.normalNodeCount }}</p></mat-list-item>
                             <mat-list-item><p matListItemTitle>Recipes</p><p matListItemLine>{{ statistics.recipeCount ?? '-' }}</p></mat-list-item>
                             <mat-list-item><p matListItemTitle>Items</p><p matListItemLine>{{ statistics.itemCount ?? '-' }}</p></mat-list-item>
                             <mat-list-item><p matListItemTitle>Power</p><p matListItemLine>{{ statistics.powerConsumption ?? '-' }} MW</p></mat-list-item>
@@ -148,7 +165,15 @@
                                 <p  matListItemLine>
                                     <span>{{ingredient.amount}} p/m</span>
                                 </p>
-                                <button type="button" matListItemMeta class="mat-mdc-list-item-meta mdc-list-item__end summary-recipe-button" (click)="openRecipeSelectorForItem(ingredient.itemName)">Recipe</button>
+                                <button
+                                    *ngIf="canSelectRecipeForItem(ingredient.itemName)"
+                                    type="button"
+                                    matListItemMeta
+                                    class="mat-mdc-list-item-meta mdc-list-item__end summary-recipe-button"
+                                    (click)="openRecipeSelectorForItem(ingredient.itemName)"
+                                >
+                                    Recipe
+                                </button>
                             </mat-list-item>
                         }
                         </mat-list>

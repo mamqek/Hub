@@ -23,7 +23,8 @@ class RecipeController extends Controller
 
         $selectedRecipes = $this->parseSelectedRecipes($request->query('selectedRecipes'));
         $optimizationGoals = $this->parseOptimizationGoals($request->query('optimizationGoals'));
-        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals);
+        $factorySettings = $this->parseFactorySettings($request->query('factorySettings'));
+        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals, $factorySettings);
         if (isset($result['error'])) {
             return response()->json([
                 'error' => $result['error'],
@@ -61,7 +62,8 @@ class RecipeController extends Controller
         $amount = (float) ($request->query('amount') ?? 1);
         $selectedRecipes = $this->parseSelectedRecipes($request->query('selectedRecipes'));
         $optimizationGoals = $this->parseOptimizationGoals($request->query('optimizationGoals'));
-        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals);
+        $factorySettings = $this->parseFactorySettings($request->query('factorySettings'));
+        $result = $this->fetchCalcOutput($item, $amount, [], false, $selectedRecipes, $optimizationGoals, $factorySettings);
         if (isset($result['error'])) {
             return response()->json([
                 'error' => $result['error'],
@@ -101,6 +103,7 @@ class RecipeController extends Controller
         }
         $selectedRecipes = $this->parseSelectedRecipes($request->input('selectedRecipes', $request->query('selectedRecipes')));
         $optimizationGoals = $this->parseOptimizationGoals($request->input('optimizationGoals', $request->query('optimizationGoals')));
+        $factorySettings = $this->parseFactorySettings($request->input('factorySettings', $request->query('factorySettings')));
 
         $rawIngredients = $request->input('ingredients', $request->query('ingredients'));
         if (is_string($rawIngredients)) {
@@ -112,7 +115,7 @@ class RecipeController extends Controller
         }
 
         $amount = $requestedAmount !== null ? (float) $requestedAmount : 1.0;
-        $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes, $optimizationGoals);
+        $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes, $optimizationGoals, $factorySettings);
         if (isset($boundedResult['error'])) {
             return response()->json([
                 'error' => $boundedResult['error'],
@@ -156,7 +159,8 @@ class RecipeController extends Controller
         array $ingredients = [],
         bool $useIngredientsToMax = false,
         array $selectedRecipes = [],
-        array $optimizationGoals = []
+        array $optimizationGoals = [],
+        array $factorySettings = []
     ): array {
         $calcServiceUrl = env('CALC_SERVICE_URL');
         if (!$calcServiceUrl) {
@@ -177,6 +181,9 @@ class RecipeController extends Controller
         }
         if ($optimizationGoals) {
             $payload['optimizationGoals'] = $optimizationGoals;
+        }
+        if ($factorySettings) {
+            $payload['factorySettings'] = $factorySettings;
         }
 
         $response = Http::post($calcServiceUrl . 'run-calc', $payload);
@@ -224,6 +231,34 @@ class RecipeController extends Controller
         }
 
         return [];
+    }
+
+    protected function parseFactorySettings($value): array {
+        if (is_string($value) && trim($value) !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded;
+            }
+        }
+
+        if (!is_array($value)) {
+            $value = [];
+        }
+
+        $minerLevel = (int) ($value['minerLevel'] ?? 1);
+        if (!in_array($minerLevel, [1, 2, 3], true)) {
+            $minerLevel = 1;
+        }
+
+        $beltLevel = (int) ($value['beltLevel'] ?? 1);
+        if ($beltLevel < 1 || $beltLevel > 6) {
+            $beltLevel = 1;
+        }
+
+        return [
+            'minerLevel' => $minerLevel,
+            'beltLevel' => $beltLevel,
+        ];
     }
 
     protected function normalizeOptimizationGoals(array $goals): array {

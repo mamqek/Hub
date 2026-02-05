@@ -18,22 +18,34 @@
             <mat-option *ngFor="let option of mainRecipeOptions" [value]="option">
               <div class="recipe-option-label">{{ option }}</div>
               <small class="recipe-option-flags" *ngIf="getAlternateRecipeMeta(option) as meta">
-                Resource: {{ flagText(meta.resourceSaving) }} •
-                Power: {{ flagText(meta.powerSaving) }} •
-                Space: {{ flagText(meta.spaceSaving) }} •
-                Complex: {{ flagText(meta.lessComplex) }}
+                <span class="meta-icons" *ngIf="hasAnyMetaFlag(meta)">
+                  <ng-container *ngFor="let flag of metaFlags">
+                    <span
+                      *ngIf="isFlagTrue(meta[flag.key])"
+                      class="meta-icon {{ flag.class }}"
+                      [attr.title]="flag.tooltip"
+                    >
+                      {{ flag.short }}
+                    </span>
+                  </ng-container>
+                </span>
               </small>
             </mat-option>
           </mat-select>
         </mat-form-field>
 
         <div class="selected-recipe-meta" *ngIf="selectedMainRecipeMeta as meta">
-          <p class="selected-recipe-flags">
-            Resource {{ flagText(meta.resourceSaving) }} ·
-            Power {{ flagText(meta.powerSaving) }} ·
-            Space {{ flagText(meta.spaceSaving) }} ·
-            Less Complex {{ flagText(meta.lessComplex) }}
-          </p>
+          <div class="meta-icons selected-recipe-flags" *ngIf="hasAnyMetaFlag(meta)">
+            <ng-container *ngFor="let flag of metaFlags">
+              <span
+                *ngIf="isFlagTrue(meta[flag.key])"
+                class="meta-icon {{ flag.class }}"
+                [attr.title]="flag.tooltip"
+              >
+                {{ flag.short }}
+              </span>
+            </ng-container>
+          </div>
           <p class="selected-recipe-desc" *ngIf="meta.description">{{ meta.description }}</p>
         </div>
 

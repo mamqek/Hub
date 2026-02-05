@@ -20,8 +20,14 @@ export interface ColorSettings {
     };
 }
 
+export interface FactorySettings {
+    minerLevel: number;
+    beltLevel: number;
+}
+
 export interface CalculatorSettings {
     colors: ColorSettings;
+    factory: FactorySettings;
 }
 
 const DEFAULT_SETTINGS: CalculatorSettings = {
@@ -31,8 +37,8 @@ const DEFAULT_SETTINGS: CalculatorSettings = {
             arrowsColor: '#f2f200',
         },
         overlay: {
-            backgroundColor: '#11251b',
-            textColor: '#ffffff',
+            backgroundColor: 'rgba(19, 24, 29, 0.75)',
+            textColor: '#eff3f5',
         },
         nodes: {
             disableResourceColors: false,
@@ -67,6 +73,10 @@ const DEFAULT_SETTINGS: CalculatorSettings = {
             ],
         },
     },
+    factory: {
+        minerLevel: 1,
+        beltLevel: 1,
+    },
 };
 
 const SETTINGS_STORE_KEY = 'calculator.settings';
@@ -96,6 +106,20 @@ export class CalculatorSettingsService {
         const incoming = (value || {}) as Partial<CalculatorSettings>;
         const incomingColors = (incoming.colors || {}) as Partial<ColorSettings>;
         const incomingNodes = (incomingColors.nodes || {}) as Partial<ColorSettings['nodes']>;
+        const incomingFactory = (incoming.factory || {}) as Partial<FactorySettings>;
+        const incomingOverlay = (incomingColors.overlay || {}) as Partial<ColorSettings['overlay']>;
+        const legacyOverlayBackground = '#11251b';
+        const legacyOverlayText = '#ffffff';
+        const resolvedOverlayBackground = this.normalizeOverlayColor(
+            incomingOverlay.backgroundColor,
+            legacyOverlayBackground,
+            DEFAULT_SETTINGS.colors.overlay.backgroundColor
+        );
+        const resolvedOverlayText = this.normalizeOverlayColor(
+            incomingOverlay.textColor,
+            legacyOverlayText,
+            DEFAULT_SETTINGS.colors.overlay.textColor
+        );
 
         return {
             colors: {
@@ -106,6 +130,8 @@ export class CalculatorSettingsService {
                 overlay: {
                     ...DEFAULT_SETTINGS.colors.overlay,
                     ...(incomingColors.overlay || {}),
+                    backgroundColor: resolvedOverlayBackground,
+                    textColor: resolvedOverlayText,
                 },
                 nodes: {
                     ...DEFAULT_SETTINGS.colors.nodes,
@@ -119,7 +145,38 @@ export class CalculatorSettingsService {
                         : [...DEFAULT_SETTINGS.colors.nodes.layerColors],
                 },
             },
+            factory: {
+                minerLevel: this.normalizeMinerLevel(incomingFactory.minerLevel),
+                beltLevel: this.normalizeBeltLevel(incomingFactory.beltLevel),
+            },
         };
+    }
+
+    private normalizeMinerLevel(value: number | undefined): number {
+        const candidate = Number(value);
+        if (candidate === 2 || candidate === 3) {
+            return candidate;
+        }
+        return DEFAULT_SETTINGS.factory.minerLevel;
+    }
+
+    private normalizeBeltLevel(value: number | undefined): number {
+        const candidate = Number(value);
+        if (candidate >= 1 && candidate <= 6) {
+            return Math.floor(candidate);
+        }
+        return DEFAULT_SETTINGS.factory.beltLevel;
+    }
+
+    private normalizeOverlayColor(value: string | undefined, legacyDefault: string, nextDefault: string): string {
+        if (!value) {
+            return nextDefault;
+        }
+        const normalized = value.trim().toLowerCase();
+        if (normalized === legacyDefault.toLowerCase()) {
+            return nextDefault;
+        }
+        return value;
     }
 
     private clone<T>(value: T): T {

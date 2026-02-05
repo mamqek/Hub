@@ -11,20 +11,24 @@
     (mouseenter)="showHint()"
     (mouseleave)="hideHint()"
 >
+    <div class="quick-info">
+        <span class="quick-pill">{{ machineCountDisplay }}x</span>
+        <span *ngIf="isExtractorCard" class="quick-pill">N {{ selectedNodeCountDisplay }}</span>
+        <span class="quick-pill">{{ outputRateDisplay }}/min</span>
+    </div>
+
     <img class="card-image" basePath [path]="machineImageUrl" draggable="false"/>
 
-    <div class="circle produced-item">
+    <div class="item-badge produced-item">
         <img basePath [path]="getItemImageUrl(data.itemName)" draggable="false"/>
     </div>
-    <div *ngIf="data.byproducts" class="byproduct-items">
-        <ng-container *ngFor="let byproduct of data.byproducts; let i = index">
-            <div class="circle byproduct-item" [ngStyle]="{
-                'right': 'calc(-15% + ' + i * 15 + 'px)',
-            }" >
+    <div *ngIf="data.byproducts?.length" class="byproduct-rail">
+        <ng-container *ngFor="let byproduct of data.byproducts; trackBy: trackByItemName">
+            <div class="item-badge byproduct-item">
                 <img basePath [path]="getItemImageUrl(byproduct.itemName)" draggable="false"/>
             </div>
         </ng-container>
-    </div>  
+    </div>
 </div>
 
 <ng-template
@@ -35,22 +39,151 @@
     [cdkConnectedOverlayPositions]="hintPositions"
 >
     <div class="card-hint rounded-lg" (mouseenter)="showHint()" (mouseleave)="hideHint()">
-        <h5 class="card-hint-title">{{data.itemName}}</h5>
-        <p class="card-hint-text">
-            Recipe: <span>{{data.recipeName || 'Unknown'}}</span>
-        </p>
-        <p class="card-hint-text">
-            Produced in: <span>{{data.machineName}}</span>
-        </p>
-        <p class="card-hint-text">
-            <span>{{data.machineCount}}</span> machines required
-        </p>
-        <!-- TODO: make this string in ts and take into extractor cases. set min 1 on pure - max 4 on unpure nodes -->
-        <p *ngIf="data.machineCount % 1 !== 0">
-            {{ data.machineCount | number:'1.0-0' }} full-power machines and 
-            1 underclocked to {{ (data.machineCount % 1 * 100) | number:'1.0-0' }}%.
-        </p>
-        <p class="card-hint-text">Produces <span>{{data.productionRate}} p/m </span></p>
-        <button type="button" class="select-recipe-button" (click)="onSelectRecipeClick($event)">Select recipe</button>
+        <div class="hint-header">
+            <div class="hint-item">
+                <div class="hint-item-icon">
+                    <img basePath [path]="getItemImageUrl(data.itemName)" [alt]="data.itemName" draggable="false"/>
+                </div>
+                <div class="hint-item-copy">
+                    <h5 class="card-hint-title">{{data.itemName}}</h5>
+                    <p class="card-hint-subtitle">{{data.recipeName || 'Unknown recipe'}}</p>
+                </div>
+            </div>
+            <button
+                *ngIf="!isExtractorCard"
+                type="button"
+                class="select-recipe-button"
+                (click)="onSelectRecipeClick($event)"
+            >
+                Select recipe
+            </button>
+        </div>
+
+        <div class="hint-kpis">
+            <div class="hint-kpi">
+                <p>Machines</p>
+                <strong>{{ machineCountDisplay }}</strong>
+                <small *ngIf="underclockDisplay">{{ underclockDisplay }}</small>
+            </div>
+            <div *ngIf="isExtractorCard" class="hint-kpi">
+                <p>Nodes</p>
+                <strong>{{ selectedNodeCountDisplay }}</strong>
+            </div>
+            <div class="hint-kpi">
+                <p>Produces</p>
+                <strong>{{ outputRateDisplay }} / min</strong>
+            </div>
+            <div class="hint-kpi machine-kpi" [class.is-extractor]="isExtractorCard">
+                <p>Machine</p>
+                <div class="machine-kpi-row">
+                    <strong>{{machineLabelDisplay}}</strong>
+                    <button *ngIf="isExtractorCard" type="button" class="factory-edit-button" title="Edit factory settings" (click)="onOpenFactorySettingsClick($event)">✎</button>
+                </div>
+            </div>
+        </div>
+
+        <div *ngIf="!isExtractorCard" class="hint-flow">
+            <section class="flow-column">
+                <h6 class="flow-title">Takes in</h6>
+                <ul *ngIf="inputFlowItems.length; else noInputItems" class="flow-list">
+                    <li *ngFor="let ingredient of inputFlowItems; trackBy: trackByItemName" class="flow-row">
+                        <img basePath [path]="getItemImageUrl(ingredient.itemName)" [alt]="ingredient.itemName" draggable="false"/>
+                        <span class="flow-item-name">{{ingredient.itemName}}</span>
+                        <span class="flow-rate">{{ingredient.rateLabel}}</span>
+                    </li>
+                </ul>
+                <ng-template #noInputItems>
+                    <p class="flow-empty">No recipe inputs</p>
+                </ng-template>
+            </section>
+
+            <section class="flow-column">
+                <h6 class="flow-title">Byproduct</h6>
+                <ul *ngIf="byproductFlowItems.length; else noByproductItems" class="flow-list">
+                    <li *ngFor="let byproduct of byproductFlowItems; trackBy: trackByItemName" class="flow-row">
+                        <img basePath [path]="getItemImageUrl(byproduct.itemName)" [alt]="byproduct.itemName" draggable="false"/>
+                        <span class="flow-item-name">{{byproduct.itemName}}</span>
+                        <span class="flow-rate">{{byproduct.rateLabel}}</span>
+                    </li>
+                </ul>
+                <ng-template #noByproductItems>
+                    <p class="flow-empty">No byproduct</p>
+                </ng-template>
+            </section>
+        </div>
+
+        <div *ngIf="isExtractorCard" class="node-allocation">
+            <h6 class="node-allocation-title">Node setup</h6>
+            <div class="node-allocation-grid">
+                <label class="node-field">
+                    <span>Impure</span>
+                    <input type="number" min="0" step="1" [value]="nodeDistribution.impure" (input)="onNodeCountInput('impure', $event)">
+                </label>
+                <label class="node-field">
+                    <span>Normal</span>
+                    <input type="number" min="0" step="1" [value]="nodeDistribution.normal" (input)="onNodeCountInput('normal', $event)">
+                </label>
+                <label class="node-field">
+                    <span>Pure</span>
+                    <input type="number" min="0" step="1" [value]="nodeDistribution.pure" (input)="onNodeCountInput('pure', $event)">
+                </label>
+            </div>
+            <p class="node-allocation-meta">
+                Capacity: <strong>{{selectedNodeCapacityDisplay}} / min</strong> • Needed (all normal): <strong>{{requiredNodeCountDisplay}}</strong>
+            </p>
+            <p class="node-allocation-meta">
+                Belt cap: <strong>Mk.{{beltLevelDisplay}}</strong> ({{beltCapDisplay}} / min per node)
+            </p>
+            <div *ngIf="showMissingInput" class="node-warning">
+                <strong>{{missingInputDisplay}}</strong>
+                <span>{{missingReasonDisplay}}</span>
+            </div>
+        </div>
+
+        <div class="hint-overclock">
+            <div class="overclock-head">
+                <h6 class="overclock-title">Clock speed</h6>
+                <strong>{{effectiveOverclockDisplay}}%</strong>
+            </div>
+
+            <input
+                class="overclock-slider"
+                type="range"
+                min="1"
+                max="250"
+                step="1"
+                [value]="effectiveOverclockPercent"
+                (input)="onOverclockInput($event)"
+            >
+
+            <div class="overclock-breakpoints">
+                <span
+                    *ngFor="let marker of overclockMarkers"
+                    [style.left.%]="marker.offsetPercent"
+                >
+                    {{marker.label}}
+                </span>
+            </div>
+
+            <div *ngIf="!isExtractorCard" class="overclock-count">
+                <label>
+                    <span>Machines</span>
+                    <input
+                        type="number"
+                        [min]="machineCountMin"
+                        [max]="machineCountMax"
+                        [value]="machineCountInput"
+                        (input)="onMachineCountInput($event)"
+                    >
+                </label>
+                <small>min {{ machineCountMin }} · max {{ machineCountMax }}</small>
+            </div>
+
+            <div class="overclock-meta">
+                <p>Machines: <strong>{{machineCountDisplay}}</strong></p>
+                <p>Power shards: <strong>{{shardCountDisplay}}</strong></p>
+                <p class="overclock-plan">{{machinePlanDisplay}}</p>
+            </div>
+        </div>
     </div>
 </ng-template>

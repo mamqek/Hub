@@ -8,7 +8,7 @@ import { CalculatorSettings, CalculatorSettingsService } from '../../../../servi
 import { SessionStoreService } from '../../../../services/session-store.service';
 import { CalculatorHistoryService, RecipeHistoryEntry } from '../../../../services/calculator-history.service';
 
-export type SettingsDialogCategory = 'colors' | 'history' | 'importExport';
+export type SettingsDialogCategory = 'colors' | 'factory' | 'history' | 'importExport';
 export interface SettingsDialogData {
     initialCategory?: SettingsDialogCategory;
     historyEntries?: RecipeHistoryEntry[];
@@ -36,6 +36,9 @@ export class SettingsDialogComponent implements OnDestroy {
     exportSelection: Record<string, boolean> = {};
     importError = '';
     readonly historyExportKey = 'history';
+    editingHistoryId: string | null = null;
+    editingHistoryLabel = '';
+    private editingHistoryOriginal = '';
 
     @ViewChild('importFileInput') importFileInput?: ElementRef<HTMLInputElement>;
 
@@ -64,6 +67,9 @@ export class SettingsDialogComponent implements OnDestroy {
 
     apply(): void {
         this.settingsService.setSettings(this.settings);
+        if (this.historyEntries.length > 0) {
+            this.historyEntries = this.historyService.replaceHistory(this.historyEntries);
+        }
         this.sessionStore.remove(SETTINGS_DRAFT_STORE_KEY);
         this.finalized = true;
         this.dialogRef.close();
@@ -77,6 +83,29 @@ export class SettingsDialogComponent implements OnDestroy {
 
     loadFromHistory(historyId: string): void {
         this.dialogRef.close({ loadHistoryId: historyId } as SettingsDialogCloseResult);
+    }
+
+    startEditingHistory(entry: RecipeHistoryEntry): void {
+        this.editingHistoryId = entry.id;
+        this.editingHistoryLabel = entry.label ?? entry.query.item ?? '';
+        this.editingHistoryOriginal = this.editingHistoryLabel;
+    }
+
+    commitHistoryLabel(entry: RecipeHistoryEntry): void {
+        if (this.editingHistoryId !== entry.id) {
+            return;
+        }
+        const nextLabel = `${this.editingHistoryLabel ?? ''}`.trim();
+        entry.label = nextLabel || undefined;
+        this.editingHistoryId = null;
+        this.editingHistoryLabel = '';
+        this.editingHistoryOriginal = '';
+    }
+
+    cancelHistoryLabel(): void {
+        this.editingHistoryId = null;
+        this.editingHistoryLabel = '';
+        this.editingHistoryOriginal = '';
     }
 
     onImportClick(): void {
@@ -210,6 +239,7 @@ export class SettingsDialogComponent implements OnDestroy {
         const next = this.clone(defaults);
         const incomingColors = (incoming?.colors || {}) as any;
         const incomingNodes = incomingColors.nodes || {};
+        const incomingFactory = (incoming?.factory || {}) as any;
 
         next.colors.board = {
             ...next.colors.board,
@@ -230,7 +260,25 @@ export class SettingsDialogComponent implements OnDestroy {
                 ? [...incomingNodes.layerColors]
                 : [...next.colors.nodes.layerColors],
         };
+        next.factory = {
+            ...next.factory,
+            minerLevel: this.normalizeMinerLevel(incomingFactory.minerLevel),
+            beltLevel: this.normalizeBeltLevel(incomingFactory.beltLevel),
+        };
 
         return next;
+    }
+
+    private normalizeMinerLevel(value: unknown): number {
+        const numeric = Number(value);
+        return numeric === 2 || numeric === 3 ? numeric : 1;
+    }
+
+    private normalizeBeltLevel(value: unknown): number {
+        const numeric = Number(value);
+        if (numeric >= 1 && numeric <= 6) {
+            return Math.floor(numeric);
+        }
+        return 1;
     }
 }
