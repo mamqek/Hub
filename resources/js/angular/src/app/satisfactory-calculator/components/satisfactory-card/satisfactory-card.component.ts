@@ -1,10 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ConnectedPosition } from '@angular/cdk/overlay';
-import { RecipeNode } from '../../services/recipe.service';
-
-
 import { IngredientsService } from 'app/satisfactory-calculator/services/ingredients.service';
 import { FactorySettings } from '../../services/calculator-settings.service';
+import { BoardNode, ProducedItem } from '../../types/factory-model.types';
 
 interface FlowItem {
     itemName: string;
@@ -46,14 +44,14 @@ interface ExtractionPlan {
 })
 export class SatisfactoryCardComponent implements OnInit, OnChanges {
 
-    @Input() data!: RecipeNode;
-    @Input() allNodes: RecipeNode[] = [];
+    @Input() data!: BoardNode;
+    @Input() allNodes: BoardNode[] = [];
     @Input() factorySettings: FactorySettings = { minerLevel: 1, beltLevel: 1 };
     @Input() isHighlighted = false;
     @Input() suppressHint = false;
     @Output() selectRecipe = new EventEmitter<void>();
     @Output() openFactorySettings = new EventEmitter<void>();
-    @Output() statsChange = new EventEmitter<{ nodeId: number; machineCount: number }>();
+    @Output() statsChange = new EventEmitter<{ nodeId: string; machineCount: number }>();
 
     machineImageUrl: string = 'images/';
     isExtractorCard = false;
@@ -102,6 +100,42 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
         return this.ingredientsService.getItemImageUrl(name);
     }
 
+    get producedItemName(): string {
+        return this.data?.itemName || this.data?.label || '';
+    }
+
+    get hasProducedItem(): boolean {
+        return Boolean(this.data?.itemName);
+    }
+
+    get recipeName(): string {
+        return this.data?.recipe?.recipeName || 'Unknown';
+    }
+
+    get machineName(): string {
+        return this.data?.machine?.machineName || 'Unknown';
+    }
+
+    get machineCount(): number | null {
+        return this.data?.machine?.machineCount ?? null;
+    }
+
+    get productionRate(): string {
+        return this.data?.recipe?.productionRate || '0.00';
+    }
+
+    get byproducts(): ProducedItem[] {
+        return this.data?.recipe?.byproducts || [];
+    }
+
+    get solverIndentLevel(): number | null {
+        return this.data?.metadata?.solverIndentLevel ?? null;
+    }
+
+    get isRecipeNode(): boolean {
+        return this.data?.kind === 'recipe';
+    }
+
     showHint() {
         if (this.suppressHint) {
             return;
@@ -144,7 +178,7 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
         }
         this.overclockPercent = Math.min(250, Math.max(1, Math.round(next)));
         if (!this.isExtractorCard && this.data) {
-            const baseMachineCount = Math.max(0, Number(this.data.machineCount || 0));
+            const baseMachineCount = Math.max(0, Number(this.machineCount || 0));
             const bounds = this.getMachineCountBounds(baseMachineCount);
             const totalPercent = baseMachineCount * 100;
             const raw = this.overclockPercent > 0 ? totalPercent / this.overclockPercent : 0;
@@ -210,9 +244,9 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
         }
 
         this.machineImageUrl = this.ingredientsService.getMachineImageUrl(
-            this.data.machineName,
-            this.data.itemName,
-            this.data.isBaseMaterial
+            this.data.machine?.machineName || '',
+            this.producedItemName,
+            this.data.recipe?.isBaseMaterial
         );
     }
 
@@ -243,7 +277,7 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             return;
         }
 
-        const outputRate = this.parseRate(this.data.productionRate);
+        const outputRate = this.parseRate(this.productionRate);
         this.outputRateDisplay = this.formatRate(outputRate);
 
         if (this.isExtractorCard) {
@@ -299,7 +333,7 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             return;
         }
 
-        const baseMachineCount = Math.max(0, Number(this.data.machineCount || 0));
+        const baseMachineCount = Math.max(0, Number(this.machineCount || 0));
         const bounds = this.getMachineCountBounds(baseMachineCount);
         const totalPercent = baseMachineCount * 100;
         if (this.machineCountInput <= 0) {
@@ -336,22 +370,27 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             return;
         }
 
-        const nodeById = new Map<number, RecipeNode>();
+        const nodeById = new Map<string, BoardNode>();
         for (const node of this.allNodes || []) {
             nodeById.set(node.id, node);
         }
 
         const aggregatedInputs = new Map<string, number>();
-        for (const ingredientId of this.data.ingredients || []) {
+        for (const ingredient of this.data.recipe?.ingredients || []) {
+            const ingredientId = ingredient.id;
+            if (!ingredientId) {
+                continue;
+            }
             const ingredientNode = nodeById.get(ingredientId);
             if (!ingredientNode) {
                 continue;
             }
 
-            const ingredientRate = this.parseRate(ingredientNode.productionRate);
+            const ingredientRate = this.parseRate(ingredientNode.recipe?.productionRate);
+            const ingredientName = ingredientNode.itemName || ingredientNode.label;
             aggregatedInputs.set(
-                ingredientNode.itemName,
-                (aggregatedInputs.get(ingredientNode.itemName) || 0) + ingredientRate
+                ingredientName,
+                (aggregatedInputs.get(ingredientName) || 0) + ingredientRate
             );
         }
 
@@ -363,7 +402,7 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             }))
             .sort((a, b) => b.rateValue - a.rateValue);
 
-        this.byproductFlowItems = (this.data.byproducts || [])
+        this.byproductFlowItems = (this.byproducts || [])
             .map((item) => {
                 const rate = this.parseRate(item.productionRate);
                 return {
@@ -399,9 +438,9 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             this.isExtractorCard = false;
             return;
         }
-        const machineName = `${this.data.machineName || ''}`.toLowerCase();
-        const recipeName = `${this.data.recipeName || ''}`.toLowerCase();
-        this.isExtractorCard = Boolean(this.data.isBaseMaterial)
+        const machineName = `${this.machineName || ''}`.toLowerCase();
+        const recipeName = `${this.recipeName || ''}`.toLowerCase();
+        this.isExtractorCard = Boolean(this.data.recipe?.isBaseMaterial)
             || recipeName === 'raw resource'
             || machineName.includes('extractor')
             || machineName.includes('miner');
@@ -412,7 +451,7 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             return;
         }
 
-        const outputRate = this.parseRate(this.data.productionRate);
+        const outputRate = this.parseRate(this.productionRate);
         const requiredNormalNodes = this.calculateRequiredNormalNodes(outputRate);
         this.nodeDistribution = {
             impure: 0,
@@ -797,7 +836,7 @@ export class SatisfactoryCardComponent implements OnInit, OnChanges {
             return `Miner Mk.${this.factorySettings?.minerLevel || 1}`;
         }
 
-        return this.data.machineName || 'Unknown';
+        return this.machineName || 'Unknown';
     }
 
     private formatNodeCount(value: number): string {

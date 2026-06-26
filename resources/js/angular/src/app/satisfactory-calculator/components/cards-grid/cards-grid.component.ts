@@ -1,4 +1,5 @@
 import { Component, inject, HostListener, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { ConnectedOverlayPositionChange, ConnectedPosition } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
 import ELK from 'elkjs/lib/elk.bundled.js';
 
@@ -25,16 +26,17 @@ import {
     RecipeSelectDialogResult,
 } from './includes/recipe-select-dialog/recipe-select-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { adaptRecipeNodesToFactoryMap, adaptRecipeResponseToFactoryMap } from '../../adapters/recipe-response-factory-map.adapter';
+import {
+    BuildingPaletteCategory,
+    BuildingPaletteItem,
+    BUILDING_PALETTE_CATEGORIES,
+    BUILDING_PALETTE_ITEMS,
+} from '../../data/building-palette.data';
+import { CalculatorBoardStateService } from '../../services/calculator-board-state.service';
 import { CalculatorSettings, CalculatorSettingsService, FactorySettings } from '../../services/calculator-settings.service';
 import { CalculatorHistoryService, RecipeHistoryEntry } from '../../services/calculator-history.service';
-
-interface ActiveQuery {
-    item: string;
-    amount: number;
-    ingredients: Ingredient[];
-    useIngredientsToMax: boolean;
-    optimizationGoals: OptimizationGoal[];
-}
+import { BoardConnection, BoardNode, FactoryMap, NodeId, Point } from '../../types/factory-model.types';
 
 interface InputDialogResult {
     item: string;
@@ -55,8 +57,20 @@ interface RenderEdge {
 }
 
 interface CardStatsChange {
-    nodeId: number;
+    nodeId: NodeId;
     machineCount: number;
+}
+
+interface ActiveQuery {
+    item: string;
+    amount: number;
+    ingredients: Ingredient[];
+    useIngredientsToMax: boolean;
+    optimizationGoals: OptimizationGoal[];
+}
+
+interface BuildingPaletteSection extends BuildingPaletteCategory {
+    items: BuildingPaletteItem[];
 }
 
 @Component({
@@ -70,6 +84,12 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     boardZoomLevel = 1;
     selectedPanelItem: string | null = null;
     isShowingDirection = false;
+    isBuildingPaletteOpen = false;
+    selectedBuildingPaletteItemId: string | null = null;
+    hoveredBuildingPaletteItemId: string | null = null;
+    buildingPaletteClientPoint: Point = { x: 0, y: 0 };
+    private buildingPaletteBoardPoint: Point = { x: 0, y: 0 };
+    buildingPaletteSide: 'left' | 'right' = 'right';
 
     ingredientsData: IngredientsData = {
         input: [],
@@ -80,10 +100,11 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     statistics: RecipeStatistics = {};
     isLoading = false;
 
-    nodes: RecipeNode[] = [];
+    nodes: BoardNode[] = [];
     renderedEdges: RenderEdge[] = [];
-    private nodePositions = new Map<number, { x: number; y: number }>();
-    private cardMachineCounts = new Map<number, number>();
+    private recipeNodes: RecipeNode[] = [];
+    private nodePositions = new Map<NodeId, Point>();
+    private cardMachineCounts = new Map<NodeId, number>();
 
     contentWidth = 2000;
     contentHeight = 2000;
@@ -94,13 +115,14 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     private isPanning = false;
     private isNodeDragging = false;
-    private dragNodeId: number | null = null;
+    private dragNodeId: NodeId | null = null;
     private dragStartMouseX = 0;
     private dragStartMouseY = 0;
     private dragStartPanX = 0;
     private dragStartPanY = 0;
     private dragStartNodeX = 0;
     private dragStartNodeY = 0;
+    private dragBoardId: string | null = null;
     private hasUserAdjustedView = false;
 
     selectedRecipes: Record<string, string> = {};
@@ -111,6 +133,8 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     currentHistoryId: string | null = null;
     private pendingHistoryLabel: string | null = null;
     isSummaryCollapsed = false;
+    currentBoardId: string | null = null;
+    private currentBoard: FactoryMap | null = null;
 
     activeQuery: ActiveQuery = {
         item: 'supercomputer',
@@ -123,6 +147,18 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     private elk = new ELK();
     private activeRequest?: Subscription;
     private settingsSub?: Subscription;
+    readonly buildingPaletteSections: BuildingPaletteSection[] = BUILDING_PALETTE_CATEGORIES.map((category) => ({
+        ...category,
+        items: BUILDING_PALETTE_ITEMS.filter((item) => item.categoryId === category.id),
+    }));
+    readonly buildingPalettePositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 16, offsetY: -14 },
+        { originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top', offsetX: -16, offsetY: -14 },
+    ];
+    readonly buildingPaletteTooltipPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center', offsetX: 12 },
+        { originX: 'start', originY: 'center', overlayX: 'end', overlayY: 'center', offsetX: -12 },
+    ];
 
     @ViewChild('viewport') viewportRef!: ElementRef<HTMLElement>;
 
@@ -130,6 +166,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         private recipeService: RecipeService,
         private ingredientsService: IngredientsService,
         private cdr: ChangeDetectorRef,
+        private boardStateService: CalculatorBoardStateService,
         private settingsService: CalculatorSettingsService,
         private historyService: CalculatorHistoryService
     ) {
@@ -142,11 +179,12 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         return `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
     }
 
-    trackById(index: number, _item: any): number {
-        return index;
+    trackById(index: number, item: { id?: string | number } | null): string | number {
+        return item?.id ?? index;
     }
 
     openDialog() {
+        this.closeBuildingPalette();
         const dialogRef = this.dialog.open(InputDialogComponent, {
             backdropClass: 'recipe-dialog-backdrop',
             width: '680px',
@@ -195,6 +233,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             const factoryChanged = this.hasFactorySettingsChanged(previousFactory, next.factory);
             if (this.nodes.length) {
                 this.applyNodeColors();
+                this.syncBoardNodesFromCurrentBoard();
                 this.cdr.markForCheck();
             }
             if (factoryChanged && this.activeQuery.item) {
@@ -213,6 +252,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     openSettingsDialog(initialCategory: SettingsDialogCategory = 'colors') {
+        this.closeBuildingPalette();
         const dialogRef = this.dialog.open(SettingsDialogComponent, {
             backdropClass: 'recipe-dialog-backdrop',
             width: '920px',
@@ -249,11 +289,17 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     onKeyDown(event: KeyboardEvent) {
+        const target = event.target as HTMLElement | null;
+        const isInteractive = this.isInteractiveElement(target);
+
+        if (event.code === 'Escape' && this.isBuildingPaletteOpen && !this.isDialogOpen()) {
+            event.preventDefault();
+            this.closeBuildingPalette();
+            return;
+        }
+
         if (event.code === 'KeyC' && !event.ctrlKey && !event.metaKey && !this.isDialogOpen()) {
-            const target = event.target as HTMLElement | null;
-            const tagName = (target?.tagName || '').toLowerCase();
-            const isEditable = target?.isContentEditable || ['input', 'textarea', 'select'].includes(tagName);
-            if (!isEditable) {
+            if (!isInteractive) {
                 event.preventDefault();
                 this.centerView();
             }
@@ -264,10 +310,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const target = event.target as HTMLElement | null;
-        const tagName = (target?.tagName || '').toLowerCase();
-        const isEditable = target?.isContentEditable || ['input', 'textarea', 'select'].includes(tagName);
-        if (isEditable) {
+        if (isInteractive || this.isBuildingPaletteOpen) {
             return;
         }
 
@@ -293,10 +336,12 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         if (this.isNodeDragging && this.dragNodeId !== null) {
             const dx = (event.clientX - this.dragStartMouseX) / this.scale;
             const dy = (event.clientY - this.dragStartMouseY) / this.scale;
-            this.nodePositions.set(this.dragNodeId, {
+            const position = {
                 x: this.dragStartNodeX + dx,
                 y: this.dragStartNodeY + dy,
-            });
+            };
+            this.nodePositions.set(this.dragNodeId, position);
+            this.setBoardNodePosition(this.dragNodeId, position);
             this.updateEdgeGeometry();
             this.cdr.markForCheck();
             return;
@@ -314,15 +359,31 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
     @HostListener('window:mouseup')
     onGlobalMouseUp() {
+        if (this.isNodeDragging && this.dragNodeId !== null && this.dragBoardId) {
+            const currentPosition = this.nodePositions.get(this.dragNodeId);
+            if (currentPosition && this.hasNodeMoved(currentPosition)) {
+                const updatedBoard = this.boardStateService.updateNodePosition(
+                    this.dragBoardId,
+                    this.dragNodeId,
+                    currentPosition
+                );
+                if (updatedBoard) {
+                    this.currentBoard = updatedBoard;
+                }
+            }
+        }
+
         this.isPanning = false;
         this.isNodeDragging = false;
         this.dragNodeId = null;
+        this.dragBoardId = null;
     }
 
     onCanvasPointerDown(event: MouseEvent) {
         if (event.button !== 0 || this.isDialogOpen()) {
             return;
         }
+        this.closeBuildingPalette();
         this.isPanning = true;
         this.dragStartMouseX = event.clientX;
         this.dragStartMouseY = event.clientY;
@@ -331,10 +392,11 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         this.hasUserAdjustedView = true;
     }
 
-    onNodePointerDown(event: MouseEvent, node: RecipeNode) {
+    onNodePointerDown(event: MouseEvent, node: BoardNode) {
         if (event.button !== 0 || this.isDialogOpen()) {
             return;
         }
+        this.closeBuildingPalette();
         event.preventDefault();
         event.stopPropagation();
         this.isNodeDragging = true;
@@ -344,7 +406,62 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         const pos = this.getNodePosition(node.id);
         this.dragStartNodeX = pos.x;
         this.dragStartNodeY = pos.y;
+        this.dragBoardId = this.getCurrentBoardId();
         this.hasUserAdjustedView = true;
+    }
+
+    onBoardContextMenu(event: MouseEvent): void {
+        if (this.isDialogOpen()) {
+            return;
+        }
+
+        const viewport = this.viewportRef?.nativeElement;
+        if (!viewport) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const rect = viewport.getBoundingClientRect();
+        const localX = event.clientX - rect.left;
+        const localY = event.clientY - rect.top;
+
+        this.buildingPaletteClientPoint = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+        this.buildingPaletteBoardPoint = {
+            x: (localX - this.panX) / this.scale,
+            y: (localY - this.panY) / this.scale,
+        };
+        this.isBuildingPaletteOpen = true;
+        this.hoveredBuildingPaletteItemId = null;
+        this.cdr.markForCheck();
+    }
+
+    onBuildingPalettePositionChange(change: ConnectedOverlayPositionChange): void {
+        this.buildingPaletteSide = change.connectionPair.overlayX === 'start' ? 'right' : 'left';
+    }
+
+    onBuildingPaletteWheel(event: WheelEvent): void {
+        event.stopPropagation();
+    }
+
+    closeBuildingPalette(): void {
+        this.isBuildingPaletteOpen = false;
+        this.hoveredBuildingPaletteItemId = null;
+    }
+
+    selectBuildingPaletteItem(item: BuildingPaletteItem, event?: MouseEvent): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.selectedBuildingPaletteItemId = item.id;
+        this.hoveredBuildingPaletteItemId = item.id;
+    }
+
+    setHoveredBuildingPaletteItem(itemId: string | null): void {
+        this.hoveredBuildingPaletteItemId = itemId;
     }
 
     onWheel(event: WheelEvent) {
@@ -378,12 +495,32 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         this.hasUserAdjustedView = true;
     }
 
-    getNodePosition(id: number): { x: number; y: number } {
+    getNodePosition(id: NodeId): Point {
         return this.nodePositions.get(id) || { x: 0, y: 0 };
     }
 
     getItemImageUrl(name: string): string {
         return this.ingredientsService.getItemImageUrl(name);
+    }
+
+    get selectedBuildingPaletteItem(): BuildingPaletteItem | null {
+        if (!this.selectedBuildingPaletteItemId) {
+            return null;
+        }
+
+        return BUILDING_PALETTE_ITEMS.find((item) => item.id === this.selectedBuildingPaletteItemId) ?? null;
+    }
+
+    get buildingPaletteSelectionMessage(): string {
+        if (this.selectedBuildingPaletteItem) {
+            return `${this.selectedBuildingPaletteItem.label} is selected. The next step will place it at this click point.`;
+        }
+
+        if (Number.isFinite(this.buildingPaletteBoardPoint.x) && Number.isFinite(this.buildingPaletteBoardPoint.y)) {
+            return 'Choose a building to prepare the next node at this click point.';
+        }
+
+        return 'Choose a building to prepare the next node.';
     }
 
     onPanelItemClick(name: string) {
@@ -394,11 +531,11 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         this.selectedPanelItem = this.selectedPanelItem === normalized ? null : normalized;
     }
 
-    isNodeHighlighted(node: RecipeNode): boolean {
+    isNodeHighlighted(node: BoardNode): boolean {
         if (!this.selectedPanelItem) {
             return false;
         }
-        return this.normalizeItemName(node.itemName) === this.selectedPanelItem;
+        return this.normalizeItemName(node.itemName || node.label) === this.selectedPanelItem;
     }
 
     isPanelItemSelected(name: string): boolean {
@@ -431,7 +568,32 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         return this.settings?.colors?.overlay?.textColor || '#ffffff';
     }
 
+    isBuildingPaletteItemSelected(itemId: string): boolean {
+        return this.selectedBuildingPaletteItemId === itemId;
+    }
+
+    getBuildingPalettePlaceholder(label: string): string {
+        const parts = label
+            .split(/[\s.-]+/)
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+        if (!parts.length) {
+            return '??';
+        }
+
+        if (parts.length === 1) {
+            return parts[0].slice(0, 2).toUpperCase();
+        }
+
+        return parts
+            .slice(0, 3)
+            .map((part) => part[0]?.toUpperCase() || '')
+            .join('');
+    }
+
     loadFromHistory(historyId: string): void {
+        this.closeBuildingPalette();
         const promoted = this.historyService.promote(historyId);
         if (!promoted) {
             return;
@@ -439,6 +601,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
         this.historyEntries = this.historyService.getHistory();
         this.currentHistoryId = promoted.id;
+        this.ensureBoardForHistoryEntry(promoted);
         this.selectedRecipes = { ...(promoted.selectedRecipes || {}) };
         this.activeQuery = {
             item: promoted.query.item,
@@ -457,6 +620,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         }
 
         this.currentHistoryId = latest.id;
+        this.ensureBoardForHistoryEntry(latest);
         this.selectedRecipes = { ...(latest.selectedRecipes || {}) };
         this.activeQuery = {
             item: latest.query.item,
@@ -470,13 +634,14 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private buildCurrentBoardHistoryEntry(): RecipeHistoryEntry | null {
-        if (!this.nodes.length) {
+        if (!this.recipeNodes.length) {
             return null;
         }
 
         return {
             id: 'current-board',
             createdAt: Date.now(),
+            boardId: this.currentBoardId || '',
             query: {
                 item: this.activeQuery.item,
                 amount: this.activeQuery.amount,
@@ -487,7 +652,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             selectedRecipes: { ...this.selectedRecipes },
             response: {
                 ingredientsData: this.ingredientsData,
-                recipeNodeArr: this.nodes,
+                recipeNodeArr: this.recipeNodes,
                 recipeOptions: this.recipeOptions,
                 alternateRecipeMeta: this.alternateRecipeMeta,
                 statistics: this.statistics,
@@ -495,8 +660,8 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         };
     }
 
-    openRecipeSelectorForNode(node: RecipeNode): void {
-        const itemKey = this.resolveRecipeItemKey(node.itemName);
+    openRecipeSelectorForNode(node: BoardNode): void {
+        const itemKey = this.resolveRecipeItemKey(node.itemName || node.label);
         this.openRecipeDialogForItem(itemKey, node);
     }
 
@@ -520,16 +685,139 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         return (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
     }
 
+    private getCurrentBoardId(): string | null {
+        return this.currentBoardId;
+    }
+
+    private createBoardFromResponse(data: RecipeResponse): string {
+        const boardId = this.boardStateService.createBoard(adaptRecipeResponseToFactoryMap(data));
+        this.currentBoardId = boardId;
+        this.currentBoard = this.boardStateService.getBoard(boardId);
+        this.boardStateService.setActiveBoard(boardId);
+        this.syncBoardNodesFromCurrentBoard();
+        this.syncNodePositionsFromCurrentBoard();
+        return boardId;
+    }
+
+    private ensureBoardForHistoryEntry(entry: RecipeHistoryEntry): void {
+        let boardId = entry.boardId;
+        let board = boardId ? this.boardStateService.getBoard(boardId) : null;
+
+        if (!board) {
+            boardId = this.boardStateService.createBoard(adaptRecipeResponseToFactoryMap(entry.response));
+            board = this.boardStateService.getBoard(boardId);
+            this.historyService.updateBoardId(entry.id, boardId);
+            this.historyEntries = this.historyService.getHistory();
+        }
+
+        if (!board) {
+            this.currentBoardId = null;
+            this.currentBoard = null;
+            this.nodePositions.clear();
+            return;
+        }
+
+        this.currentBoardId = boardId;
+        this.currentBoard = board;
+        this.boardStateService.setActiveBoard(boardId);
+        this.syncBoardNodesFromCurrentBoard();
+        this.syncNodePositionsFromCurrentBoard();
+    }
+
+    private findRecipeNode(nodeId: NodeId): RecipeNode | undefined {
+        return this.recipeNodes.find((node) => `${node.id}` === nodeId);
+    }
+
+    private rebuildCurrentBoardFromNodes(): void {
+        if (!this.currentBoardId) {
+            return;
+        }
+
+        const nextBoard = adaptRecipeNodesToFactoryMap(this.recipeNodes, this.currentBoard);
+        this.currentBoard = this.boardStateService.saveBoard(this.currentBoardId, nextBoard);
+        this.syncBoardNodesFromCurrentBoard();
+        this.syncNodePositionsFromCurrentBoard();
+    }
+
+    private syncBoardNodesFromCurrentBoard(): void {
+        this.nodes = this.currentBoard
+            ? Object.values(this.currentBoard.nodes).sort((a, b) => a.id.localeCompare(b.id))
+            : [];
+    }
+
+    private syncNodePositionsFromCurrentBoard(): void {
+        this.nodePositions = new Map<NodeId, Point>();
+        if (!this.currentBoard) {
+            return;
+        }
+
+        for (const node of this.nodes) {
+            if (!this.currentBoard.nodes[node.id]) {
+                continue;
+            }
+            this.nodePositions.set(node.id, {
+                x: node.position.x,
+                y: node.position.y,
+            });
+        }
+    }
+
+    private setBoardNodePosition(nodeId: NodeId, position: Point): void {
+        if (!this.currentBoard?.nodes[nodeId]) {
+            return;
+        }
+        this.currentBoard.nodes[nodeId].position = {
+            x: position.x,
+            y: position.y,
+        };
+    }
+
+    private getBoardNodesNeedingLayout(): Set<string> {
+        if (!this.currentBoard) {
+            return new Set<string>();
+        }
+
+        return new Set(
+            Object.values(this.currentBoard.nodes)
+                .filter((node) => node.position.x === 0 && node.position.y === 0)
+                .map((node) => node.id)
+        );
+    }
+
+    private buildRenderEdge(connection: BoardConnection): RenderEdge | null {
+        const fromPos = this.nodePositions.get(connection.fromNodeId);
+        const toPos = this.nodePositions.get(connection.toNodeId);
+        if (!fromPos || !toPos) {
+            return null;
+        }
+
+        return {
+            id: connection.id,
+            x1: fromPos.x + this.itemSize,
+            y1: fromPos.y + this.itemSize / 2,
+            x2: toPos.x,
+            y2: toPos.y + this.itemSize / 2,
+            label: connection.productionRate
+                ? `${connection.productionRate} p/m`
+                : (connection.itemName ?? ''),
+        };
+    }
+
+    private hasNodeMoved(position: Point): boolean {
+        return Math.abs(position.x - this.dragStartNodeX) > 0.001 || Math.abs(position.y - this.dragStartNodeY) > 0.001;
+    }
+
     private resolveRecipeItemKey(itemName: string): string {
         const normalized = this.normalizeItemName(itemName);
         const exactKey = Object.keys(this.recipeOptions).find((key) => this.normalizeItemName(key) === normalized);
         return exactKey || itemName;
     }
 
-    private openRecipeDialog(itemKey: string, options: string[], sourceNode?: RecipeNode) {
+    private openRecipeDialog(itemKey: string, options: string[], sourceNode?: BoardNode) {
+        this.closeBuildingPalette();
         const currentSelection = this.selectedRecipes[itemKey]
             ?? this.findCurrentRecipeName(itemKey)
-            ?? sourceNode?.recipeName
+            ?? sourceNode?.recipe?.recipeName
             ?? '';
         const dialogRef = this.dialog.open(RecipeSelectDialogComponent, {
             backdropClass: 'recipe-dialog-backdrop',
@@ -549,7 +837,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             const selectedRecipe = result.selectedRecipe;
             const previousRecipe = this.selectedRecipes[itemKey]
                 ?? this.findCurrentRecipeName(itemKey)
-                ?? sourceNode?.recipeName
+                ?? sourceNode?.recipe?.recipeName
                 ?? '';
             const historyLabel = this.buildHistoryLabel(itemKey, previousRecipe, selectedRecipe);
 
@@ -569,7 +857,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         });
     }
 
-    private openRecipeDialogForItem(itemKey: string, sourceNode?: RecipeNode) {
+    private openRecipeDialogForItem(itemKey: string, sourceNode?: BoardNode) {
         const options = this.recipeOptions[itemKey] ?? [];
         if (options.length > 0) {
             this.openRecipeDialog(itemKey, options, sourceNode);
@@ -599,8 +887,13 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         });
     }
 
-    private rebuildSingleBranch(node: RecipeNode, itemKey: string, selectedRecipe: string, historyLabel?: string) {
-        const branchRate = Number.parseFloat(`${node.productionRate || 0}`);
+    private rebuildSingleBranch(node: BoardNode, itemKey: string, selectedRecipe: string, historyLabel?: string) {
+        const sourceRecipeNode = this.findRecipeNode(node.id);
+        if (!sourceRecipeNode) {
+            return;
+        }
+
+        const branchRate = Number.parseFloat(`${sourceRecipeNode.productionRate || 0}`);
         const branchAmount = Number.isFinite(branchRate) && branchRate > 0 ? branchRate : 1;
         const branchRecipes: Record<string, string> = { ...this.selectedRecipes, [itemKey]: selectedRecipe };
 
@@ -617,12 +910,16 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                 if (!branchNodes.length) {
                     return;
                 }
-                this.replaceBranch(node.id, branchNodes);
-                this.applyNodeColors();
+                this.replaceBranch(Number(sourceRecipeNode.id), branchNodes);
                 this.recipeOptions = { ...this.recipeOptions, ...(branchData.recipeOptions ?? {}) };
                 this.alternateRecipeMeta = { ...this.alternateRecipeMeta, ...(branchData.alternateRecipeMeta ?? {}) };
-                this.ingredientsData = this.buildIngredientsDataFromNodes();
+                this.rebuildCurrentBoardFromNodes();
+                this.applyNodeColors();
+                this.syncBoardNodesFromCurrentBoard();
+                this.ingredientsData = this.buildIngredientsDataFromBoard();
+                this.statistics = this.buildDisplayStatistics({});
                 this.pushCurrentBoardHistory(historyLabel);
+                this.syncCurrentHistoryResponse();
                 this.isLoading = false;
                 void this.layoutGraph();
             },
@@ -634,14 +931,14 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private replaceBranch(rootId: number, replacementNodes: RecipeNode[]) {
-        const nodeMap = new Map(this.nodes.map((n) => [n.id, n]));
+        const nodeMap = new Map(this.recipeNodes.map((n) => [n.id, n]));
         const rootNode = nodeMap.get(rootId);
         if (!rootNode) {
             return;
         }
 
         const toRemove = this.collectSubtreeIds(rootId, nodeMap);
-        const survivors = this.nodes.filter((node) => !toRemove.has(node.id));
+        const survivors = this.recipeNodes.filter((node) => !toRemove.has(node.id));
 
         const replacementRoot = replacementNodes.find((n) => n.parentId === undefined) || replacementNodes[0];
         if (!replacementRoot) {
@@ -684,7 +981,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             return updated;
         });
 
-        this.nodes = [...survivors, ...remapped].sort((a, b) => a.id - b.id);
+        this.recipeNodes = [...survivors, ...remapped].sort((a, b) => a.id - b.id);
     }
 
     private collectSubtreeIds(rootId: number, nodeMap: Map<number, RecipeNode>): Set<number> {
@@ -704,27 +1001,37 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         return visited;
     }
 
-    private buildIngredientsDataFromNodes(): IngredientsData {
+    private buildIngredientsDataFromBoard(): IngredientsData {
         const input = new Map<string, number>();
         const intermediate = new Map<string, number>();
         const output = new Map<string, number>();
         const byproduct = new Map<string, number>();
+        const outgoingCounts = new Map<NodeId, number>();
 
         const addAmount = (bucket: Map<string, number>, key: string, amount: number) => {
             bucket.set(key, (bucket.get(key) || 0) + amount);
         };
 
-        for (const node of this.nodes) {
-            const rate = Number.parseFloat(`${node.productionRate || 0}`) || 0;
-            if (node.isBaseMaterial) {
-                addAmount(input, node.itemName, rate);
-            } else if (node.parentId === undefined) {
-                addAmount(output, node.itemName, rate);
+        if (!this.currentBoard) {
+            return { input: [], intermediate: [], output: [], byproduct: [] };
+        }
+
+        for (const connection of Object.values(this.currentBoard.connections)) {
+            outgoingCounts.set(connection.fromNodeId, (outgoingCounts.get(connection.fromNodeId) || 0) + 1);
+        }
+
+        for (const node of Object.values(this.currentBoard.nodes)) {
+            const itemName = node.itemName || node.label;
+            const rate = Number.parseFloat(`${node.recipe?.productionRate || 0}`) || 0;
+            if (node.recipe?.isBaseMaterial) {
+                addAmount(input, itemName, rate);
+            } else if (!outgoingCounts.get(node.id)) {
+                addAmount(output, itemName, rate);
             } else {
-                addAmount(intermediate, node.itemName, rate);
+                addAmount(intermediate, itemName, rate);
             }
 
-            for (const by of node.byproducts || []) {
+            for (const by of node.recipe?.byproducts || []) {
                 const byRate = Number.parseFloat(`${by.productionRate || 0}`) || 0;
                 addAmount(byproduct, by.itemName, byRate);
             }
@@ -810,22 +1117,43 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private applyRecipeData(data: RecipeResponse, saveToHistory: boolean = true) {
-        console.log('Received recipe data:', data);
-        this.nodes = data.recipeNodeArr;
+        this.recipeNodes = Array.isArray(data.recipeNodeArr) ? [...data.recipeNodeArr] : [];
         this.cardMachineCounts.clear();
-        this.applyNodeColors();
         this.ingredientsData = data.ingredientsData;
         this.recipeOptions = data.recipeOptions ?? {};
         this.alternateRecipeMeta = data.alternateRecipeMeta ?? {};
-        this.statistics = this.buildDisplayStatistics(data.statistics);
-        console.log('Computed statistics:', this.statistics);
         this.selectedPanelItem = null;
         this.isLoading = false;
         if (saveToHistory) {
-            this.pushHistoryEntry(data, this.pendingHistoryLabel || undefined);
+            const boardId = this.createBoardFromResponse(data);
+            this.pushHistoryEntry(data, this.pendingHistoryLabel || undefined, boardId);
             this.pendingHistoryLabel = null;
+        } else if (!this.currentBoard) {
+            this.createBoardFromResponse(data);
         }
+        this.applyNodeColors();
+        this.syncBoardNodesFromCurrentBoard();
+        this.syncNodePositionsFromCurrentBoard();
+        this.statistics = this.buildDisplayStatistics(data.statistics);
         void this.layoutGraph();
+    }
+
+    private syncCurrentHistoryResponse(): void {
+        if (!this.currentHistoryId) {
+            return;
+        }
+
+        const updated = this.historyService.updateResponse(this.currentHistoryId, {
+            ingredientsData: this.ingredientsData,
+            recipeNodeArr: this.recipeNodes,
+            recipeOptions: this.recipeOptions,
+            alternateRecipeMeta: this.alternateRecipeMeta,
+            statistics: this.statistics,
+        });
+
+        if (updated) {
+            this.historyEntries = this.historyService.getHistory();
+        }
     }
 
     getHistoryTooltip(entry: RecipeHistoryEntry): string {
@@ -842,8 +1170,9 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             : entry.query.item;
     }
 
-    private pushHistoryEntry(response: RecipeResponse, label?: string): void {
+    private pushHistoryEntry(response: RecipeResponse, label?: string, boardId?: string): void {
         this.historyEntries = this.historyService.push({
+            boardId: boardId ?? this.currentBoardId ?? '',
             label: label?.trim() || undefined,
             query: {
                 item: this.activeQuery.item,
@@ -864,6 +1193,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             return;
         }
         this.historyEntries = this.historyService.push({
+            boardId: current.boardId,
             label: label?.trim() || undefined,
             query: current.query,
             selectedRecipes: current.selectedRecipes,
@@ -915,20 +1245,20 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         const stats: RecipeStatistics = { ...(source || {}) };
 
         if (stats.totalMachineCount === undefined) {
-            const total = this.nodes.reduce((sum, node) => sum + (Number.parseFloat(`${node.machineCount || 0}`) || 0), 0);
+            const total = this.nodes.reduce((sum, node) => sum + (Number(node.machine?.machineCount) || 0), 0);
             stats.totalMachineCount = total.toFixed(2);
         }
 
         if (stats.recipeCount === undefined) {
             stats.recipeCount = new Set(
                 this.nodes
-                    .map((node) => (node.recipeName || '').trim())
+                    .map((node) => (node.recipe?.recipeName || '').trim())
                     .filter((name) => !!name && name.toLowerCase() !== 'raw resource')
             ).size;
         }
 
         if (stats.itemCount === undefined) {
-            stats.itemCount = new Set(this.nodes.map((node) => node.itemName)).size;
+            stats.itemCount = new Set(this.nodes.map((node) => node.itemName || node.label)).size;
         }
 
         return stats;
@@ -952,6 +1282,11 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private applyNodeColors() {
+        if (!this.currentBoard) {
+            this.nodes = [];
+            return;
+        }
+
         const resourceColors = this.settings.colors.nodes.resourceColors;
         const extractionPalette: Array<{ match: RegExp; key: string }> = [
             { match: /iron/i, key: 'iron' },
@@ -971,20 +1306,28 @@ export class CardsGridComponent implements OnInit, OnDestroy {
 
         const layerPalette = this.settings.colors.nodes.layerColors;
         const nodeById = new Map(this.nodes.map((node) => [node.id, node]));
-        const distanceMemo = new Map<number, number>();
+        const incomingNodeIds = new Map<NodeId, NodeId[]>();
+        const distanceMemo = new Map<NodeId, number>();
 
-        const distanceFromExtraction = (node: RecipeNode): number => {
+        for (const connection of Object.values(this.currentBoard.connections)) {
+            const existing = incomingNodeIds.get(connection.toNodeId) || [];
+            existing.push(connection.fromNodeId);
+            incomingNodeIds.set(connection.toNodeId, existing);
+        }
+
+        const distanceFromExtraction = (node: BoardNode): number => {
             if (distanceMemo.has(node.id)) {
                 return distanceMemo.get(node.id)!;
             }
-            if (node.isBaseMaterial || !node.ingredients || node.ingredients.length === 0) {
+            const incoming = incomingNodeIds.get(node.id) || [];
+            if (node.recipe?.isBaseMaterial || incoming.length === 0) {
                 distanceMemo.set(node.id, 0);
                 return 0;
             }
 
-            const childDistances = node.ingredients
+            const childDistances = incoming
                 .map((childId) => nodeById.get(childId))
-                .filter((child): child is RecipeNode => Boolean(child))
+                .filter((child): child is BoardNode => Boolean(child))
                 .map((child) => distanceFromExtraction(child));
 
             const distance = childDistances.length ? Math.min(...childDistances) + 1 : 0;
@@ -1003,23 +1346,53 @@ export class CardsGridComponent implements OnInit, OnDestroy {
             return resourceColors[found.key] || resourceColors['default'] || '#6b7a8f';
         };
 
+        let didChange = false;
         for (const node of this.nodes) {
             const distance = distanceFromExtraction(node);
+            let nextColor = node.cardColor ?? null;
             if (distance === 0 && !this.settings.colors.nodes.disableResourceColors) {
-                node.cardColor = getExtractionColor(node.itemName);
-                continue;
+                nextColor = getExtractionColor(node.itemName || node.label);
+            } else if (this.settings.colors.nodes.disableLayerColors) {
+                nextColor = this.settings.colors.nodes.unifiedLayerColor || '#4e85d6';
+            } else {
+                nextColor = layerPalette[Math.min(distance, layerPalette.length - 1)] || '#4e85d6';
             }
-            if (this.settings.colors.nodes.disableLayerColors) {
-                node.cardColor = this.settings.colors.nodes.unifiedLayerColor || '#4e85d6';
-                continue;
+            if (node.cardColor !== nextColor) {
+                node.cardColor = nextColor;
+                this.currentBoard.nodes[node.id].cardColor = nextColor;
+                didChange = true;
             }
-            node.cardColor = layerPalette[Math.min(distance, layerPalette.length - 1)] || '#4e85d6';
+        }
+
+        if (didChange && this.currentBoardId) {
+            this.currentBoard = this.boardStateService.saveBoard(this.currentBoardId, this.currentBoard);
         }
     }
 
     private async layoutGraph() {
         if (!this.nodes.length) {
+            this.nodePositions.clear();
             this.renderedEdges = [];
+            return;
+        }
+
+        const boardId = this.getCurrentBoardId();
+        if (!boardId || !this.currentBoard) {
+            this.renderedEdges = [];
+            return;
+        }
+
+        const nodesNeedingLayout = this.getBoardNodesNeedingLayout();
+        if (nodesNeedingLayout.size === 0) {
+            this.syncNodePositionsFromCurrentBoard();
+            this.updateEdgeGeometry();
+            this.updateContentSize();
+
+            if (!this.hasUserAdjustedView) {
+                this.fitContentToViewport();
+            }
+
+            this.cdr.detectChanges();
             return;
         }
 
@@ -1033,37 +1406,41 @@ export class CardsGridComponent implements OnInit, OnDestroy {
                     'elk.spacing.nodeNode': '90',
                     'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
                 },
-                children: this.nodes
+                children: Object.values(this.currentBoard.nodes)
                     .slice()
-                    .sort((a, b) => a.id - b.id)
-                    .map((node) => ({ id: `${node.id}`, width: this.itemSize, height: this.itemSize })),
-                edges: this.nodes
-                    .filter((node) => node.parentId !== undefined)
-                    .map((node) => ({
-                        id: `e-${node.id}-${node.parentId}`,
-                        sources: [`${node.id}`],
-                        targets: [`${node.parentId}`],
+                    .sort((a, b) => a.id.localeCompare(b.id))
+                    .map((node) => ({ id: node.id, width: this.itemSize, height: this.itemSize })),
+                edges: Object.values(this.currentBoard.connections)
+                    .map((connection) => ({
+                        id: connection.id,
+                        sources: [connection.fromNodeId],
+                        targets: [connection.toNodeId],
                     })),
             };
 
             const layout = await this.elk.layout(layoutInput);
-            const positioned = new Map<number, { x: number; y: number }>();
             for (const child of layout.children || []) {
-                const id = Number(child.id);
-                if (Number.isFinite(id)) {
-                    positioned.set(id, { x: (child.x || 0) + 80, y: (child.y || 0) + 80 });
+                const nodeId = `${child.id}`;
+                if (this.currentBoard.nodes[nodeId] && nodesNeedingLayout.has(nodeId)) {
+                    this.currentBoard.nodes[nodeId].position = {
+                        x: (child.x || 0) + 80,
+                        y: (child.y || 0) + 80,
+                    };
                 }
-            }
-
-            if (positioned.size > 0) {
-                this.nodePositions = positioned;
             }
         } catch (error) {
             console.error('ELK layout failed, using fallback layout.', error);
             let y = 80;
-            this.nodePositions = new Map(this.nodes.map((node, idx) => [node.id, { x: 80 + idx * 30, y: y += 35 }]));
+            for (const node of Object.values(this.currentBoard.nodes).sort((a, b) => a.id.localeCompare(b.id))) {
+                if (!nodesNeedingLayout.has(node.id)) {
+                    continue;
+                }
+                node.position = { x: 80, y: y += 90 };
+            }
         }
 
+        this.currentBoard = this.boardStateService.saveBoard(boardId, this.currentBoard);
+        this.syncNodePositionsFromCurrentBoard();
         this.updateEdgeGeometry();
         this.updateContentSize();
 
@@ -1075,7 +1452,7 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     get suppressCardHints(): boolean {
-        return this.isNodeDragging || this.isPanning || this.isShowingDirection;
+        return this.isNodeDragging || this.isPanning || this.isShowingDirection || this.isBuildingPaletteOpen;
     }
 
     private getFactorySettingsPayload(): FactorySettingsPayload {
@@ -1095,22 +1472,14 @@ export class CardsGridComponent implements OnInit, OnDestroy {
     }
 
     private updateEdgeGeometry() {
-        const nodeMap = new Map(this.nodes.map((node) => [node.id, node]));
-        this.renderedEdges = this.nodes
-            .filter((node) => node.parentId !== undefined)
-            .map((node) => {
-                const childPos = this.getNodePosition(node.id);
-                const parentPos = this.getNodePosition(node.parentId!);
-                return {
-                    id: `edge-${node.id}-${node.parentId}`,
-                    x1: childPos.x + this.itemSize,
-                    y1: childPos.y + this.itemSize / 2,
-                    x2: parentPos.x,
-                    y2: parentPos.y + this.itemSize / 2,
-                    label: `${node.productionRate} p/m`,
-                };
-            })
-            .filter((edge) => nodeMap.has(Number(edge.id.split('-')[1])));
+        if (!this.currentBoard) {
+            this.renderedEdges = [];
+            return;
+        }
+
+        this.renderedEdges = Object.values(this.currentBoard.connections)
+            .map((connection) => this.buildRenderEdge(connection))
+            .filter((edge): edge is RenderEdge => Boolean(edge));
     }
 
     private updateContentSize() {
@@ -1156,5 +1525,18 @@ export class CardsGridComponent implements OnInit, OnDestroy {
         const centerY = minY + graphHeight / 2;
         this.panX = vw / 2 - centerX * this.scale;
         this.panY = vh / 2 - centerY * this.scale;
+    }
+
+    private isInteractiveElement(target: HTMLElement | null): boolean {
+        if (!target) {
+            return false;
+        }
+
+        const tagName = (target.tagName || '').toLowerCase();
+        if (target.isContentEditable || ['input', 'textarea', 'select', 'button', 'a'].includes(tagName)) {
+            return true;
+        }
+
+        return Boolean(target.closest('.building-palette') || target.closest('.card-hint'));
     }
 }

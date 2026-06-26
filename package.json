@@ -5,6 +5,7 @@
         "dev": "vite",
         "dev:all": "sh -c 'php artisan serve & npm run dev & npm run service:calculator & wait'",
         "dev:sc": "sh -c 'php artisan serve & npm run angular & npm run service:calculator & wait'",
+        "dev:sc:win": "concurrently \"php artisan serve\" \"npm run angular\" \"npm run service:calculator\"",
         "vue": "vite",
         "angular": "cd resources/js/angular && npm start",
         "all": "vite && cd resources/js/angular && npm start",
@@ -17,6 +18,7 @@
     },
     "devDependencies": {
         "axios": "^1.6.4",
+        "concurrently": "^9.2.1",
         "cross-env": "^7.0.3",
         "globals": "^15.8.0",
         "laravel-vite-plugin": "^1.0",
@@ -29,6 +31,7 @@
         "@vitejs/plugin-vue": "^5.0.4",
         "pinia": "^2.2.2",
         "pinia-plugin-persistedstate": "^3.2.1",
+        "vercel": "^54.17.3",
         "vue": "^3.4.27",
         "vue-i18n": "^9.14.0",
         "vue-router": "^4.3.2"

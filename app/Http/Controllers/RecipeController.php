@@ -96,10 +96,11 @@ class RecipeController extends Controller
         }
 
         $requestedAmount = $request->input('amount') ?? $request->query('amount');
+        $hasExplicitAmount = $requestedAmount !== null && $requestedAmount !== '';
         $useIngredientsToMax = $request->input('useIngredientsToMax');
         $useIngredientsToMax = filter_var($useIngredientsToMax, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($useIngredientsToMax === null) {
-            $useIngredientsToMax = false;
+            $useIngredientsToMax = !$hasExplicitAmount;
         }
         $selectedRecipes = $this->parseSelectedRecipes($request->input('selectedRecipes', $request->query('selectedRecipes')));
         $optimizationGoals = $this->parseOptimizationGoals($request->input('optimizationGoals', $request->query('optimizationGoals')));
@@ -114,7 +115,7 @@ class RecipeController extends Controller
             return response()->json(['error' => 'Missing or invalid ingredients array.'], 400);
         }
 
-        $amount = $requestedAmount !== null ? (float) $requestedAmount : 1.0;
+        $amount = $hasExplicitAmount ? (float) $requestedAmount : 0.0;
         $boundedResult = $this->fetchCalcOutput($item, $amount, $rawIngredients, $useIngredientsToMax, $selectedRecipes, $optimizationGoals, $factorySettings);
         if (isset($boundedResult['error'])) {
             return response()->json([

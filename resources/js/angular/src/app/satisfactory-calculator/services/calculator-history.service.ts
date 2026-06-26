@@ -14,6 +14,7 @@ export interface RecipeHistoryEntry {
     id: string;
     createdAt: number;
     label?: string;
+    boardId: string;
     query: HistoryQueryState;
     selectedRecipes: Record<string, string>;
     response: RecipeResponse;
@@ -27,40 +28,41 @@ export class CalculatorHistoryService {
     constructor(private sessionStore: SessionStoreService) {}
 
     getHistory(): RecipeHistoryEntry[] {
-        const history = this.sessionStore.get<RecipeHistoryEntry[]>(HISTORY_STORE_KEY, []);
-        return this.clone(history);
+        return this.readHistory();
     }
 
     push(entry: Omit<RecipeHistoryEntry, 'id' | 'createdAt'>): RecipeHistoryEntry[] {
-        const nextEntry: RecipeHistoryEntry = {
+        const nextEntry = this.normalizeEntry({
             id: this.generateId(),
             createdAt: Date.now(),
             label: entry.label,
-            query: this.clone(entry.query),
-            selectedRecipes: this.clone(entry.selectedRecipes),
-            response: this.clone(entry.response),
-        };
+            boardId: entry.boardId,
+            query: entry.query,
+            selectedRecipes: entry.selectedRecipes,
+            response: entry.response,
+        });
 
-        const current = this.getHistory();
+        const current = this.readHistory();
         const topEntry = current[0];
         if (topEntry && this.isSameRequest(topEntry, nextEntry)) {
             current[0] = {
                 ...topEntry,
                 createdAt: Date.now(),
-                response: nextEntry.response,
                 label: nextEntry.label ?? topEntry.label,
+                boardId: nextEntry.boardId,
+                response: this.clone(nextEntry.response),
             };
-            this.sessionStore.set(HISTORY_STORE_KEY, current);
+            this.writeHistory(current);
             return this.clone(current);
         }
 
         const next = [nextEntry, ...current].slice(0, MAX_HISTORY_ENTRIES);
-        this.sessionStore.set(HISTORY_STORE_KEY, next);
+        this.writeHistory(next);
         return this.clone(next);
     }
 
     promote(id: string): RecipeHistoryEntry | null {
-        const current = this.getHistory();
+        const current = this.readHistory();
         const index = current.findIndex((entry) => entry.id === id);
         if (index < 0) {
             return null;
@@ -71,16 +73,96 @@ export class CalculatorHistoryService {
             ...selected,
             createdAt: Date.now(),
         });
-        this.sessionStore.set(HISTORY_STORE_KEY, current);
+        this.writeHistory(current);
         return this.clone(current[0]);
+    }
+
+    updateBoardId(id: string, boardId: string): RecipeHistoryEntry | null {
+        const current = this.readHistory();
+        const index = current.findIndex((entry) => entry.id === id);
+        if (index < 0) {
+            return null;
+        }
+
+        current[index] = {
+            ...current[index],
+            boardId: `${boardId || ''}`.trim(),
+        };
+        this.writeHistory(current);
+        return this.clone(current[index]);
+    }
+
+    updateResponse(id: string, response: RecipeResponse): RecipeHistoryEntry | null {
+        const current = this.readHistory();
+        const index = current.findIndex((entry) => entry.id === id);
+        if (index < 0) {
+            return null;
+        }
+
+        current[index] = {
+            ...current[index],
+            response: this.clone(response),
+        };
+        this.writeHistory(current);
+        return this.clone(current[index]);
     }
 
     replaceHistory(entries: RecipeHistoryEntry[]): RecipeHistoryEntry[] {
         const safeEntries = (Array.isArray(entries) ? entries : [])
-            .filter((entry) => Boolean(entry?.query?.item) && Array.isArray(entry?.response?.recipeNodeArr))
+            .map((entry) => this.normalizeEntry(entry))
+            .filter((entry) => Boolean(entry.query.item) && Array.isArray(entry.response?.recipeNodeArr))
             .slice(0, MAX_HISTORY_ENTRIES);
-        this.sessionStore.set(HISTORY_STORE_KEY, safeEntries);
+        this.writeHistory(safeEntries);
         return this.clone(safeEntries);
+    }
+
+    private readHistory(): RecipeHistoryEntry[] {
+        const history = this.sessionStore.get<any[]>(HISTORY_STORE_KEY, []);
+        return (Array.isArray(history) ? history : [])
+            .map((entry) => this.normalizeEntry(entry))
+            .filter((entry) => Boolean(entry.query.item) && Array.isArray(entry.response?.recipeNodeArr))
+            .slice(0, MAX_HISTORY_ENTRIES);
+    }
+
+    private writeHistory(entries: RecipeHistoryEntry[]): void {
+        this.sessionStore.set(HISTORY_STORE_KEY, this.clone(entries));
+    }
+
+    private normalizeEntry(entry: any): RecipeHistoryEntry {
+        return {
+            id: typeof entry?.id === 'string' && entry.id.trim()
+                ? entry.id
+                : this.generateId(),
+            createdAt: Number.isFinite(Number(entry?.createdAt))
+                ? Number(entry.createdAt)
+                : Date.now(),
+            label: typeof entry?.label === 'string' && entry.label.trim()
+                ? entry.label.trim()
+                : undefined,
+            boardId: typeof entry?.boardId === 'string'
+                ? entry.boardId.trim()
+                : '',
+            query: {
+                item: `${entry?.query?.item || ''}`,
+                amount: Number.isFinite(Number(entry?.query?.amount))
+                    ? Number(entry.query.amount)
+                    : 0,
+                ingredients: Array.isArray(entry?.query?.ingredients)
+                    ? this.clone(entry.query.ingredients)
+                    : [],
+                useIngredientsToMax: Boolean(entry?.query?.useIngredientsToMax),
+                optimizationGoals: Array.isArray(entry?.query?.optimizationGoals)
+                    ? this.clone(entry.query.optimizationGoals)
+                    : [],
+            },
+            selectedRecipes: entry?.selectedRecipes && typeof entry.selectedRecipes === 'object'
+                ? this.clone(entry.selectedRecipes)
+                : {},
+            response: this.clone(entry?.response ?? {
+                recipeNodeArr: [],
+                ingredientsData: { input: [], intermediate: [], output: [], byproduct: [] },
+            }),
+        };
     }
 
     private generateId(): string {

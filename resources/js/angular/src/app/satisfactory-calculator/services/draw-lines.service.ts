@@ -1,5 +1,4 @@
 import { Injectable  } from '@angular/core';
-import { RecipeNode } from './recipe.service';
 
 interface ParentOrChild {
     parentId?: number;

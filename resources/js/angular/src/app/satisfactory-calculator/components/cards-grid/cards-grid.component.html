@@ -1,4 +1,11 @@
-<div class="board-viewport" #viewport (mousedown)="onCanvasPointerDown($event)" (wheel)="onWheel($event)" [style.background-color]="settings.colors.board.canvasColor">
+<div
+    class="board-viewport"
+    #viewport
+    (mousedown)="onCanvasPointerDown($event)"
+    (contextmenu)="onBoardContextMenu($event)"
+    (wheel)="onWheel($event)"
+    [style.background-color]="settings.colors.board.canvasColor"
+>
     <div
         class="board-content"
         [style.width.px]="contentWidth"
@@ -64,6 +71,97 @@
 <div *ngIf="isLoading" class="loading-indicator" aria-live="polite">
     <span class="loading-spinner"></span>
 </div>
+
+<div
+    class="building-palette-anchor"
+    cdkOverlayOrigin
+    #buildingPaletteOrigin="cdkOverlayOrigin"
+    [style.left.px]="buildingPaletteClientPoint.x"
+    [style.top.px]="buildingPaletteClientPoint.y"
+></div>
+
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="buildingPaletteOrigin"
+    [cdkConnectedOverlayOpen]="isBuildingPaletteOpen"
+    [cdkConnectedOverlayHasBackdrop]="false"
+    [cdkConnectedOverlayPositions]="buildingPalettePositions"
+    (overlayOutsideClick)="closeBuildingPalette()"
+    (positionChange)="onBuildingPalettePositionChange($event)"
+>
+    <div
+        class="building-palette"
+        [class.is-left]="buildingPaletteSide === 'left'"
+        [class.is-right]="buildingPaletteSide === 'right'"
+        [style.--overlay-background]="overlayBackgroundColor"
+        [style.--overlay-text]="overlayTextColor"
+        (mousedown)="$event.stopPropagation()"
+        (contextmenu)="$event.preventDefault(); $event.stopPropagation()"
+        (wheel)="onBuildingPaletteWheel($event)"
+    >
+        <div class="building-palette__header">
+            <p class="building-palette__eyebrow">Board Actions</p>
+            <h3 class="building-palette__title">Add Building</h3>
+            <p class="building-palette__selection">
+                {{ buildingPaletteSelectionMessage }}
+            </p>
+        </div>
+
+        <div class="building-palette__content">
+            <section *ngFor="let section of buildingPaletteSections; trackBy: trackById" class="building-palette__section">
+                <div class="building-palette__section-header">
+                    <h4 class="building-palette__section-title">{{ section.title }}</h4>
+                </div>
+
+                <div class="building-palette__grid">
+                    <ng-container *ngFor="let item of section.items; trackBy: trackById">
+                        <button
+                            type="button"
+                            class="building-button"
+                            [class.is-selected]="isBuildingPaletteItemSelected(item.id)"
+                            cdkOverlayOrigin
+                            #tooltipOrigin="cdkOverlayOrigin"
+                            (click)="selectBuildingPaletteItem(item, $event)"
+                            (mouseenter)="setHoveredBuildingPaletteItem(item.id)"
+                            (mouseleave)="setHoveredBuildingPaletteItem(null)"
+                            (focus)="setHoveredBuildingPaletteItem(item.id)"
+                            (blur)="setHoveredBuildingPaletteItem(null)"
+                            [attr.aria-label]="item.label"
+                        >
+                            <ng-container *ngIf="item.imagePath; else buildingPlaceholder">
+                                <img
+                                    class="building-button__image"
+                                    basePath
+                                    [path]="item.imagePath"
+                                    [alt]="item.label"
+                                    draggable="false"
+                                >
+                            </ng-container>
+
+                            <ng-template #buildingPlaceholder>
+                                <div class="building-button__placeholder" aria-hidden="true">
+                                    {{ getBuildingPalettePlaceholder(item.label) }}
+                                </div>
+                            </ng-template>
+                        </button>
+
+                        <ng-template
+                            cdkConnectedOverlay
+                            [cdkConnectedOverlayOrigin]="tooltipOrigin"
+                            [cdkConnectedOverlayOpen]="hoveredBuildingPaletteItemId === item.id"
+                            [cdkConnectedOverlayHasBackdrop]="false"
+                            [cdkConnectedOverlayPositions]="buildingPaletteTooltipPositions"
+                        >
+                            <div class="building-tooltip">
+                                {{ item.label }}
+                            </div>
+                        </ng-template>
+                    </ng-container>
+                </div>
+            </section>
+        </div>
+    </div>
+</ng-template>
 
 <div
     class="overlay"

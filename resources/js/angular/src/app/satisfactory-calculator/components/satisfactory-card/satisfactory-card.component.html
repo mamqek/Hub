@@ -1,5 +1,6 @@
 <div
-    matBadge="{{data.indentLevel}}"
+    [matBadge]="solverIndentLevel"
+    [matBadgeHidden]="solverIndentLevel === null"
     matBadgeSize="large"
     class="card rounded-md"
     [class.is-highlighted]="isHighlighted"
@@ -19,11 +20,11 @@
 
     <img class="card-image" basePath [path]="machineImageUrl" draggable="false"/>
 
-    <div class="item-badge produced-item">
-        <img basePath [path]="getItemImageUrl(data.itemName)" draggable="false"/>
+    <div *ngIf="hasProducedItem" class="item-badge produced-item">
+        <img basePath [path]="getItemImageUrl(producedItemName)" draggable="false"/>
     </div>
-    <div *ngIf="data.byproducts?.length" class="byproduct-rail">
-        <ng-container *ngFor="let byproduct of data.byproducts; trackBy: trackByItemName">
+    <div *ngIf="byproducts.length" class="byproduct-rail">
+        <ng-container *ngFor="let byproduct of byproducts; trackBy: trackByItemName">
             <div class="item-badge byproduct-item">
                 <img basePath [path]="getItemImageUrl(byproduct.itemName)" draggable="false"/>
             </div>
@@ -42,11 +43,11 @@
         <div class="hint-header">
             <div class="hint-item">
                 <div class="hint-item-icon">
-                    <img basePath [path]="getItemImageUrl(data.itemName)" [alt]="data.itemName" draggable="false"/>
+                    <img basePath [path]="getItemImageUrl(producedItemName)" [alt]="producedItemName" draggable="false"/>
                 </div>
                 <div class="hint-item-copy">
-                    <h5 class="card-hint-title">{{data.itemName}}</h5>
-                    <p class="card-hint-subtitle">{{data.recipeName || 'Unknown recipe'}}</p>
+                    <h5 class="card-hint-title">{{producedItemName}}</h5>
+                    <p class="card-hint-subtitle">{{recipeName || 'Unknown recipe'}}</p>
                 </div>
             </div>
             <button
@@ -77,7 +78,7 @@
                 <p>Machine</p>
                 <div class="machine-kpi-row">
                     <strong>{{machineLabelDisplay}}</strong>
-                    <button *ngIf="isExtractorCard" type="button" class="factory-edit-button" title="Edit factory settings" (click)="onOpenFactorySettingsClick($event)">✎</button>
+                    <button *ngIf="isExtractorCard" type="button" class="factory-edit-button" title="Edit factory settings" (click)="onOpenFactorySettingsClick($event)">Edit</button>
                 </div>
             </div>
         </div>
@@ -129,7 +130,7 @@
                 </label>
             </div>
             <p class="node-allocation-meta">
-                Capacity: <strong>{{selectedNodeCapacityDisplay}} / min</strong> • Needed (all normal): <strong>{{requiredNodeCountDisplay}}</strong>
+                Capacity: <strong>{{selectedNodeCapacityDisplay}} / min</strong> | Needed (all normal): <strong>{{requiredNodeCountDisplay}}</strong>
             </p>
             <p class="node-allocation-meta">
                 Belt cap: <strong>Mk.{{beltLevelDisplay}}</strong> ({{beltCapDisplay}} / min per node)
@@ -176,7 +177,7 @@
                         (input)="onMachineCountInput($event)"
                     >
                 </label>
-                <small>min {{ machineCountMin }} · max {{ machineCountMax }}</small>
+                <small>min {{ machineCountMin }} | max {{ machineCountMax }}</small>
             </div>
 
             <div class="overclock-meta">
